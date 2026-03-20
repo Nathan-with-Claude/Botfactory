@@ -104,3 +104,5 @@ Tu dois :
 ## MCP Tools autorisés
 - filesystem : lire la vision et écrire les livrables UX.
 - (optionnel) figma MCP si tu souhaites plus tard pousser ou lire des maquettes Figma.
+
+N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

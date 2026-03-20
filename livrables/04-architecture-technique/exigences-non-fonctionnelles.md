@@ -1,6 +1,6 @@
 # Exigences Non Fonctionnelles DocuPost
 
-> Document de référence — Version 1.1 — 2026-03-19
+> Document de référence — Version 1.2 — 2026-03-20
 > Produit par l'Architecte Technique à partir des entretiens métier (Pierre livreur,
 > Mme Dubois DSI, M. Garnier Architecte Technique, M. Renaud Responsable Exploitation
 > Logistique), des KPIs (/livrables/01-vision/kpis.md) et des contraintes SI imposées.
@@ -10,6 +10,11 @@
 >
 > Mise à jour v1.1 : compatibilité étendue iOS + Android (React Native), exigences
 > de performance mobile adaptées aux contraintes React Native.
+>
+> Mise à jour v1.2 : ajout des NFR spécifiques au Parcours 0 (Préparation des tournées) :
+> ENF-DISP-004 (disponibilité 6h00), ENF-PERF-010 (import TMS < 5 min),
+> ENF-RESIL-005 (résilience TMS indisponible), ENF-SEC-008 (accès SUPERVISOR only
+> aux endpoints de planification). Mise à jour de la matrice de criticité.
 
 ---
 
@@ -60,6 +65,31 @@ pour recevoir et transmettre les événements vers l'OMS.
 
 **Mitigation** : File de rejeu outbox (DD-003) : les événements sont persistés en base
 avant transmission. Une indisponibilité du service n'entraîne pas de perte d'événement.
+
+**Criticité** : MUST HAVE
+
+---
+
+### ENF-DISP-004 — Disponibilité interface web de planification dès 6h00 (Parcours 0)
+
+**Exigence** : L'interface web de planification (Parcours 0 — Préparation des tournées)
+doit être disponible dès 6h00 du matin, du lundi au samedi. Elle constitue le point de
+démarrage de la journée opérationnelle pour le responsable logistique.
+
+**Cible** : Disponibilité garantie dès 6h00 (avant l'import TMS automatique).
+Continuité requise sans interruption jusqu'à 7h00 minimum (fin de la fenêtre de lancement).
+
+**Source** : M. Renaud (entretien 2026-03-20) — "Les livreurs partent entre 6h30 et 7h00.
+Je dois avoir fini les affectations avant qu'ils partent."
+Contrainte temporelle critique identifiée dans DD-011 (fenêtre de planification matinale).
+
+**Mitigation** :
+- Le `svc-planification-tournee` et ses dépendances (PostgreSQL planification) doivent
+  être démarrés et prêts (Readiness probe OK) avant 6h00.
+- En production Kubernetes, la disponibilité est garantie par le déploiement blue/green
+  (pas d'interruption pour les déploiements nocturnes) et les Liveness/Readiness probes.
+- Les fenêtres de maintenance planifiées doivent éviter la plage 05h45 – 07h15
+  (lundi au samedi).
 
 **Criticité** : MUST HAVE
 
@@ -224,6 +254,32 @@ Pas de blocage du JS thread > 16ms pendant les interactions utilisateur.
 
 ---
 
+### ENF-PERF-010 — Performance de l'import TMS (Parcours 0)
+
+**Exigence** : L'import des tournées depuis le TMS, déclenché à 6h00, doit se terminer
+en moins de 5 minutes pour l'ensemble des tournées du jour. L'interface web de planification
+doit être opérationnelle (données disponibles) au plus tard à 6h05.
+
+**Cible** :
+- Import TMS complet : < 5 minutes (pour 8 à 15 tournées, soit jusqu'à 1 500 colis au total)
+- Latence de l'appel API TMS : < 30 secondes (p95) pour la réponse initiale
+- Temps de traitement ACL (TmsResponseTranslator) : < 10 secondes pour 1 500 colis
+- Interface web W-04 disponible avec données chargées : < 5 minutes après 6h00
+
+**Source** : M. Renaud (entretien 2026-03-20) — "Je dois avoir les tournées sous les yeux
+dès que j'arrive. J'ai environ 45 minutes pour tout affecter."
+Volume terrain : 8 à 15 tournées par jour, estimation 1 500 colis au total.
+
+**Mécanisme** :
+- `ImporteurTMSScheduler` déclenche l'import en un seul appel REST (ou batch fichier).
+- Traitement batch en mémoire : pas d'appel OMS ou de jointure externe pendant l'import.
+- Persistance en masse (JPA `saveAll` ou `batchInsert` PostgreSQL) pour les TourneeTMS.
+- Métriques : `tms_import_duration_seconds` (histogram Prometheus) — alerte si > 3 minutes.
+
+**Criticité** : MUST HAVE
+
+---
+
 ## 3. Scalabilité
 
 ### ENF-SCAL-001 — Scalabilité horizontale des services backend
@@ -351,6 +407,44 @@ accessibles par URL permanente. L'accès doit être limité dans le temps et aud
 
 ---
 
+### ENF-SEC-008 — Contrôle d'accès aux endpoints de planification (Parcours 0)
+
+**Exigence** : Les endpoints de planification de tournée sont exclusivement accessibles
+au rôle `SUPERVISOR`. Le rôle `LIVREUR` n'a aucun accès à ces ressources, ni en lecture
+ni en écriture.
+
+**Endpoints concernés** :
+- `GET /plans/{date}` — consultation du plan du jour
+- `GET /plans/{date}/tournees` — liste des tournées TMS du jour
+- `POST /affectations` — enregistrement d'une affectation livreur/véhicule
+- `POST /tournees/{id}/lancer` — lancement d'une tournée (transmission au livreur)
+
+**Mécanisme** :
+```java
+// PlanificationController.java
+@GetMapping("/plans/{date}")
+@PreAuthorize("hasRole('SUPERVISOR')")
+public ResponseEntity<PlanDuJourDto> getPlanDuJour(@PathVariable LocalDate date) { ... }
+
+@PostMapping("/affectations")
+@PreAuthorize("hasRole('SUPERVISOR')")
+public ResponseEntity<Void> enregistrerAffectation(@RequestBody AffectationRequest req) { ... }
+
+@PostMapping("/tournees/{id}/lancer")
+@PreAuthorize("hasRole('SUPERVISOR')")
+public ResponseEntity<Void> lancerTournee(@PathVariable UUID id) { ... }
+```
+
+Spring Security `@PreAuthorize` avec extraction du rôle depuis le claim JWT.
+Toute tentative d'accès par un rôle `LIVREUR` ou `ADMIN` non autorisé retourne HTTP 403.
+
+**Source** : Ségrégation des responsabilités Parcours 0 (responsable logistique uniquement)
+et principe de moindre privilège DSI.
+
+**Criticité** : MUST HAVE
+
+---
+
 ## 5. Conformité RGPD
 
 ### ENF-RGPD-001 — Minimisation des données de géolocalisation
@@ -466,6 +560,41 @@ d'intégration avec des tentatives inutiles.
 
 ---
 
+### ENF-RESIL-005 — Résilience aux indisponibilités du TMS lors de l'import matinal (Parcours 0)
+
+**Exigence** : Si l'import TMS échoue à 6h00 (API indisponible, timeout, données
+malformées), le système doit :
+1. Alerter le responsable logistique dans un délai maximum de 2 minutes après l'échec.
+2. Permettre une saisie manuelle de secours via l'interface web.
+3. Retenter automatiquement l'import (3 tentatives : 6h05, 6h10, 6h15) avant de passer
+   définitivement en mode dégradé.
+
+**Délai de détection** : 2 minutes maximum après l'échec de l'import (constatation à 6h02 au plus tard).
+
+**Source** : M. Renaud (entretien 2026-03-20) — "Si je n'ai pas les tournées au bout de
+quelques minutes, je dois pouvoir saisir manuellement pour ne pas bloquer les livreurs."
+Contrainte opérationnelle critique : fenêtre de planification de 45 minutes seulement
+(DD-011).
+
+**Mécanisme** :
+- `ImporteurTMSScheduler` capture toutes les exceptions et publie une alerte WebSocket
+  immédiate vers l'interface web de planification.
+- 3 tentatives automatiques de retry (cron 6h05, 6h10, 6h15) via un `ScheduledRetryService`
+  dans `svc-planification`.
+- Après 3 échecs consécutifs :
+  - Alerte critique via AlertManager (Prometheus) → email ops.
+  - Métrique `tms_import_failure_total` incrémentée.
+  - Interface web W-04 affiche un bandeau d'avertissement : "Import TMS indisponible —
+    mode saisie manuelle activé."
+- Formulaire de saisie manuelle disponible dans W-05 (mode dégradé) : le superviseur
+  peut créer et configurer des TourneeTMS manuellement.
+- En cas de saisie manuelle, le flux d'affectation et de lancement est identique au
+  flux nominal (même use cases, même Domain Events).
+
+**Criticité** : MUST HAVE
+
+---
+
 ## 7. Observabilité
 
 ### ENF-OBS-001 — Logs structurés
@@ -553,6 +682,8 @@ d'exploitation sans intervention manuelle.
 | Condition | Sévérité | Action |
 |---|---|---|
 | OMS sync failure > 10 minutes | CRITIQUE | PagerDuty / email ops |
+| Import TMS en échec à 6h00 (3 tentatives échouées) | CRITIQUE | WebSocket superviseur + PagerDuty ops |
+| Tournées non affectées à 6h45 | WARNING | WebSocket superviseur (alerte dans interface web) |
 | Disponibilité API Gateway < 99,5 % sur 5 min | CRITIQUE | PagerDuty / email ops |
 | File offline > 100 événements en attente > 15 min | WARNING | Email ops |
 | Pod Kubernetes redémarré > 3 fois en 10 min | WARNING | Email ops |
@@ -593,6 +724,10 @@ d'exploitation sans intervention manuelle.
 | ENF-RGPD-002 | Pseudonymisation reporting | SHOULD HAVE | RGPD |
 | ENF-RGPD-003 | Durée conservation données | SHOULD HAVE | RGPD (à confirmer DPO) |
 | ENF-RGPD-004 | Consentement livreur géoloc (iOS + Android) | MUST HAVE | RGPD |
+| ENF-DISP-004 | Disponibilité interface web planification dès 6h00 | MUST HAVE | Prérequis Parcours 0 (M. Renaud) |
+| ENF-PERF-010 | Import TMS complet < 5 min, interface disponible à 6h05 | MUST HAVE | Fenêtre planification 45 min (M. Renaud) |
+| ENF-RESIL-005 | Résilience TMS indisponible : alerte < 2 min + saisie manuelle | MUST HAVE | Continuité Parcours 0, départ livreurs non bloqué |
+| ENF-SEC-008 | Accès endpoints planification réservé au rôle SUPERVISOR | MUST HAVE | Ségrégation Parcours 0 (RBAC) |
 | ENF-RESIL-001 | Résilience indisponibilité OMS | MUST HAVE | Continuité service terrain |
 | ENF-RESIL-002 | Résilience FCM | SHOULD HAVE | Dégradation acceptable |
 | ENF-RESIL-003 | Résilience SSO courte coupure | SHOULD HAVE | Confort utilisateur |

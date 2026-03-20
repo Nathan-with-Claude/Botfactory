@@ -134,3 +134,5 @@ BC_[Nom]/
 ## MCP Tools autorisés
 - filesystem : lire architecture métier, écrire livrables techniques.
 - (optionnel) sentry ou APM MCP si intégré plus tard pour monitoring.
+
+N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

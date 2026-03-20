@@ -1,9 +1,78 @@
 # Features DocuPost (par Epic)
 
-> Document de référence — Version 1.0 — 2026-03-19
+> Document de référence — Version 1.1 — 2026-03-20
 > Produit par le Product Owner à partir des livrables vision, UX et architecture métier.
 > Chaque Feature correspond à une capacité fonctionnelle d'un Bounded Context.
 > Les termes sont issus de l'Ubiquitous Language (/livrables/03-architecture-metier/domain-model.md).
+
+---
+
+## EPIC-007 : Planification et Préparation des Tournées (interface web logisticien)
+
+### F-018 : Import et visualisation du plan du jour
+
+**Description** : En tant que responsable logistique, je veux que les tournées du TMS
+soient importées automatiquement chaque matin à 6h00 et visualisables dans un tableau
+de bord, afin d'avoir une vue complète du plan du jour sans saisie manuelle.
+
+**Capability** : 7.1 Import et réception des tournées TMS
+**Screens couverts** : W-04 (Vue liste des tournées du matin)
+**Domain Events** : TournéeImportéeTMS
+**Priorité MoSCoW** : Must Have
+**Dépendances** : Intégration TMS (H6), EPIC-006 (authentification)
+
+User Stories rattachées :
+- US-021 : Visualiser le plan du jour importé depuis le TMS
+
+---
+
+### F-019 : Vérification de la composition des tournées
+
+**Description** : En tant que responsable logistique, je veux vérifier la composition
+de chaque tournée (nombre de colis, zones, contraintes horaires) et être alerté des
+anomalies, afin de détecter les problèmes avant le départ des livreurs.
+
+**Capability** : 7.2 Vérification de composition (anomalies colis/zones/contraintes)
+**Screens couverts** : W-05 (onglet Composition)
+**Domain Events** : CompositionVérifiée
+**Priorité MoSCoW** : Should Have
+
+User Stories rattachées :
+- US-022 : Vérifier la composition d'une tournée avant affectation
+
+---
+
+### F-020 : Affectation livreur et véhicule
+
+**Description** : En tant que responsable logistique, je veux affecter un livreur et
+un véhicule à chaque tournée depuis l'interface web, afin de tracer l'affectation dans
+le SI et d'assurer que chaque tournée a les ressources nécessaires.
+
+**Capability** : 7.3 Affectation livreur / véhicule par tournée
+**Screens couverts** : W-05 (onglet Affectation)
+**Domain Events** : AffectationEnregistrée
+**Priorité MoSCoW** : Must Have
+**Contraintes** : Un livreur / un véhicule par tournée par jour (invariants BC-07)
+
+User Stories rattachées :
+- US-023 : Affecter un livreur et un véhicule à une tournée
+
+---
+
+### F-021 : Lancement des tournées
+
+**Description** : En tant que responsable logistique, je veux lancer une ou plusieurs
+tournées depuis le tableau de bord, afin de les rendre visibles dans l'application
+mobile des livreurs concernés.
+
+**Capability** : 7.4 Lancement des tournées
+**Screens couverts** : W-04 (bouton Lancer), W-05 (bouton Valider et lancer)
+**Domain Events** : TournéeLancée → TournéeChargée (BC-01)
+**Priorité MoSCoW** : Must Have
+**Contraintes** : Une tournée ne peut être lancée que si elle a une affectation complète
+
+User Stories rattachées :
+- US-024 : Lancer une tournée pour la rendre visible au livreur
 
 ---
 
@@ -302,6 +371,10 @@ User Stories rattachées :
 
 | Feature | Epic | Priorité | Périmètre |
 |---------|------|----------|-----------|
+| F-018 : Import et visualisation du plan du jour | EPIC-007 | Must Have | MVP |
+| F-019 : Vérification de la composition des tournées | EPIC-007 | Should Have | MVP |
+| F-020 : Affectation livreur et véhicule | EPIC-007 | Must Have | MVP |
+| F-021 : Lancement des tournées | EPIC-007 | Must Have | MVP |
 | F-001 : Chargement et prise en main de la tournée | EPIC-001 | Must Have | MVP |
 | F-002 : Organisation des arrêts par zone | EPIC-001 | Must Have | MVP |
 | F-003 : Mise à jour du statut d'un colis | EPIC-001 | Must Have | MVP |

@@ -69,3 +69,5 @@ Le feedback terrain est une **source de raffinement de l’Ubiquitous Language**
 
 ## MCP Tools autorisés
 - filesystem : lire les livrables UX et US, écrire le feedback.
+
+N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

@@ -19,7 +19,10 @@
       "Bash(touch:*)",
       "Bash(git:*)",
       "mcp__filesystem__read_multiple_files",
-      "mcp__filesystem__create_directory"
+      "mcp__filesystem__create_directory",
+      "Bash(python3 -c \"import sys,json; lines=sys.stdin.read\\(\\).strip\\(\\).split\\(''''\\\\n''''\\); [print\\(json.loads\\(l\\).get\\(''''type'''',''''?''''\\), ''''|'''', str\\(json.loads\\(l\\).get\\(''''message'''',{}\\).get\\(''''content'''',''''''''\\)\\)[:200]\\) for l in lines if l]\")",
+      "Bash(ls /livrables/)",
+      "Read(//livrables/**)"
     ]
   }
 }
