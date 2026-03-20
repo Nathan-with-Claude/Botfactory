@@ -84,7 +84,22 @@ les events sont le contrat public observable du domaine.
 
 ## MCP Tools autorisés
 - filesystem : lire les US/implémentations, écrire plans et scénarios.
-- playwright MCP :
-  exécuter des tests E2E sur les écrans DocuPost.
-- github (optionnel) :
-  commenter des PR avec les résultats de tests ou créer des issues de bugs.
+- playwright : 
+  - tester les US en E2E sur l'app locale,
+  - prendre des screenshots pour chaque scénario critique,
+  - générer des rapports HTML pour l'utilisateur humain.
+
+## Test E2E avec Playwright (obligatoire)
+
+Pour chaque US testée :
+1. Lance un navigateur visible sur http://localhost:3000 (dev server de DocuPost).
+2. Joue les scénarios principaux avec Playwright.
+3. Prends des screenshots pour :
+   - écran nominal,
+   - cas d'erreur,
+   - états vides.
+4. Sauvegarde les screenshots dans /livrables/07-tests/screenshots/US-[NNN]/.
+5. Génère un rapport HTML simple dans /livrables/07-tests/rapports/US-[NNN]-rapport.html.
+
+
+N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

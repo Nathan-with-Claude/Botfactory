@@ -189,7 +189,7 @@
   Initialisation du monorepo DocuPost : structure svc-tournee (BC-01), mobile partiel (api + screens + components), stubs web et shared/domain-events.
 
 - 2026-03-20T14:00Z @developpeur CREATE → /src/backend/svc-tournee/ (US-001)
-  Implémentation US-001 backend : domain (Tournee, Colis, VOs, events, repository), application (ConsulterListeColisHandler, command, exception), infrastructure (JPA entities, mapper, TourneeRepositoryImpl, DevDataSeeder dev), interfaces (GET /api/tournees/today, DTOs, MockJwtAuthFilter dev, SecurityConfig). Tests TDD : TourneeTest, ConsulterListeColisHandlerTest, TourneeControllerTest.
+  Implémentation US-001 backend : domain (Tournee, Colis, VOs, events, repository), application (ConsulterListeColisHandler, command, exception), infrastructure (JPA entities, mapper, TourneeRepositoryImpl, DevDataSeeder dev), interfaces (GET /api/tournees/today, DTOs, MockJwtAuthFilter dev, SecurityConfig). Tests TDD : TourneeTest, ConsulterListeColisHandler Test, TourneeControllerTest.
 
 - 2026-03-20T14:00Z @developpeur CREATE → /src/mobile/src/ (US-001)
   Implémentation US-001 mobile : tourneeTypes.ts, tourneeApi.ts, ListeColisScreen.tsx (états chargement/succès/vide/erreur, FlatList, bandeau progression), ColisItem.tsx (statut badge, contraintes mises en évidence), test Jest ListeColisScreen.test.tsx (8 scénarios).
@@ -199,3 +199,18 @@
 
 - 2026-03-20T14:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
   Mise à jour journal développeur : US-001 → statut Implémenté, 5 décisions techniques enregistrées (DT-001 à DT-005), interventions et TODOs actifs.
+
+- 2026-03-20T15:00Z @qa CREATE → /livrables/07-tests/scenarios/US-001-scenarios.md
+  25 scénarios de test US-001 : invariants domaine (TC-001 à TC-005), application (TC-006 à TC-009), interface API (TC-010 à TC-014), mobile (TC-015 à TC-019), edge cases et non-régression (TC-020 à TC-023), performance (TC-024), sécurité (TC-025).
+
+- 2026-03-20T15:00Z @qa CREATE → /livrables/07-tests/jeux-de-donnees.md
+  Jeux de données US-001 : JDD-001 (5 colis standard Pierre Morel), JDD-002 (livreur sans tournée), JDD-003 (120 colis performance), JDD-004 (colis multi-contraintes), JDD-005 (tournée 1 colis), JDD-006 (colis traités LIVRE+ECHEC).
+
+- 2026-03-20T15:00Z @qa UPDATE → /livrables/07-tests/plan-tests.md
+  Mise à jour plan-tests.md v1.1 : ajout section US-001 (25 TCs, couverture par couche, mapping tests automatisés existants JUnit/Jest, TCs à implémenter perf/sécurité, TCs manuels).
+
+- 2026-03-20T15:00Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  US-001 → statut "Scénarios rédigés + Jeux de données prêts". Mise à jour tableau suivi, interventions et points d'attention.
+
+- 2026-03-20T16:00Z @end-user CREATE → /livrables/09-feedback/feedback-US001-liste-colis-2026-03-20.md
+  Feedback terrain Pierre Morel (livreur) sur US-001 liste des colis — 3 bloquants, 5 améliorations importantes, note 3/5.

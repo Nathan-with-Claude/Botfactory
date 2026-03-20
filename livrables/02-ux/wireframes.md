@@ -1,8 +1,14 @@
 # Wireframes textuels DocuPost
 
-> Document de référence — Version 1.0 — 2026-03-19
-> Produit à partir des personas (/livrables/02-ux/personas.md), des user journeys
-> (/livrables/02-ux/user-journeys.md) et du périmètre MVP (/livrables/01-vision/perimetre-mvp.md).
+> Document de référence — Version 1.1 — 2026-03-20
+> Mis à jour suite à l'entretien complémentaire du 2026-03-20 avec M. Renaud :
+> ajout des wireframes W-04 (Vue liste des tournées du matin) et W-05 (Détail d'une
+> tournée à préparer) couvrant le Parcours 0 — Préparation des tournées (interface web,
+> responsable logistique).
+>
+> Version 1.0 produite le 2026-03-19 à partir des personas (/livrables/02-ux/personas.md),
+> des user journeys (/livrables/02-ux/user-journeys.md) et du périmètre MVP
+> (/livrables/01-vision/perimetre-mvp.md).
 >
 > Conventions :
 > - Les wireframes sont textuels et décrivent le layout, les zones, les composants et les
@@ -11,6 +17,230 @@
 > - Chaque écran est annoté avec les Domain Events qu'il déclenche ou affiche.
 > - Les états spéciaux (liste vide, chargement, erreur réseau, mode offline) sont décrits
 >   pour chaque écran.
+
+---
+
+## Interface web — Responsable logistique (Parcours 0)
+
+---
+
+### Écran W-04 : Vue liste des tournées du matin
+
+**Persona** : Laurent Renaud (Responsable Exploitation Logistique)
+**Objectif** : Visualiser l'ensemble des *tournées TMS* importées du matin, identifier
+celles non encore affectées, et lancer les *affectations* depuis un tableau consolidé
+**URL/Route** : /preparation
+**Domain Events déclenchés** : TournéeImportéeTMS (à l'import), AffectationEnregistrée,
+TournéeLancée
+**Domain Events affichés** : TournéeImportéeTMS, TournéeVérifiée, AffectationEnregistrée
+
+#### Layout
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DocuPost Préparation  |  20/03/2026 — Matin  |  [Déconnexion] │  Header global
+├─────────────────────────────────────────────────────────────────┤
+│  Plan du jour : 12 tournées  |  3 non affectées  |  9 affectées │  Bandeau résumé
+│  0 lancées                  |  [LANCER TOUTES LES TOURNÉES]     │  Bouton de lancement global
+├─────────────────────────────────────────────────────────────────┤
+│  Filtres : [Toutes] [Non affectées] [Affectées] [Lancées]       │  Filtres de liste
+├──────────┬──────────┬──────────┬─────────────┬─────────────────┤
+│ Tournée  │ Nb colis │ Zone(s)  │ Statut      │ Actions         │  En-tête tableau
+├──────────┼──────────┼──────────┼─────────────┼─────────────────┤
+│ T-201    │ 34 colis │ Lyon 3e  │ NON AFFECTÉE│ [Affecter] [Voir│
+│          │          │ Lyon 6e  │  ●          │  détail]        │  Ligne non affectée — badge rouge
+├──────────┼──────────┼──────────┼─────────────┼─────────────────┤
+│ T-202    │ 28 colis │ Villeurbanne│ AFFECTÉE  │ P. Morel        │
+│          │          │          │  ●          │ Véhicule VH-07  │  Ligne affectée — badge vert
+│          │          │          │             │ [Voir détail] [Lancer]│
+├──────────┼──────────┼──────────┼─────────────┼─────────────────┤
+│ T-203    │ 41 colis │ Lyon 8e  │ NON AFFECTÉE│ [Affecter] [Voir│
+│          │          │ Lyon 5e  │  ● ⚠ Charge │  détail]        │  Surbrillance orange : surcharge détectée
+├──────────┼──────────┼──────────┼─────────────┼─────────────────┤
+│ T-204    │ 22 colis │ Lyon 2e  │ LANCÉE      │ P. Dupont       │
+│          │          │          │  ●          │ Véhicule VH-03  │  Ligne lancée — badge bleu, lecture seule
+│          │          │          │             │ [Voir détail]   │
+└──────────┴──────────┴──────────┴─────────────┴─────────────────┘
+│  [Charger plus]                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Composants
+
+- Header global : logo, titre "Préparation", date du matin, bouton de déconnexion.
+- Bandeau résumé : compteurs en temps réel — total des *tournées TMS* importées, répartition
+  par statut (non affectées, affectées, lancées). Bouton "LANCER TOUTES LES TOURNÉES"
+  visible uniquement si aucune *tournée* n'est encore lancée et toutes sont affectées.
+- Filtres par statut : Toutes, Non affectées, Affectées, Lancées.
+- Tableau des *tournées TMS* :
+  - Colonnes : code *tournée*, nombre de *colis*, zones couvertes, statut d'*affectation*
+    (badge coloré), livreur assigné, *véhicule* assigné, actions disponibles.
+  - Ligne *tournée* non affectée : badge rouge "NON AFFECTÉE". Boutons "Affecter" et
+    "Voir détail".
+  - Ligne *tournée* affectée : badge vert "AFFECTÉE". Livreur et *véhicule* affichés.
+    Boutons "Voir détail" et "Lancer".
+  - Ligne *tournée* avec anomalie détectée (surcharge) : surbrillance orange, icône
+    alerte, libellé de l'anomalie (ex. "Charge dépassée").
+  - Ligne *tournée* lancée : badge bleu "LANCÉE". Lecture seule. Bouton "Voir détail"
+    uniquement.
+
+#### Interactions principales
+
+- Appui sur "Affecter" : ouvre W-05 (Détail d'une tournée à préparer) en mode affectation.
+- Appui sur "Voir détail" : ouvre W-05 en mode consultation.
+- Appui sur "Lancer" d'une *tournée* affectée : déclenche **TournéeLancée**. La *tournée*
+  devient visible dans l'application mobile du livreur assigné. La ligne passe au statut
+  "LANCÉE".
+- Appui sur "LANCER TOUTES LES TOURNÉES" : déclenche **TournéeLancée** pour chaque
+  *tournée* affectée non encore lancée. Confirmation demandée avant l'action.
+- Appui sur un filtre : filtre la liste immédiatement.
+- Import TMS automatique : les *tournées TMS* sont importées au chargement de la page
+  ou sur action manuelle "Rafraîchir depuis TMS".
+
+#### États spéciaux
+
+- Import TMS non encore reçu : "Aucune tournée importée pour aujourd'hui. Import TMS
+  en attente ou à déclencher manuellement."
+- Toutes les *tournées* sont lancées : bannière verte "Toutes les tournées ont été lancées.
+  Les livreurs ont reçu leur tournée."
+- Anomalie sur une *tournée* : icône alerte sur la ligne + descriptif au survol (nombre
+  de *colis* au-delà du seuil, zone inhabituelle).
+- Perte de connexion serveur : bandeau rouge "Connexion perdue — Dernière synchronisation
+  TMS à HH:MM".
+
+**Termes du domaine annotés** : *tournée TMS*, *plan du jour*, *affectation*, *lancement de tournée*,
+*véhicule*, *colis*, *zone*, *composition de tournée*
+
+---
+
+### Écran W-05 : Détail d'une tournée à préparer
+
+**Persona** : Laurent Renaud (Responsable Exploitation Logistique)
+**Objectif** : Vérifier la *composition de tournée*, affecter un livreur et un *véhicule*,
+puis lancer la *tournée*
+**URL/Route** : /preparation/tournee/:id
+**Domain Events déclenchés** : TournéeVérifiée, AffectationEnregistrée, TournéeLancée
+
+#### Layout
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  [< Plan du jour]  Tournée T-203 — Non affectée  ⚠ Surcharge   │  Header + retour + statut
+├─────────────────────────────────────────────────────────────────┤
+│  Import TMS du 20/03/2026 à 06h14  |  41 colis  |  2 zones     │  Méta-données de la tournée
+├─────────────────────────────────────────────────────────────────┤
+│  [Composition]  [Affectation]                                   │  Onglets principaux
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  [Onglet Composition actif]                                      │
+│                                                                  │
+│  Zones couvertes                                                 │
+│  ● Lyon 8e — 27 colis   ● Lyon 5e — 14 colis                   │  Répartition par zone
+│                                                                  │
+│  Contraintes horaires                                            │
+│  ⚑ 6 colis avec horaire avant 10h00                             │  Contraintes détectées
+│  ⚑ 3 colis avec horaire avant 12h00                             │
+│                                                                  │
+│  ⚠ Anomalie détectée : 41 colis dépasse le seuil de 35 pour    │  Bloc anomalie visible
+│  ce type de tournée (zone péri-urbaine). Vérifier avant         │
+│  de lancer.                                                      │
+│                                                                  │
+│  Liste des colis                                                 │
+│  ┌────────┬───────────────────────────┬──────────┬───────────┐  │
+│  │ Colis  │ Adresse                   │ Zone     │ Contrainte│  │
+│  ├────────┼───────────────────────────┼──────────┼───────────┤  │
+│  │ #01042 │ 8 Rue Moïse, Lyon 8e      │ Lyon 8e  │ Avant 10h │  │
+│  ├────────┼───────────────────────────┼──────────┼───────────┤  │
+│  │ #01043 │ 15 Cours Gambetta, Lyon 5e│ Lyon 5e  │ —         │  │
+│  ├────────┼───────────────────────────┼──────────┼───────────┤  │
+│  │ #01044 │ 3 Allée des Acacias, Lyon 5│ Lyon 5e │ Fragile   │  │
+│  └────────┴───────────────────────────┴──────────┴───────────┘  │
+│  [Voir tous les 41 colis]                                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  [< Plan du jour]  Tournée T-203 — Non affectée                 │  Header
+├─────────────────────────────────────────────────────────────────┤
+│  [Composition]  [Affectation ●]                                 │  Onglet Affectation actif
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Livreur                                                         │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  Sélectionner un livreur disponible...             [▼]   │   │  Sélecteur livreur
+│  └──────────────────────────────────────────────────────────┘   │
+│  Livreurs disponibles : P. Morel, L. Petit, S. Roger (3/8)      │  Info disponibilité
+│                                                                  │
+│  Véhicule                                                        │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  Sélectionner un véhicule disponible...            [▼]   │   │  Sélecteur véhicule
+│  └──────────────────────────────────────────────────────────┘   │
+│  Véhicules disponibles : VH-04, VH-07, VH-11 (3/6)             │  Info disponibilité
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────┐  ┌──────────────────────────────┐   │
+│  │  VALIDER L'AFFECTATION │  │  VALIDER ET LANCER           │   │  Actions principales
+│  └────────────────────────┘  └──────────────────────────────┘   │
+│  Les deux boutons sont désactivés tant que livreur et véhicule  │
+│  ne sont pas sélectionnés.                                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Composants
+
+**Onglet Composition**
+
+- Header avec bouton retour vers W-04, identifiant de la *tournée*, statut, indicateur
+  d'anomalie si présent.
+- Méta-données : horodatage de l'import TMS, nombre total de *colis*, nombre de zones.
+- Zones couvertes : liste des zones avec nombre de *colis* par zone.
+- Contraintes horaires : liste des contraintes détectées (nombre de *colis* concernés
+  par plage horaire).
+- Bloc anomalie : encadré orange visible si une anomalie est détectée (surcharge,
+  zone inhabituelle). Descriptif de l'anomalie et recommandation.
+- Liste des *colis* de la *tournée* : tableau avec colonnes identifiant *colis*, adresse,
+  zone, contrainte. Affichage paginé avec option "Voir tous".
+
+**Onglet Affectation**
+
+- Sélecteur "Livreur" : liste déroulante des livreurs disponibles ce matin avec leur nom.
+  Libellé informatif du nombre de livreurs disponibles.
+- Sélecteur "Véhicule" : liste déroulante des *véhicules* disponibles avec leur
+  identifiant. Libellé informatif du nombre de *véhicules* disponibles.
+- Bouton "VALIDER L'AFFECTATION" : enregistre l'*affectation* sans lancer la *tournée*.
+  Déclenche **AffectationEnregistrée**. La *tournée* passe au statut "AFFECTÉE" dans W-04.
+- Bouton "VALIDER ET LANCER" : enregistre l'*affectation* et lance la *tournée* en une
+  seule action. Déclenche **AffectationEnregistrée** puis **TournéeLancée**. La *tournée*
+  devient immédiatement visible dans l'application mobile du livreur assigné.
+
+#### Interactions principales
+
+- Bascule entre les onglets "Composition" et "Affectation" : sans rechargement.
+- Sélection d'un livreur : déverrouille le sélecteur de *véhicule*.
+- Sélection d'un *véhicule* : active les deux boutons d'action.
+- "VALIDER L'AFFECTATION" : confirmation par toast "Affectation enregistrée pour T-203 —
+  P. Morel / VH-07." Retour automatique vers W-04.
+- "VALIDER ET LANCER" : confirmation demandée "Lancer la tournée T-203 pour P. Morel ?
+  Cette action est irréversible." Puis toast de confirmation et retour vers W-04 avec
+  la ligne passée en statut "LANCÉE".
+- Retour vers W-04 via le bouton header : sans perte des données saisies si
+  l'*affectation* n'est pas encore validée (confirmation demandée si modifications en cours).
+
+#### États spéciaux
+
+- Aucun livreur disponible : message "Aucun livreur disponible. Vérifiez les présences
+  du matin avant d'affecter cette tournée." Boutons désactivés.
+- Aucun *véhicule* disponible : message "Aucun véhicule disponible. Vérifiez le parc
+  véhicule avant d'affecter cette tournée." Boutons désactivés.
+- *Tournée* déjà lancée : les sélecteurs et boutons d'affectation sont remplacés par
+  "Tournée lancée à HH:MM — [Livreur] / [Véhicule]". Lecture seule.
+- Anomalie non acquittée : si le bloc anomalie est présent, le bouton "VALIDER ET
+  LANCER" affiche un label "Lancer malgré l'anomalie" pour forcer la conscience de
+  l'utilisateur sur le risque.
+
+**Termes du domaine annotés** : *tournée TMS*, *composition de tournée*, *affectation*,
+*lancement de tournée*, *véhicule*, *colis*, *zone*, *contrainte*, *vérification de composition*
 
 ---
 
@@ -584,17 +814,19 @@ localisation du livreur, et envoyer des *instructions*
 
 ## Récapitulatif des écrans MVP
 
-| Écran | Plateforme | Persona    | Parcours(s) couverts | Domain Events principaux                     |
-|-------|-----------|------------|----------------------|----------------------------------------------|
-| M-01  | Mobile    | Livreur    | P1 — Authentification | —                                           |
-| M-02  | Mobile    | Livreur    | P1 — Liste tournée   | TournéeDémarrée, TournéeChargée              |
-| M-03  | Mobile    | Livreur    | P1 — Détail colis    | (déclencheur vers M-04 ou M-05)              |
-| M-04  | Mobile    | Livreur    | P1, P4 — Preuve      | PreuveCapturée, LivraisonConfirmée, SynchronisationOMS |
-| M-05  | Mobile    | Livreur    | P1, P3 — Échec       | ÉchecLivraisonDéclaré, MotifEnregistré, DispositionEnregistrée |
-| M-06  | Mobile    | Livreur    | P5 — Instruction     | InstructionReçue, TournéeModifiée            |
-| W-01  | Web       | Superviseur| P2 — Tableau de bord | TournéeÀRisqueDétectée, AlerteDéclenchée     |
-| W-02  | Web       | Superviseur| P2 — Détail tournée  | (affiche tous les événements de la tournée)  |
-| W-03  | Web       | Superviseur| P5 — Instruction     | InstructionEnvoyée, TournéeModifiée          |
+| Écran | Plateforme | Persona              | Parcours(s) couverts             | Domain Events principaux                                          |
+|-------|-----------|----------------------|----------------------------------|-------------------------------------------------------------------|
+| W-04  | Web       | Resp. logistique     | P0 — Liste tournées matin        | TournéeImportéeTMS, AffectationEnregistrée, TournéeLancée         |
+| W-05  | Web       | Resp. logistique     | P0 — Détail tournée à préparer   | TournéeVérifiée, AffectationEnregistrée, TournéeLancée            |
+| M-01  | Mobile    | Livreur              | P1 — Authentification            | —                                                                 |
+| M-02  | Mobile    | Livreur              | P1 — Liste tournée               | TournéeDémarrée, TournéeChargée                                   |
+| M-03  | Mobile    | Livreur              | P1 — Détail colis                | (déclencheur vers M-04 ou M-05)                                   |
+| M-04  | Mobile    | Livreur              | P1, P4 — Preuve                  | PreuveCapturée, LivraisonConfirmée, SynchronisationOMS            |
+| M-05  | Mobile    | Livreur              | P1, P3 — Échec                   | ÉchecLivraisonDéclaré, MotifEnregistré, DispositionEnregistrée    |
+| M-06  | Mobile    | Livreur              | P5 — Instruction                 | InstructionReçue, TournéeModifiée                                 |
+| W-01  | Web       | Superviseur          | P2 — Tableau de bord             | TournéeÀRisqueDétectée, AlerteDéclenchée                          |
+| W-02  | Web       | Superviseur          | P2 — Détail tournée              | (affiche tous les événements de la tournée)                       |
+| W-03  | Web       | Superviseur          | P5 — Instruction                 | InstructionEnvoyée, TournéeModifiée                               |
 
 ---
 
@@ -623,3 +855,10 @@ entre l'action terrain et la mise à jour de l'écran superviseur.
 Chaque écran doit avoir un état explicite pour : chargement, liste vide, erreur réseau,
 mode offline. Ces états ne doivent jamais bloquer l'utilisateur sans lui indiquer ce qui
 se passe et ce qu'il peut faire.
+
+### Interface de préparation (web — responsable logistique)
+Les écrans W-04 et W-05 sont utilisés sous contrainte de temps (les livreurs partent
+entre 7h30 et 8h00). La conception doit privilégier la densité d'information et la
+rapidité des interactions : sélecteurs pré-filtrés sur les ressources disponibles,
+confirmation en une ou deux actions, retour visuel immédiat sur chaque *affectation*
+et chaque *lancement de tournée*.

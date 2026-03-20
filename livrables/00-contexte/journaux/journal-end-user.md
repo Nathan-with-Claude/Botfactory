@@ -1,6 +1,6 @@
 # Journal de bord — @end-user — DocuPost
 
-> **RÈGLE** : Lire ce fichier EN DÉBUT de session. Le mettre à jour EN FIN de session.
+> **REGLE** : Lire ce fichier EN DEBUT de session. Le mettre à jour EN FIN de session.
 > Ce fichier synthétise le profil des utilisateurs terrain et suit les feedbacks collectés.
 
 ---
@@ -31,6 +31,7 @@
 | Date | US testée | Persona | Feedback | Priorité | Statut |
 |------|-----------|---------|----------|----------|--------|
 | 2026-03-19 | (général) | Pierre | Feedback initial général documenté | — | Archivé |
+| 2026-03-20 | US-001 | Pierre Morel | 3 bloquants (ordre de passage, colis urgents invisibles, infos accès absentes), 5 améliorations, note 3/5 | Critique | Livré |
 
 ---
 
@@ -39,6 +40,7 @@
 | Date | Sujet | Fichier |
 |------|-------|---------|
 | 2026-03-19 | Feedback initial (général) | /livrables/09-feedback/feedback-enduser.md |
+| 2026-03-20 | Feedback US-001 — Liste des colis (Pierre Morel) | /livrables/09-feedback/feedback-US001-liste-colis-2026-03-20.md |
 
 ---
 
@@ -49,3 +51,11 @@
 - Pour Laurent : signaler tout flux qui dépasse **5 minutes** pour une action de préparation matinale
 - Les feedbacks doivent être **priorisés** (critique / important / mineur) et liés à une US
 - Format fichier feedback : `/livrables/09-feedback/feedback-[US ou feature]-[date].md`
+
+### Points issus du feedback US-001 (à surveiller sur les prochaines US)
+
+- Vérifier si l'**ordre de passage** est explicitement présent dans les écrans M-03 et au-delà
+- Vérifier que les **colis avec contrainte horaire** remontent en tête de liste ou font l'objet d'un regroupement visible
+- Confirmer que le terme **"Zone A / Zone B"** sera remplacé par des libellés géographiques réels (arrondissement, secteur)
+- Vérifier que **"Clôturer la tournée"** est compris intuitivement — envisager "Terminer ma journée" ou "Boucler la tournée"
+- Vérifier que **"Document sensible"** sera décliné en "Recommandé" / "Lettre recommandée" dans les étiquettes affichées

@@ -128,3 +128,5 @@ afin de [bénéfice].
 ## MCP Tools autorisés
 - filesystem : lire vision, UX, architecture métier, écrire backlog.
 - github : créer et mettre à jour des issues à partir des User Stories.
+
+N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.
