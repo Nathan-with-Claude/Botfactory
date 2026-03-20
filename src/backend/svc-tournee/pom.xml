@@ -85,6 +85,18 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- Correction BUG-002 : Spring ASM ne supporte pas les .class Java 25.
+                 spring.classformat.ignore=true evite l'echec du scan de classpath
+                 lors des tests @WebMvcTest et @SpringBootTest.
+                 Passe en system property JVM (avant tout chargement de contexte Spring).
+                 A supprimer quand Spring Boot sera compatible avec Java 25+ ASM. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dspring.classformat.ignore=true</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

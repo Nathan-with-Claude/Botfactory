@@ -5,6 +5,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { getTourneeAujourdhui, TourneeNonTrouveeError } from '../api/tourneeApi';
@@ -15,8 +16,9 @@ import ColisItem from '../components/ColisItem';
  * Ecran M-02 — Liste des colis de la tournee
  *
  * Affiche :
- * - Bandeau "Reste a livrer : X / Y"
- * - Estimation de fin si disponible
+ * - Bandeau "Reste a livrer : X / Y" (US-001 + US-002)
+ * - Estimation de fin si disponible (US-002)
+ * - Bouton "Cloture la tournee" visible uniquement si resteALivrer === 0 (US-002, SC4)
  * - Liste FlatList de ColisItem (un item par colis)
  * - Etats : chargement (spinner), erreur, liste vide ("Aucun colis assigne")
  *
@@ -101,7 +103,7 @@ export const ListeColisScreen: React.FC = () => {
 
   return (
     <View style={styles.container} testID="liste-colis-screen">
-      {/* Bandeau de progression */}
+      {/* Bandeau de progression (US-002) */}
       <View style={styles.bandeauProgression} testID="bandeau-progression">
         <Text style={styles.resteALivrer} testID="reste-a-livrer">
           Reste a livrer : {tournee.resteALivrer} / {tournee.colisTotal}
@@ -112,6 +114,21 @@ export const ListeColisScreen: React.FC = () => {
           </Text>
         )}
       </View>
+
+      {/* Bouton "Cloture la tournee" — visible uniquement si tous les colis sont traites (US-002, SC4) */}
+      {tournee.resteALivrer === 0 && (
+        <TouchableOpacity
+          style={styles.boutonCloture}
+          testID="bouton-cloture"
+          onPress={() => {
+            // TODO US-007 : implementer la cloture de tournee
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Cloture la tournee"
+        >
+          <Text style={styles.boutonClotureText}>Cloture la tournee</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Liste des colis */}
       <FlatList
@@ -163,6 +180,20 @@ const styles = StyleSheet.create({
   estimationFin: {
     color: '#BBDEFB',
     fontSize: 14,
+  },
+  boutonCloture: {
+    backgroundColor: '#388E3C',
+    margin: 16,
+    marginTop: 8,
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+  },
+  boutonClotureText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   liste: {
     paddingVertical: 8,

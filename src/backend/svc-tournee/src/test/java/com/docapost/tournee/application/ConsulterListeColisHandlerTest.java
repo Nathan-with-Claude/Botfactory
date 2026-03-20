@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,6 +27,9 @@ class ConsulterListeColisHandlerTest {
 
     @Mock
     private TourneeRepository tourneeRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ConsulterListeColisHandler handler;
@@ -47,6 +51,7 @@ class ConsulterListeColisHandlerTest {
         Tournee tournee = uneTourneeAvecCinqColis();
         when(tourneeRepository.findByLivreurIdAndDate(livreurId, today))
                 .thenReturn(Optional.of(tournee));
+        when(tourneeRepository.save(any(Tournee.class))).thenReturn(tournee);
 
         ConsulterListeColisCommand command = new ConsulterListeColisCommand(livreurId, today);
         Tournee result = handler.handle(command);
@@ -62,6 +67,7 @@ class ConsulterListeColisHandlerTest {
         Tournee tournee = uneTourneeAvecCinqColis();
         when(tourneeRepository.findByLivreurIdAndDate(livreurId, today))
                 .thenReturn(Optional.of(tournee));
+        when(tourneeRepository.save(any(Tournee.class))).thenReturn(tournee);
 
         ConsulterListeColisCommand command = new ConsulterListeColisCommand(livreurId, today);
         Tournee result = handler.handle(command);
@@ -96,7 +102,7 @@ class ConsulterListeColisHandlerTest {
     }
 
     @Test
-    @DisplayName("handle() emet les domain events si premiere consultation")
+    @DisplayName("handle() emet les domain events via eventPublisher si premiere consultation")
     void handle_emet_domain_events_au_premier_acces() {
         Tournee tournee = uneTourneeAvecCinqColis();
         when(tourneeRepository.findByLivreurIdAndDate(livreurId, today))
@@ -104,10 +110,11 @@ class ConsulterListeColisHandlerTest {
         when(tourneeRepository.save(any(Tournee.class))).thenReturn(tournee);
 
         ConsulterListeColisCommand command = new ConsulterListeColisCommand(livreurId, today);
-        Tournee result = handler.handle(command);
+        handler.handle(command);
 
-        // La tournee doit avoir des events (TourneeDemarree) apres le premier acces
-        assertThat(result.getDomainEvents()).isNotEmpty();
+        // Le handler doit avoir publie au moins un evenement (TourneeDemarree) via l'eventPublisher
+        // Les events sont "pull" depuis la tournee et publies — ils ne restent pas dans getDomainEvents()
+        verify(eventPublisher, atLeastOnce()).publishEvent(any(Object.class));
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────

@@ -44,7 +44,7 @@ US-019/020 (SSO auth)
 | US-023 | Affecter livreur + véhicule | BC-07 | À faire | — | — | Invariant : 1 livreur/tournée/jour |
 | US-024 | Lancer tournée | BC-07 | À faire | — | — | Event TournéeLancée → BC-01 |
 | US-001 | Consulter liste colis | BC-01 | Implémenté | Sprint 1 | feature/US-001 | Mock auth + DataSeeder dev. Voir US-001-impl.md |
-| US-002 | Suivre progression | BC-01 | À faire | — | — | |
+| US-002 | Suivre progression | BC-01 | Implémenté | Sprint 1 | feature/US-001 | AvancementCalculator + bouton Clôture mobile. 6+3 tests backend vert. BUG-002 (Spring ASM Java 25) documenté. |
 | US-003 | Filtrer par zone | BC-01 | À faire | — | — | Écran M-01 (filtres) |
 | US-004 | Détail colis | BC-01 | À faire | — | — | Écran M-02 |
 | US-005 | Déclarer échec | BC-01 | À faire | — | — | Écran M-03, motifs normalisés |
@@ -71,6 +71,7 @@ US-019/020 (SSO auth)
 | Date | US | Action | Fichier impl |
 |------|----|--------|--------------|
 | 2026-03-20 | US-001 | Initialisation monorepo + implémentation complète (domain, application, infrastructure, interfaces, mobile) | /livrables/06-dev/vertical-slices/US-001-impl.md |
+| 2026-03-20 | US-002 | Domain Service AvancementCalculator + bouton Clôture mobile (SC4) + bugfixes BUG-002 (tests) | /livrables/06-dev/vertical-slices/US-002-impl.md |
 
 ---
 
@@ -85,6 +86,9 @@ US-019/020 (SSO auth)
 | 2026-03-20 | US-001 | Spring Boot 3.4.3 au lieu de 4.0.3 | Spring Boot 4.x non disponible en Q1 2026 — migrer dès disponibilité |
 | 2026-03-20 | US-001 | H2 en mémoire (dev) + PostgreSQL (prod) dans application.yml | Pas de dépendance infra en développement local |
 | 2026-03-20 | US-001 | Pattern collect-and-publish pour les Domain Events | Domaine pur sans dépendance Spring — Application Service orchestre la publication |
+| 2026-03-20 | US-002 | AvancementCalculator créé en Domain Service (domain/service/) | Encapsule la logique de calcul d'avancement hors de l'Aggregate — séparation de responsabilité DDD |
+| 2026-03-20 | US-002 | estimationFin = null dans le MVP | Cadence moyenne non disponible sans historique de livraison — fonctionnalité future US-XXX |
+| 2026-03-20 | US-002 | BUG-002 : TourneeControllerTest non résolu (Spring ASM + Java 25) | Spring Boot 3.4.x + ASM 9.x incompatible avec .class Java 25 (format 69). Workaround partiel. Solution : JDK 21 ou Spring Boot 3.5+ |
 
 ---
 

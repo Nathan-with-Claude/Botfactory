@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -26,8 +27,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Tests d'integration de la couche interface REST — TourneeController
  * Utilise @WebMvcTest pour tester uniquement la couche HTTP.
+ *
+ * Note BUG-002 : spring.classformat.ignore=true est requis car Spring ASM 9.x
+ * (inclus dans Spring Boot 3.4.x) ne supporte pas les class files Java 25+ (format 69).
+ * Ce parametre permet d'ignorer les fichiers de classe incompatibles lors du scan.
  */
 @WebMvcTest(TourneeController.class)
+@TestPropertySource(properties = "spring.classformat.ignore=true")
 class TourneeControllerTest {
 
     @Autowired

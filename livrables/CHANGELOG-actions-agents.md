@@ -214,3 +214,36 @@
 
 - 2026-03-20T16:00Z @end-user CREATE → /livrables/09-feedback/feedback-US001-liste-colis-2026-03-20.md
   Feedback terrain Pierre Morel (livreur) sur US-001 liste des colis — 3 bloquants, 5 améliorations importantes, note 3/5.
+
+- 2026-03-20T18:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/service/AvancementCalculator.java
+  US-002 : Domain Service AvancementCalculator (calcul avancement + estimationFin null MVP).
+
+- 2026-03-20T18:00Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/domain/AvancementCalculatorTest.java
+  US-002 : 6 tests TDD pour AvancementCalculator (SC1 reste à livrer, SC3 A_REPRESENTER exclu, SC4 estTerminee, cohérence).
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/domain/TourneeTest.java
+  US-002 : +3 tests invariants US-002 (resteALivrer, estTerminee true/false).
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/infrastructure/seeder/DevDataSeeder.java
+  US-002 : Données de test enrichies avec mix statuts réalistes (3 A_LIVRER, 1 LIVRE, 1 ECHEC).
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-002 : Bouton "Clôturer la tournée" conditionnel (visible si resteALivrer === 0, SC4).
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /src/mobile/src/__tests__/ListeColisScreen.test.tsx
+  US-002 : +4 tests mobiles (bouton clôture SC4, bandeau progression, estimation null).
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /src/mobile/package.json
+  Bugfix : setupFilesAfterFramework → setupFilesAfterEnv (matchers @testing-library/jest-native non appliqués).
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/application/ConsulterListeColisHandlerTest.java
+  BUG-002 : Ajout @Mock ApplicationEventPublisher + stub save() + correction assertion events.
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /src/backend/svc-tournee/pom.xml
+  BUG-002 : Ajout maven-surefire-plugin avec spring.classformat.ignore=true pour Java 25 + Spring ASM.
+
+- 2026-03-20T18:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-002-impl.md
+  Documentation vertical slice US-002 : AvancementCalculator, bouton clôture, bugfixes BUG-002, bilan tests 13 verts mobiles + 18 verts backend.
+
+- 2026-03-20T18:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  US-002 → statut Implémenté. 3 nouvelles décisions techniques (AvancementCalculator, estimationFin null MVP, BUG-002).

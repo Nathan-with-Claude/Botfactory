@@ -183,4 +183,64 @@ describe('ListeColisScreen', () => {
       expect(statuts[1]).toHaveTextContent('Livre');
     });
   });
+
+  // ─── US-002 : Bouton Cloture et progression ───────────────────────────────
+
+  it('US002-SC4 - affiche le bouton "Cloture" si resteALivrer vaut 0', async () => {
+    const tourneeToutesTraitees: TourneeDTO = {
+      ...uneTourneeAvecDeuxColis,
+      colis: [
+        { ...uneTourneeAvecDeuxColis.colis[0], statut: 'LIVRE' },
+        { ...uneTourneeAvecDeuxColis.colis[1], statut: 'LIVRE' },
+      ],
+      resteALivrer: 0,
+      colisTotal: 2,
+      colisTraites: 2,
+    };
+    mockGetTourneeAujourdhui.mockResolvedValueOnce(tourneeToutesTraitees);
+
+    render(<ListeColisScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bouton-cloture')).toBeTruthy();
+    });
+  });
+
+  it('US002-SC4 - cache le bouton "Cloture" si resteALivrer est superieur a 0', async () => {
+    mockGetTourneeAujourdhui.mockResolvedValueOnce(uneTourneeAvecDeuxColis);
+
+    render(<ListeColisScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bandeau-progression')).toBeTruthy();
+    });
+
+    expect(screen.queryByTestId('bouton-cloture')).toBeNull();
+  });
+
+  it('US002 - le bandeau de progression affiche le bon format "Reste a livrer : X / Y"', async () => {
+    mockGetTourneeAujourdhui.mockResolvedValueOnce(uneTourneeAvecDeuxColis);
+
+    render(<ListeColisScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('reste-a-livrer')).toHaveTextContent('Reste a livrer : 1 / 2');
+    });
+  });
+
+  it('US002 - n\'affiche pas l\'estimation de fin si elle est null', async () => {
+    const tourneeSansEstimation: TourneeDTO = {
+      ...uneTourneeAvecDeuxColis,
+      estimationFin: null,
+    };
+    mockGetTourneeAujourdhui.mockResolvedValueOnce(tourneeSansEstimation);
+
+    render(<ListeColisScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bandeau-progression')).toBeTruthy();
+    });
+
+    expect(screen.queryByTestId('estimation-fin')).toBeNull();
+  });
 });
