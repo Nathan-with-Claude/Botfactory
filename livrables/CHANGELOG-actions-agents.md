@@ -763,3 +763,33 @@
 
 - 2026-03-24T19:30Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
   Mise à jour statuts US-021/022/023/024 → Implémenté. Nouvelles décisions BC-07 et bugfixes.
+
+- 2026-03-24T19:45Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-015-impl.md
+  Documentation vertical slice US-015 — suivi exécution instruction, endpoints GET/PATCH, onglet W-02.
+
+- 2026-03-24T19:45Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-016-impl.md
+  Documentation vertical slice US-016 — BandeauInstructionOverlay M-06 + polling 10s + déduplication.
+
+- 2026-03-24T19:45Z @developpeur CREATE → /src/mobile/src/api/supervisionApi.ts
+  US-015/016 : getInstructionsEnAttente + marquerInstructionExecutee (BC-04 port 8082, défensif).
+
+- 2026-03-24T19:45Z @developpeur CREATE → /src/mobile/src/components/BandeauInstructionOverlay.tsx
+  US-016 : bandeau slide-down M-06, auto-fermeture 10s, bouton VOIR → M-03, prop autoFermetureMs injectable.
+
+- 2026-03-24T19:45Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-016 : polling 10s + instructionsVues Set (déduplication) + affichage BandeauInstructionOverlay.
+
+- 2026-03-24T19:45Z @developpeur UPDATE → /src/mobile/src/screens/DetailColisScreen.tsx
+  US-015 : auto-exécution silencieuse si instruction ENVOYEE trouvée pour ce colis (props injectables).
+
+- 2026-03-24T19:45Z @developpeur UPDATE → /src/web/supervision/src/pages/DetailTourneePage.tsx
+  US-015 : onglet Instructions — badge orange ENVOYEE, liste statuts, rechargement WS, Array.isArray guard.
+
+- 2026-03-24T19:45Z @developpeur CREATE → /src/mobile/src/__tests__/BandeauInstructionOverlay.test.tsx
+  5 tests Jest US-016 (rendu, onVoir, onFermer, auto-fermeture). 98/98 mobile tests verts.
+
+- 2026-03-24T19:45Z @developpeur UPDATE → /src/web/supervision/src/__tests__/DetailTourneePage.test.tsx
+  +3 tests Jest US-015 (onglet Instructions, badge, liste vide). 60/60 web tests verts.
+
+- 2026-03-24T19:45Z @developpeur COMMIT → feat(US-015/US-016) 943297c
+  Commit feature/US-001 : 83 backend + 98 mobile + 60 web = 241 tests verts.
