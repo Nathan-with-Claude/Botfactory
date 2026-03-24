@@ -247,3 +247,243 @@
 
 - 2026-03-20T18:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
   US-002 → statut Implémenté. 3 nouvelles décisions techniques (AvancementCalculator, estimationFin null MVP, BUG-002).
+
+- 2026-03-20T19:00Z @developpeur FIX → /src/backend/svc-tournee/pom.xml, /src/backend/svc-tournee/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker
+  BUG-002 corrigé : 23/23 tests verts. Diagnostic complet (JAVA_HOME=JDK20 vs PATH=JDK25 vs classes compilées JDK21). Solution : mock-maker-subclass (CGLIB proxy, évite instrumentation bytecode incompatible Java 25) + spring.classformat.ignore=true. Lancer Maven avec JAVA_HOME JDK 25.
+
+- 2026-03-20T19:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  BUG-002 → statut résolu. Décision technique DT-009 enregistrée (mock-maker-subclass + JAVA_HOME JDK 25).
+
+- 2026-03-23T00:00Z @developpeur UPDATE → /livrables/06-dev/vertical-slices/US-002-impl.md
+  Ajout section "Commandes de lancement (tests manuels)" : backend Maven (options A/B + note JAVA_HOME JDK 25), mobile npm start/Expo, URLs de test avec données DevDataSeeder attendues, commandes tests unitaires backend et mobile.
+
+- 2026-03-23T00:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Nouvelle intervention 2026-03-23 enregistrée. Correction avertissements Markdown préexistants (MD040 bloc code sans langage, MD060 séparateurs tableaux, MD036 emphase utilisée comme titre).
+
+- 2026-03-23T12:00Z @qa CREATE → /livrables/06-dev/poste-de-commande-tests.md
+  Création du poste de commande tests manuels — section US-002 : 10 lignes de check-list (bandeau progression, bouton clôture, invariants, API brute, accessibilité), limitations connues BUG-002, feedback structuré.
+
+- 2026-03-23T12:00Z @qa CREATE → /livrables/07-tests/scenarios/US-002-scenarios.md
+  20 scénarios de test US-002 en Ubiquitous Language : invariants domaine TC-026 à TC-033 (AvancementCalculator + Tournee), application TC-034 à TC-037, interface mobile TC-038 à TC-041, edge cases TC-042 à TC-044, non-régression TC-045. 5 jeux de données JDD-US002-01 à JDD-US002-05.
+
+- 2026-03-23T12:00Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  US-002 → statut "Scénarios rédigés + check-list tests manuels". Ajout section points d'attention US-002, mise à jour tableau suivi et interventions.
+
+- 2026-03-23T14:00Z @qa CREATE → /src/mobile/e2e/US-002-progression-tournee.spec.ts
+  Spec Playwright E2E US-002 : 13 tests couvrant SC1 (bandeau 3/5), SC2 (bouton clôture absent), SC3 (estimation fin / "--"), SC4 (mock resteALivrer=0 → bouton visible), API backend directs (resteALivrer, colisTotal, estimationFin null, statuts DevDataSeeder).
+
+- 2026-03-23T14:00Z @qa CREATE → /livrables/07-tests/scenarios/US-002-rapport-playwright.md
+  Rapport Playwright US-002 : 13/13 FAIL infrastructurels (ERR_CONNECTION_REFUSED — serveurs non démarrés). Analyse statique du spec : cohérence 100 % avec l'implémentation, couverture 4/4 scénarios Gherkin. Commandes de relance documentées.
+
+- 2026-03-23T19:55Z @developpeur FIX → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/infrastructure/seeder/DevDataSeeder.java
+  BUG-001 : DevDataSeeder — ajout paramètre StatutColis à createColis() + appel explicite LIVRE/ECHEC pour colis-dev-004/005. colis-dev-001/002/003 → A_LIVRER, colis-dev-004 → LIVRE, colis-dev-005 → ECHEC.
+
+- 2026-03-23T19:55Z @developpeur FIX → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/dto/TourneeDTO.java
+  BUG-002 : TourneeDTO — ajout champ estTerminee (boolean) calculé depuis Avancement.estTerminee(). Champ désormais présent dans la réponse JSON GET /api/tournees/today.
+
+- 2026-03-23T19:55Z @developpeur FIX → /src/mobile/src/screens/ListeColisScreen.tsx
+  BUG-003 : ListeColisScreen — testID="estimation-fin" toujours rendu (même si estimationFin=null). Affiche "--" si null, sinon "Fin estimee : {valeur}". Suppression du rendu conditionnel {estimationFin && ...}.
+
+- 2026-03-23T19:55Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Bilan post-bugfixes Playwright US-002 : 3 bugs réels corrigés. API validée : resteALivrer=3, estTerminee=false, 3 A_LIVRER + 1 LIVRE + 1 ECHEC. Tests backend : 23/23 verts.
+
+- 2026-03-23T14:00Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  US-002 → statut mis à jour : "Scénarios rédigés + spec Playwright créé (13 tests) + rapport statique". Interventions de session ajoutées. Séparateurs MD060 corrigés (lignes 22 et 55).
+
+- 2026-03-23T21:05Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-003-impl.md
+  Implémentation US-003 : filtrage par zone géographique (mobile). domain/filtreZone.ts + FiltreZones.tsx + ListeColisScreen mis à jour. TDD appliqué. 34/34 tests Jest verts.
+
+- 2026-03-23T21:05Z @developpeur CREATE → /C/Github/Botfactory/src/mobile/src/domain/filtreZone.ts
+  Nouveau : logique de domaine pure pour filtrage par zone (extraireZonesDisponibles, filtrerColisByZone, ZONE_TOUS).
+
+- 2026-03-23T21:05Z @developpeur CREATE → /C/Github/Botfactory/src/mobile/src/components/FiltreZones.tsx
+  Nouveau : composant barre d'onglets zones géographiques pour écran M-02.
+
+- 2026-03-23T21:05Z @developpeur UPDATE → /C/Github/Botfactory/src/mobile/src/screens/ListeColisScreen.tsx
+  Intégration FiltreZones + logique de filtrage locale (useMemo). Estimation fin : rendu conditionnel restauré.
+
+- 2026-03-23T21:05Z @developpeur UPDATE → /C/Github/Botfactory/src/mobile/package.json
+  Fix Jest : exclusion du dossier e2e/ (specs Playwright) via testPathIgnorePatterns.
+
+- 2026-03-23T21:05Z @developpeur UPDATE → /livrables/06-dev/poste-de-commande-tests.md
+  Ajout section US-003 : check-list 11 scénarios manuels pour PO / expert métier.
+
+- 2026-03-23T21:05Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  US-003 → statut "Implémenté". Décisions et interventions ajoutées.
+
+- 2026-03-23T21:15Z @qa CREATE → /livrables/07-tests/scenarios/US-003-scenarios.md
+  Rédaction 28 scénarios de tests US-003 (TC-046 à TC-073) : Domain (11), Interface (14), Non régression (3), E2E à tester (4).
+
+- 2026-03-23T21:15Z @qa UPDATE → /livrables/07-tests/jeux-de-donnees.md
+  Ajout JDD-US003-01 à JDD-US003-05 (tournée 3 zones, zone traitée, sans zones, DevDataSeeder, logique pure).
+
+- 2026-03-23T21:15Z @qa CREATE → /livrables/07-tests/scenarios/US-003-rapport-playwright.md
+  Rapport de tests US-003 : 57/57 Jest+mvn PASS, 4 scénarios E2E documentés (infrastructure non disponible en session).
+
+- 2026-03-23T21:15Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  Mise à jour statut US-003 "Exécutés", ajout interventions et points d'attention spécifiques US-003.
+
+- 2026-03-23T23:10Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/ConsulterDetailColisCommand.java
+  US-004 : Command immuable (record) portant TourneeId + ColisId pour le use case détail colis.
+
+- 2026-03-23T23:10Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/ConsulterDetailColisHandler.java
+  US-004 : Application Service lecture seule — charge la Tournée, cherche le Colis, lève ColisNotFoundException si absent.
+
+- 2026-03-23T23:10Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/ColisNotFoundException.java
+  US-004 : Exception applicative levée quand le colisId ne correspond à aucun colis de la tournée.
+
+- 2026-03-23T23:10Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/rest/TourneeController.java
+  US-004 : Ajout endpoint GET /api/tournees/{tourneeId}/colis/{colisId} — retourne ColisDTO ou 404.
+
+- 2026-03-23T23:10Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/dto/ColisDTO.java
+  US-004 : Ajout champ estTraite (boolean) dans ColisDTO pour permettre le masquage des boutons côté frontend.
+
+- 2026-03-23T23:10Z @developpeur CREATE → /src/mobile/src/screens/DetailColisScreen.tsx
+  US-004 : Écran M-03 — détail d'un colis avec destinataire, adresse, contraintes, boutons d'action masqués si statut terminal, numéro téléphone masqué (RGPD).
+
+- 2026-03-23T23:10Z @developpeur UPDATE → /src/mobile/src/components/ColisItem.tsx
+  US-004 : Item de liste rendu navigable (TouchableOpacity + onPress) pour accéder au détail.
+
+- 2026-03-23T23:10Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-004 : Navigation interne vers DetailColisScreen via état NavigationColis.
+
+- 2026-03-23T23:10Z @developpeur UPDATE → /src/mobile/src/api/tourneeApi.ts
+  US-004 : Ajout getDetailColis() + ColisNonTrouveError.
+
+- 2026-03-23T23:10Z @developpeur UPDATE → /src/mobile/src/api/tourneeTypes.ts
+  US-004 : Ajout champ estTraite dans ColisDTO TypeScript.
+
+- 2026-03-23T23:10Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/application/ConsulterDetailColisHandlerTest.java
+  US-004 TDD : 5 tests unitaires ConsulterDetailColisHandler (verts).
+
+- 2026-03-23T23:10Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/interfaces/DetailColisControllerTest.java
+  US-004 TDD : 6 tests d'intégration controller (verts). Total backend : 34/34.
+
+- 2026-03-23T23:10Z @developpeur CREATE → /src/mobile/src/__tests__/DetailColisScreen.test.tsx
+  US-004 TDD : 16 tests Jest DetailColisScreen (verts). Total Jest : 50/50.
+
+- 2026-03-23T23:10Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-004-impl.md
+  Documentation du vertical slice US-004 avec décisions d'implémentation et scénarios de tests manuels.
+
+- 2026-03-23T23:10Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  US-004 → statut "Implémenté". Décisions et interventions ajoutées.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/MotifNonLivraison.java
+  US-005 TDD Domain : Value Object MotifNonLivraison (ABSENT, ACCES_IMPOSSIBLE, REFUS_CLIENT, HORAIRE_DEPASSE).
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/Disposition.java
+  US-005 TDD Domain : Value Object Disposition (A_REPRESENTER, DEPOT_CHEZ_TIERS, RETOUR_DEPOT).
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/events/EchecLivraisonDeclare.java
+  US-005 TDD Domain : Domain Event EchecLivraisonDeclare (immuable, horodaté, note max 250 car.).
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/Colis.java
+  US-005 : ajout champs motifNonLivraison, disposition + constructeur étendu + setters package-private.
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/Tournee.java
+  US-005 : ajout méthode declarerEchecLivraison() avec invariants et emission EchecLivraisonDeclare.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/DeclarerEchecLivraisonCommand.java
+  US-005 : Command record pour la déclaration d'échec.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/DeclarerEchecLivraisonHandler.java
+  US-005 : Application Service orchestrant la déclaration d'échec (@Transactional).
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/infrastructure/persistence/ColisEntity.java
+  US-005 : colonnes JPA motif_non_livraison et disposition ajoutées (nullable).
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/infrastructure/persistence/TourneeMapper.java
+  US-005 : mapping motif/disposition dans colisToDomain, colisToEntity, updateStatut.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/dto/DeclarerEchecRequest.java
+  US-005 : DTO de requête POST pour la déclaration d'échec.
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/dto/ColisDTO.java
+  US-005 : champs motifNonLivraison et disposition ajoutés dans le DTO de réponse.
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/rest/TourneeController.java
+  US-005 : endpoint POST /{tourneeId}/colis/{colisId}/echec avec gestion 200/404/409/401.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/domain/DeclarerEchecLivraisonTest.java
+  US-005 TDD : 10 tests domain (transitions, invariants, events). Total backend : 54/54 verts.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/application/DeclarerEchecLivraisonHandlerTest.java
+  US-005 TDD : 5 tests application (orchestration, exceptions). Total backend : 54/54 verts.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/interfaces/EchecLivraisonControllerTest.java
+  US-005 TDD : 5 tests REST (200/404/409/401). Total backend : 54/54 verts.
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/mobile/src/api/tourneeTypes.ts
+  US-005 : types MotifNonLivraison, Disposition, MOTIF_LABELS, DISPOSITION_LABELS, DeclarerEchecRequest.
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/mobile/src/api/tourneeApi.ts
+  US-005 : fonction declarerEchecLivraison() + EchecDejaDeClareError.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/mobile/src/screens/DeclarerEchecScreen.tsx
+  US-005 : écran M-05 (motifs radio, dispositions radio, note optionnelle, bouton désactivé, erreurs).
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-005 : navigation vers DeclarerEchecScreen (état echec), rechargement après enregistrement.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /src/mobile/src/__tests__/DeclarerEchecScreen.test.tsx
+  US-005 TDD : 14 tests Jest écran M-05. Total Jest : 64/64 verts.
+
+- 2026-03-24T09:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-005-impl.md
+  Documentation du vertical slice US-005 avec décisions d'implémentation et commandes de tests manuels.
+
+- 2026-03-24T09:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  US-005 → statut "Implémenté". Décisions et interventions ajoutées.
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/RecapitulatifTournee.java
+  US-007 : Value Object RecapitulatifTournee (colisTotal, colisLivres, colisEchecs, colisARepresenter) avec méthode factory calculer(List<Colis>).
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/events/TourneeCloturee.java
+  US-007 : Domain Event TourneeCloturee immuable + horodaté (tourneeId, livreurId, recap, horodatage).
+
+- 2026-03-24T10:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/Tournee.java
+  US-007 : ajout Tournee.cloturerTournee() — invariant A_LIVRER + idempotence + émission TourneeCloturee.
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/CloturerTourneeCommand.java
+  US-007 : Command CloturerTourneeCommand (TourneeId).
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/RecapitulatifTourneeResult.java
+  US-007 : DTO Application RecapitulatifTourneeResult (résultat handler → interface layer).
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/CloturerTourneeHandler.java
+  US-007 : Application Service CloturerTourneeHandler (charger → cloturerTournee → sauvegarder → publier events → retourner recap).
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/dto/RecapitulatifTourneeDTO.java
+  US-007 : DTO Interface RecapitulatifTourneeDTO (réponse JSON POST /cloture).
+
+- 2026-03-24T10:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/rest/TourneeController.java
+  US-007 : ajout endpoint POST /api/tournees/{tourneeId}/cloture (200/404/409/401) + injection CloturerTourneeHandler.
+
+- 2026-03-24T10:00Z @developpeur UPDATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/domain/TourneeTest.java
+  US-007 TDD : +4 tests cloturerTournee() (succès, event recap, invariant A_LIVRER, idempotence).
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/application/CloturerTourneeHandlerTest.java
+  US-007 TDD : 5 tests handler (clôture OK, sauvegarde, event publié, tournée introuvable, invariant).
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/interfaces/CloturerTourneeControllerTest.java
+  US-007 TDD : 4 tests controller (200/404/409/401). Total backend : 67/67 verts.
+
+- 2026-03-24T10:00Z @developpeur UPDATE → /src/mobile/src/api/tourneeTypes.ts
+  US-007 : ajout type RecapitulatifTourneeDTO.
+
+- 2026-03-24T10:00Z @developpeur UPDATE → /src/mobile/src/api/tourneeApi.ts
+  US-007 : fonction cloturerTournee() + ColisEncoreALivrerError.
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/mobile/src/screens/RecapitulatifTourneeScreen.tsx
+  US-007 : écran M-07 (compteurs livrés/échecs/à représenter, enquête satisfaction 1-5, bouton Terminer).
+
+- 2026-03-24T10:00Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-007 : bouton Clôturer connecté → navigation RecapitulatifTourneeScreen, masqué si statut CLOTUREE.
+
+- 2026-03-24T10:00Z @developpeur CREATE → /src/mobile/src/__tests__/RecapitulatifTourneeScreen.test.tsx
+  US-007 TDD : 10 tests Jest écran M-07. Total Jest : 74/74 verts.
+
+- 2026-03-24T10:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-007-impl.md
+  Documentation vertical slice US-007 avec décisions, endpoints, commandes de tests manuels.
+
+- 2026-03-24T10:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  US-007 → statut "Implémenté". US-006 → reporté (taille L). Décisions et interventions ajoutées.

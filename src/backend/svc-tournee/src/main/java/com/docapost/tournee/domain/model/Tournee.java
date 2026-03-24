@@ -1,6 +1,8 @@
 package com.docapost.tournee.domain.model;
 
 import com.docapost.tournee.domain.events.DomainEvent;
+import com.docapost.tournee.domain.events.EchecLivraisonDeclare;
+import com.docapost.tournee.domain.events.TourneeCloturee;
 import com.docapost.tournee.domain.events.TourneeDemarree;
 
 import java.time.LocalDate;
@@ -19,6 +21,7 @@ import java.util.Objects;
  * 2. Une Tournee ne peut etre cloturee que si tous les Colis ont un statut terminal.
  * 3. L'identifiant du livreur est immuable une fois la Tournee demarree.
  * 4. demarrer() est idempotent : n'emet pas TourneeDemarree si deja demarree.
+ * 5. declarerEchecLivraison() : motif et disposition obligatoires, transition A_LIVRER → ECHEC uniquement.
  *
  * Source : "Mon seul outil c'est ma feuille de route." (Pierre)
  */
@@ -69,6 +72,114 @@ public class Tournee {
 
         statut = StatutTournee.DEMARREE;
         domainEvents.add(TourneeDemarree.of(id, livreurId));
+    }
+
+    /**
+     * Declare un echec de livraison pour un colis de la tournee.
+     *
+     * Invariants appliques :
+     * - Le colis doit exister dans cette tournee.
+     * - Le motif est obligatoire.
+     * - La disposition est obligatoire.
+     * - La transition autorisee est : A_LIVRER → ECHEC uniquement.
+     *   Un colis deja en ECHEC, LIVRE ou A_REPRESENTER ne peut pas repasser en ECHEC.
+     * - Emet EchecLivraisonDeclare horodate.
+     *
+     * Source : US-005 — "Chaque echec doit etre trace de façon structuree." (Pierre)
+     *
+     * @param colisId   identifiant du colis concerne
+     * @param motif     motif normalise de non-livraison (obligatoire)
+     * @param disposition disposition du colis (obligatoire)
+     * @param noteLibre note libre optionnelle (max 250 caracteres)
+     * @return le Colis mis a jour avec statut ECHEC
+     * @throws TourneeInvariantException si le colis n'existe pas dans la tournee,
+     *                                   si le motif ou la disposition sont null,
+     *                                   ou si la transition de statut est interdite.
+     */
+    public Colis declarerEchecLivraison(
+            ColisId colisId,
+            MotifNonLivraison motif,
+            Disposition disposition,
+            String noteLibre
+    ) {
+        // Invariant : motif obligatoire
+        if (motif == null) {
+            throw new TourneeInvariantException(
+                    "Le motif de non-livraison est obligatoire pour declarer un echec"
+            );
+        }
+
+        // Invariant : disposition obligatoire
+        if (disposition == null) {
+            throw new TourneeInvariantException(
+                    "La disposition est obligatoire pour declarer un echec"
+            );
+        }
+
+        // Rechercher le colis dans la tournee
+        Colis colis = this.colis.stream()
+                .filter(c -> c.getId().equals(colisId))
+                .findFirst()
+                .orElseThrow(() -> new TourneeInvariantException(
+                        "Colis introuvable dans cette tournee : " + colisId.value()
+                ));
+
+        // Invariant : transition autorisée uniquement depuis A_LIVRER
+        if (colis.getStatut() == StatutColis.ECHEC) {
+            throw new TourneeInvariantException(
+                    "Transition interdite : le colis est deja en statut ECHEC"
+            );
+        }
+        if (colis.getStatut() != StatutColis.A_LIVRER) {
+            throw new TourneeInvariantException(
+                    "Transition interdite : seul un colis en statut A_LIVRER peut passer en ECHEC. "
+                            + "Statut actuel : " + colis.getStatut()
+            );
+        }
+
+        // Appliquer la transition
+        colis.setStatut(StatutColis.ECHEC);
+        colis.setMotifNonLivraison(motif);
+        colis.setDisposition(disposition);
+
+        // Emettre le Domain Event (pattern collect-and-publish)
+        domainEvents.add(EchecLivraisonDeclare.of(id, colisId, motif, disposition, noteLibre));
+
+        return colis;
+    }
+
+    /**
+     * Cloture la tournee apres traitement de tous les colis.
+     *
+     * Invariants appliques :
+     * - Aucun colis ne doit rester en statut A_LIVRER.
+     * - Idempotent : si la tournee est deja cloturee, rien n'est fait.
+     * - Emet TourneeCloturee avec le recap de la tournee.
+     *
+     * Source : US-007 — "Confirmer officiellement la fin de ma tournee dans le SI." (Pierre)
+     *
+     * @throws TourneeInvariantException si au moins un colis est encore au statut A_LIVRER
+     */
+    public RecapitulatifTournee cloturerTournee() {
+        // Idempotence : ne rien faire si deja cloturee
+        if (statut == StatutTournee.CLOTUREE) {
+            return RecapitulatifTournee.calculer(colis);
+        }
+
+        // Invariant : tous les colis doivent avoir un statut terminal
+        boolean aDesColisALivrer = colis.stream()
+                .anyMatch(c -> c.getStatut() == StatutColis.A_LIVRER);
+        if (aDesColisALivrer) {
+            throw new TourneeInvariantException(
+                    "Une Tournee ne peut etre cloturee que si tous les colis ont un statut terminal. "
+                            + "Certains colis sont encore en statut a livrer."
+            );
+        }
+
+        statut = StatutTournee.CLOTUREE;
+        RecapitulatifTournee recap = RecapitulatifTournee.calculer(colis);
+        domainEvents.add(TourneeCloturee.of(id, livreurId, recap));
+        return recap;
     }
 
     /**

@@ -45,6 +45,15 @@ class TourneeControllerTest {
     @MockBean
     private ConsulterListeColisHandler consulterListeColisHandler;
 
+    @MockBean
+    private com.docapost.tournee.application.ConsulterDetailColisHandler consulterDetailColisHandler;
+
+    @MockBean
+    private com.docapost.tournee.application.DeclarerEchecLivraisonHandler declarerEchecLivraisonHandler;
+
+    @MockBean
+    private com.docapost.tournee.application.CloturerTourneeHandler cloturerTourneeHandler;
+
     @Test
     @DisplayName("GET /api/tournees/today retourne 200 avec la liste des colis")
     @WithMockUser(username = "livreur-001", roles = "LIVREUR")

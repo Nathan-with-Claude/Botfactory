@@ -1,5 +1,6 @@
 package com.docapost.tournee.domain;
 
+import com.docapost.tournee.domain.events.TourneeCloturee;
 import com.docapost.tournee.domain.events.TourneeDemarree;
 import com.docapost.tournee.domain.model.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -144,6 +145,95 @@ class TourneeTest {
 
         assertThat(avancement.colisTraites()).isEqualTo(1);
         assertThat(avancement.colisTotal()).isEqualTo(2);
+    }
+
+    // ─── cloturerTournee() ───────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("cloturerTournee() passe le statut a CLOTUREE si tous les colis sont traites")
+    void cloturerTournee_reussit_si_tous_traites() {
+        Colis livre = new Colis(
+                new ColisId("c-1"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of()
+        );
+        Colis echec = new Colis(
+                new ColisId("c-2"), tourneeId,
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of()
+        );
+        Tournee tournee = new Tournee(tourneeId, livreurId, today, List.of(livre, echec), StatutTournee.DEMARREE);
+
+        assertThatCode(tournee::cloturerTournee).doesNotThrowAnyException();
+        assertThat(tournee.getStatut()).isEqualTo(StatutTournee.CLOTUREE);
+    }
+
+    @Test
+    @DisplayName("cloturerTournee() emet TourneeCloturee avec le recap de la tournee")
+    void cloturerTournee_emet_event_avec_recap() {
+        Colis livre1 = new Colis(
+                new ColisId("c-1"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of()
+        );
+        Colis livre2 = new Colis(
+                new ColisId("c-2"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of()
+        );
+        Colis echec = new Colis(
+                new ColisId("c-3"), tourneeId,
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of()
+        );
+        Colis aRepresenter = new Colis(
+                new ColisId("c-4"), tourneeId,
+                StatutColis.A_REPRESENTER, uneAdresse(), unDestinataire(), List.of()
+        );
+        Tournee tournee = new Tournee(
+                tourneeId, livreurId, today,
+                List.of(livre1, livre2, echec, aRepresenter),
+                StatutTournee.DEMARREE
+        );
+
+        tournee.cloturerTournee();
+
+        assertThat(tournee.getDomainEvents()).hasSize(1);
+        assertThat(tournee.getDomainEvents().get(0)).isInstanceOf(TourneeCloturee.class);
+
+        TourneeCloturee event = (TourneeCloturee) tournee.getDomainEvents().get(0);
+        assertThat(event.tourneeId()).isEqualTo(tourneeId);
+        assertThat(event.livreurId()).isEqualTo(livreurId);
+        assertThat(event.recap().colisTotal()).isEqualTo(4);
+        assertThat(event.recap().colisLivres()).isEqualTo(2);
+        assertThat(event.recap().colisEchecs()).isEqualTo(1);
+        assertThat(event.recap().colisARepresenter()).isEqualTo(1);
+        assertThat(event.horodatage()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("cloturerTournee() leve une exception si au moins un colis est encore a livrer")
+    void cloturerTournee_leve_exception_si_colis_a_livrer() {
+        Colis livre = new Colis(
+                new ColisId("c-1"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of()
+        );
+        Colis aLivrer = unColisSurUneLivraison();
+        Tournee tournee = new Tournee(tourneeId, livreurId, today, List.of(livre, aLivrer), StatutTournee.DEMARREE);
+
+        assertThatThrownBy(tournee::cloturerTournee)
+                .isInstanceOf(TourneeInvariantException.class)
+                .hasMessageContaining("a livrer");
+    }
+
+    @Test
+    @DisplayName("cloturerTournee() est idempotent : n'emet pas TourneeCloturee si deja cloturee")
+    void cloturerTournee_est_idempotent() {
+        Colis livre = new Colis(
+                new ColisId("c-1"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of()
+        );
+        Tournee tournee = new Tournee(tourneeId, livreurId, today, List.of(livre), StatutTournee.CLOTUREE);
+
+        // Appel sur une tournee deja cloturee : ne doit pas lever d'exception ni re-emettre l'event
+        assertThatCode(tournee::cloturerTournee).doesNotThrowAnyException();
+        assertThat(tournee.getDomainEvents()).isEmpty();
+        assertThat(tournee.getStatut()).isEqualTo(StatutTournee.CLOTUREE);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
