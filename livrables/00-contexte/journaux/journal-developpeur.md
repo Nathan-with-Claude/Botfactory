@@ -59,8 +59,8 @@ US-019/020 (SSO auth)
 | US-014 | Envoyer instruction | BC-03 | Implémenté | Sprint 2 | feature/US-001 | Instruction Aggregate + InstructionEnvoyee event + EnvoyerInstructionHandler + POST /api/supervision/instructions + PanneauInstructionPage W-03. 12 tests backend + 6 tests Jest. |
 | US-015 | Suivre instruction | BC-03 | Implémenté | Sprint 2 | feature/US-001 | marquerExecutee() + 3 endpoints + onglet W-02 + auto-exec M-03. 50 tests backend + 3 web + 5 mobile verts. |
 | US-016 | Notification push | BC-04 | Implémenté | Sprint 2 | feature/US-001 | Polling 10s + BandeauInstructionOverlay M-06 (FCM déféré Sprint 3). 5 tests Jest mobile verts. |
-| US-017 | Sync OMS | BC-05 | À faire | — | — | < 30 sec, ACL |
-| US-018 | Historisation immuable | BC-05 | À faire | — | — | Event store |
+| US-017 | Sync OMS | BC-05 | Implémenté | Sprint 3 | feature/US-001 | svc-oms créé (port 8083). OutboxPoller @Scheduled 10s + OmsApiClient (simulé). 5 tests handler verts. |
+| US-018 | Historisation immuable | BC-05 | Implémenté | Sprint 3 | feature/US-001 | EvenementLivraison record immuable + Event Store append-only JPA. 9+3+6=23 tests verts. |
 
 Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré`
 
@@ -84,6 +84,8 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | BUG-C | Correction RecapitulatifTournee.calculer() : colisARepresenter filtre désormais statut=ECHEC+disposition=A_REPRESENTER (et non StatutColis.A_REPRESENTER jamais utilisé). Ajout 2 tests unitaires. | /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/RecapitulatifTournee.java, TourneeTest.java |
 | 2026-03-24 | US-008 | Implémentation signature numérique : BC-02 collocalisé (domain/preuves/), PreuveLivraison Aggregate immuable + 4 factory methods, ConfirmerLivraisonHandler, POST /livraison endpoint, CapturePreuveScreen M-04 (pad signature MVP). TDD : 12+8+8 tests backend + 19 tests Jest. 97/97 backend verts + 93/93 Jest verts. | /livrables/06-dev/vertical-slices/US-008-impl.md |
 | 2026-03-24 | US-009 | Implémentation preuves alternatives (PHOTO, TIERS_IDENTIFIE, DEPOT_SECURISE) : VO TiersIdentifie + DepotSecurise + PhotoPreuve, factory methods, zones de capture dans CapturePreuveScreen. Capture caméra native déférée à US-010. Tests inclus dans les suites US-008. 93/93 Jest verts. | /livrables/06-dev/vertical-slices/US-009-impl.md |
+| 2026-03-24 | US-017 | Création svc-oms (BC-05, port 8083) : OmsApiPort + OmsApiClient (simulé MVP) + SynchroniserPendingEvenementsHandler + OutboxPoller @Scheduled 10s. 5 tests handler + 6 tests controller verts. | /livrables/06-dev/vertical-slices/US-017-impl.md |
+| 2026-03-24 | US-018 | Event Store append-only : EvenementLivraison record immuable + 4 attributs obligatoires (qui/quoi/quand/géo) + mode dégradé GPS + EvenementStoreImpl JPA (updatable=false) + EnregistrerEvenementHandler (idempotence 409) + DevDataSeeder 4 événements. 9+3+6=23 tests verts. | /livrables/06-dev/vertical-slices/US-018-impl.md |
 
 ---
 

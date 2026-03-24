@@ -5,6 +5,36 @@
 
 ---
 
+- 2026-03-24T20:30Z @developpeur CREATE → src/backend/svc-oms/ (nouveau microservice BC-05)
+  Création svc-oms (port 8083) : pom.xml, SvcOmsApplication, application.properties, mockito-extensions.
+
+- 2026-03-24T20:31Z @developpeur CREATE → src/backend/svc-oms/src/main/java/com/docapost/oms/domain/
+  Domain layer BC-05 : EvenementLivraison (record immuable), TypeEvenement, StatutSynchronisation, Coordonnees, EvenementStore (port).
+
+- 2026-03-24T20:32Z @developpeur CREATE → src/backend/svc-oms/src/main/java/com/docapost/oms/application/
+  Application layer US-018 : EnregistrerEvenementHandler + ConsulterHistoriqueColisHandler + ConsulterHistoriqueTourneeHandler.
+
+- 2026-03-24T20:33Z @developpeur CREATE → src/backend/svc-oms/src/main/java/com/docapost/oms/application/SynchroniserPendingEvenementsHandler.java + OmsApiPort.java
+  Application layer US-017 : handler outbox + port ACL vers OMS externe.
+
+- 2026-03-24T20:34Z @developpeur CREATE → src/backend/svc-oms/src/main/java/com/docapost/oms/infrastructure/
+  Infrastructure BC-05 : EvenementEntity (append-only JPA), EvenementJpaRepository, EvenementStoreImpl, OmsApiClient (simulé), OutboxPoller (@Scheduled 10s), DevDataSeeder (4 événements test).
+
+- 2026-03-24T20:35Z @developpeur CREATE → src/backend/svc-oms/src/main/java/com/docapost/oms/interfaces/
+  Interface layer BC-05 : EvenementController (POST /evenements + GET /colis/{id} + GET /tournee/{id}), MockJwtAuthFilter, SecurityConfig.
+
+- 2026-03-24T20:36Z @developpeur CREATE → src/backend/svc-oms/src/test/java/com/docapost/oms/
+  Tests TDD : EvenementLivraisonTest (9), EnregistrerEvenementHandlerTest (3), SynchroniserPendingEvenementsHandlerTest (5), EvenementControllerTest (6) — 23/23 verts.
+
+- 2026-03-24T20:37Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-017-impl.md
+  Documentation vertical slice US-017 (sync OMS, outbox, ACL, limitations MVP).
+
+- 2026-03-24T20:38Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-018-impl.md
+  Documentation vertical slice US-018 (Event Store append-only, immuabilité, mode dégradé GPS, audit).
+
+- 2026-03-24T20:39Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Statuts US-017 et US-018 → Implémenté. Interventions + décisions techniques ajoutées.
+
 - 2026-03-24T08:30Z @qa CREATE → /livrables/07-tests/scenarios/US-004-scenarios.md
   Rédaction 24 scénarios de test TC-074 à TC-097 (Domain/Application/Infrastructure/E2E) pour US-004 Détail Colis.
 
