@@ -102,8 +102,10 @@ const DetailTourneePage: React.FC<DetailTourneePageProps> = ({
         `${apiBaseUrl}/api/supervision/instructions/tournee/${encodeURIComponent(tourneeId)}`
       );
       if (response.ok) {
-        const data: InstructionDTO[] = await response.json();
-        setInstructions(data);
+        const data: unknown = await response.json();
+        if (Array.isArray(data)) {
+          setInstructions(data as InstructionDTO[]);
+        }
       }
     } catch {
       // Échec silencieux — les instructions ne bloquent pas l'affichage
@@ -112,6 +114,7 @@ const DetailTourneePage: React.FC<DetailTourneePageProps> = ({
 
   useEffect(() => {
     chargerDetail();
+    chargerInstructions();
 
     // WebSocket : écoute les mises à jour du tableau de bord pour rafraîchir
     try {
@@ -120,15 +123,15 @@ const DetailTourneePage: React.FC<DetailTourneePageProps> = ({
         : new WebSocket(`${apiBaseUrl.replace('http', 'ws')}/ws/supervision`);
 
       ws.onmessage = () => {
-        // Rechargement du détail à chaque broadcast tableau de bord
         chargerDetail();
+        chargerInstructions();
       };
 
       return () => ws.close();
     } catch {
       // WebSocket non disponible
     }
-  }, [chargerDetail, apiBaseUrl, wsFactory]);
+  }, [chargerDetail, chargerInstructions, apiBaseUrl, wsFactory]);
 
   const estTourneeActive = detail?.tournee.statut === 'EN_COURS' || detail?.tournee.statut === 'A_RISQUE';
 
@@ -230,6 +233,36 @@ const DetailTourneePage: React.FC<DetailTourneePageProps> = ({
             >
               Incidents ({detail.incidents.length})
             </button>
+            <button
+              data-testid="onglet-instructions"
+              onClick={() => setOnglet('instructions')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 4,
+                border: 'none',
+                background: onglet === 'instructions' ? '#6a1b9a' : '#e0e0e0',
+                color: onglet === 'instructions' ? '#fff' : '#333',
+                cursor: 'pointer',
+              }}
+            >
+              Instructions ({instructions.length})
+              {instructions.filter(i => i.statut === 'ENVOYEE').length > 0 && (
+                <span
+                  data-testid="badge-instructions-en-attente"
+                  style={{
+                    marginLeft: 6,
+                    background: '#ff9800',
+                    color: '#fff',
+                    borderRadius: 10,
+                    padding: '1px 7px',
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {instructions.filter(i => i.statut === 'ENVOYEE').length}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Onglet Colis */}
@@ -313,6 +346,59 @@ const DetailTourneePage: React.FC<DetailTourneePageProps> = ({
                     {inc.note && <div style={{ color: '#555', marginTop: 4 }}>{inc.note}</div>}
                     <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
                       {new Date(inc.horodatage).toLocaleString('fr-FR')}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Onglet Instructions — US-015 */}
+          {onglet === 'instructions' && (
+            <div data-testid="liste-instructions">
+              {instructions.length === 0 ? (
+                <p>Aucune instruction envoyée pour cette tournée.</p>
+              ) : (
+                instructions.map((instr) => (
+                  <div
+                    key={instr.instructionId}
+                    data-testid={`instruction-${instr.instructionId}`}
+                    style={{
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 6,
+                      padding: 12,
+                      marginBottom: 8,
+                      borderLeft: `4px solid ${instr.statut === 'ENVOYEE' ? '#ff9800' : '#388e3c'}`,
+                      background: instr.statut === 'ENVOYEE' ? '#fff8e1' : '#f1f8e9',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong>{instr.typeInstruction}</strong>
+                      <span
+                        data-testid={`statut-instruction-${instr.instructionId}`}
+                        style={{
+                          fontWeight: 'bold',
+                          fontSize: 12,
+                          color: instr.statut === 'ENVOYEE' ? '#e65100' : '#2e7d32',
+                          background: instr.statut === 'ENVOYEE' ? '#fff3e0' : '#e8f5e9',
+                          padding: '2px 8px',
+                          borderRadius: 10,
+                        }}
+                      >
+                        {instr.statut === 'ENVOYEE' ? 'En attente' : 'Exécutée'}
+                      </span>
+                    </div>
+                    <div style={{ marginTop: 4, fontSize: 13, color: '#555' }}>
+                      Colis : <strong>{instr.colisId}</strong>
+                      {instr.creneauCible && (
+                        <span style={{ marginLeft: 8 }}>
+                          — Créneau : {new Date(instr.creneauCible).toLocaleString('fr-FR')}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ marginTop: 4, fontSize: 11, color: '#888', display: 'flex', gap: 12 }}>
+                      <span>Envoyée par : {instr.superviseurId}</span>
+                      <span>{new Date(instr.horodatage).toLocaleString('fr-FR')}</span>
                     </div>
                   </div>
                 ))

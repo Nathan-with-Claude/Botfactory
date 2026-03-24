@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { ColisDTO, StatutColis } from '../api/tourneeTypes';
 import { ColisNonTrouveError, getDetailColis } from '../api/tourneeApi';
+import { getInstructionsEnAttente, marquerInstructionExecutee } from '../api/supervisionApi';
 
 /**
  * Ecran M-03 — Detail d'un colis (US-004)
@@ -41,6 +42,10 @@ interface DetailColisScreenProps {
   onRetour: () => void;
   onLivrer?: (colisId: string) => void;   // TODO US-008 : navigation vers M-04
   onEchec?: (colisId: string) => void;    // TODO US-005 : navigation vers M-05
+  /** Override pour les tests — permet de mocker l'appel supervision */
+  marquerExecuteeFn?: (instructionId: string) => Promise<void>;
+  /** Override pour les tests — permet de mocker la récupération des instructions */
+  getInstructionsFn?: (tourneeId: string) => Promise<import('../api/supervisionApi').InstructionMobileDTO[]>;
 }
 
 // ─── Types internes ───────────────────────────────────────────────────────────
@@ -66,6 +71,8 @@ export const DetailColisScreen: React.FC<DetailColisScreenProps> = ({
   onRetour,
   onLivrer,
   onEchec,
+  marquerExecuteeFn = marquerInstructionExecutee,
+  getInstructionsFn = getInstructionsEnAttente,
 }) => {
   const [etat, setEtat] = useState<EtatEcran>({ type: 'chargement' });
 
@@ -74,6 +81,20 @@ export const DetailColisScreen: React.FC<DetailColisScreenProps> = ({
     try {
       const colis = await getDetailColis(tourneeId, colisId);
       setEtat({ type: 'succes', colis });
+
+      // US-015 : marquer automatiquement l'instruction ENVOYEE comme exécutée
+      // dès que Pierre consulte le détail du colis (transparent, aucun UI)
+      try {
+        const instructions = await getInstructionsFn(tourneeId);
+        const instructionEnAttente = instructions.find(
+          (i) => i.colisId === colisId && i.statut === 'ENVOYEE'
+        );
+        if (instructionEnAttente) {
+          await marquerExecuteeFn(instructionEnAttente.instructionId);
+        }
+      } catch {
+        // Silencieux — l'échec de la mise à jour instruction ne bloque pas le livreur
+      }
     } catch (err) {
       if (err instanceof ColisNonTrouveError) {
         setEtat({ type: 'erreur', message: 'Colis introuvable dans cette tournee.' });
@@ -84,7 +105,7 @@ export const DetailColisScreen: React.FC<DetailColisScreenProps> = ({
         });
       }
     }
-  }, [tourneeId, colisId]);
+  }, [tourneeId, colisId, getInstructionsFn, marquerExecuteeFn]);
 
   useEffect(() => {
     chargerDetailColis();

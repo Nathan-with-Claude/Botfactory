@@ -74,6 +74,38 @@ function makeWsFactory() {
   return factory as typeof factory & { getWs: () => MockWebSocket };
 }
 
+const mockInstructions = [
+  {
+    instructionId: 'instr-001',
+    tourneeId: 'tournee-sup-001',
+    colisId: 'colis-s-003',
+    superviseurId: 'superviseur-001',
+    typeInstruction: 'PRIORISER',
+    statut: 'ENVOYEE',
+    horodatage: '2026-03-24T10:30:00Z',
+  },
+  {
+    instructionId: 'instr-002',
+    tourneeId: 'tournee-sup-001',
+    colisId: 'colis-s-001',
+    superviseurId: 'superviseur-001',
+    typeInstruction: 'ANNULER',
+    statut: 'EXECUTEE',
+    horodatage: '2026-03-24T09:00:00Z',
+  },
+];
+
+function makeUrlAwareFetch(detail: unknown, instructions: unknown[]) {
+  return (url: string) => {
+    const body = url.includes('/instructions/') ? instructions : detail;
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(body),
+    } as Response);
+  };
+}
+
 describe('DetailTourneePage (US-012)', () => {
   it('affiche le bandeau avancement et les onglets après chargement', async () => {
     render(
@@ -178,6 +210,51 @@ describe('DetailTourneePage (US-012)', () => {
     await waitFor(() => screen.getByTestId('btn-retour'));
     fireEvent.click(screen.getByTestId('btn-retour'));
     expect(onRetour).toHaveBeenCalled();
+  });
+
+  it('affiche l\'onglet Instructions avec statuts ENVOYEE et EXECUTEE (US-015)', async () => {
+    render(
+      <DetailTourneePage
+        tourneeId="tournee-sup-001"
+        fetchFn={makeUrlAwareFetch(mockDetail, mockInstructions)}
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('onglet-instructions'));
+    fireEvent.click(screen.getByTestId('onglet-instructions'));
+
+    await waitFor(() => screen.getByTestId('liste-instructions'));
+    expect(screen.getByTestId('instruction-instr-001')).toBeInTheDocument();
+    expect(screen.getByTestId('statut-instruction-instr-001')).toHaveTextContent('En attente');
+    expect(screen.getByTestId('instruction-instr-002')).toBeInTheDocument();
+    expect(screen.getByTestId('statut-instruction-instr-002')).toHaveTextContent('Exécutée');
+  });
+
+  it('affiche le badge orange sur l\'onglet si des instructions sont ENVOYEE (US-015)', async () => {
+    render(
+      <DetailTourneePage
+        tourneeId="tournee-sup-001"
+        fetchFn={makeUrlAwareFetch(mockDetail, mockInstructions)}
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('badge-instructions-en-attente'));
+    expect(screen.getByTestId('badge-instructions-en-attente')).toHaveTextContent('1');
+  });
+
+  it('affiche "Aucune instruction" si la liste est vide (US-015)', async () => {
+    render(
+      <DetailTourneePage
+        tourneeId="tournee-sup-001"
+        fetchFn={makeUrlAwareFetch(mockDetail, [])}
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('onglet-instructions'));
+    fireEvent.click(screen.getByTestId('onglet-instructions'));
+
+    await waitFor(() => screen.getByTestId('liste-instructions'));
+    expect(screen.getByText(/Aucune instruction/)).toBeInTheDocument();
   });
 
   it('rafraîchit le détail lors d\'un message WebSocket', async () => {

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -22,6 +22,14 @@ import { DetailColisScreen } from './DetailColisScreen';
 import { DeclarerEchecScreen } from './DeclarerEchecScreen';
 import { RecapitulatifTourneeScreen } from './RecapitulatifTourneeScreen';
 import { CapturePreuveScreen } from './CapturePreuveScreen';
+import BandeauInstructionOverlay from '../components/BandeauInstructionOverlay';
+import {
+  getInstructionsEnAttente,
+  InstructionMobileDTO,
+} from '../api/supervisionApi';
+
+/** Intervalle de polling pour les instructions ENVOYEE (US-016) */
+const POLLING_INTERVAL_MS = 10_000;
 
 /**
  * Ecran M-02 — Liste des colis de la tournee
@@ -67,6 +75,11 @@ export const ListeColisScreen: React.FC = () => {
   const [zoneActive, setZoneActive] = useState<FiltreZone>(ZONE_TOUS);
   const [navigation, setNavigation] = useState<NavigationColis>({ ecran: 'liste' });
 
+  // US-016 : instruction en attente affichée dans le bandeau M-06
+  const [instructionAffichee, setInstructionAffichee] = useState<InstructionMobileDTO | null>(null);
+  // Garde en mémoire les instructionId déjà affichés pour éviter les doublons
+  const instructionsVues = useRef<Set<string>>(new Set());
+
   const chargerTournee = useCallback(async () => {
     try {
       const tournee = await getTourneeAujourdhui();
@@ -90,6 +103,29 @@ export const ListeColisScreen: React.FC = () => {
   useEffect(() => {
     chargerTournee();
   }, [chargerTournee]);
+
+  // US-016 : polling des instructions ENVOYEE toutes les 10 secondes
+  useEffect(() => {
+    const pollInstructions = async () => {
+      if (etat.type !== 'succes') return;
+      try {
+        const instructions = await getInstructionsEnAttente(etat.tournee.tourneeId);
+        // Afficher uniquement la première instruction non encore vue
+        const nouvelle = instructions.find(
+          (i) => !instructionsVues.current.has(i.instructionId)
+        );
+        if (nouvelle) {
+          instructionsVues.current.add(nouvelle.instructionId);
+          setInstructionAffichee(nouvelle);
+        }
+      } catch {
+        // Polling silencieux — ne bloque pas la liste
+      }
+    };
+
+    const intervalle = setInterval(pollInstructions, POLLING_INTERVAL_MS);
+    return () => clearInterval(intervalle);
+  }, [etat]);
 
   const handleRafraichissement = useCallback(async () => {
     setRafraichissement(true);
@@ -275,6 +311,18 @@ export const ListeColisScreen: React.FC = () => {
 
   return (
     <View style={styles.container} testID="liste-colis-screen">
+      {/* Bandeau overlay instruction superviseur M-06 (US-016) */}
+      {instructionAffichee && (
+        <BandeauInstructionOverlay
+          instruction={instructionAffichee}
+          onVoir={(colisId) => {
+            setInstructionAffichee(null);
+            ouvrirDetailColis(colisId);
+          }}
+          onFermer={() => setInstructionAffichee(null)}
+        />
+      )}
+
       {/* Bandeau de progression (US-002) — toujours base sur toute la tournee (US-003) */}
       <View style={styles.bandeauProgression} testID="bandeau-progression">
         <Text style={styles.resteALivrer} testID="reste-a-livrer">
