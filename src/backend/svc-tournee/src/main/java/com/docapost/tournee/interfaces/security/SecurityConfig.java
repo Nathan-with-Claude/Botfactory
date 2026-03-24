@@ -2,6 +2,7 @@ package com.docapost.tournee.interfaces.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -28,6 +29,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final MockJwtAuthFilter mockJwtAuthFilter;
@@ -54,6 +56,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // preflight CORS
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()  // dev uniquement
+                        // US-010 : accès aux preuves restreint aux rôles support/superviseur
+                        .requestMatchers("/api/preuves/**")
+                            .hasAnyRole("SUPERVISEUR", "SUPPORT")
                         .anyRequest().authenticated()
                 );
 

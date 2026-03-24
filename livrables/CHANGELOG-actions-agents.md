@@ -86,6 +86,60 @@
 - 2026-03-24T14:30Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
   Mise à jour journal dev : US-008/009 → Implémenté, BUG-A/B/C → Résolus, décisions architecturales BC-02 ajoutées.
 
+- 2026-03-24T17:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Reprise de session : US-010/011/012 → Implémenté (rétroactivement), démarrage US-013/014.
+
+- 2026-03-24T17:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-012-impl.md
+  Documentation vertical slice US-012 : détail tournée superviseur, VueTourneeDetail Read Model, DetailTourneePage W-02.
+
+- 2026-03-24T17:00Z @developpeur CREATE → /src/web/supervision/src/__tests__/DetailTourneePage.test.tsx
+  US-012 : 6 tests Jest TDD (bandeau, badges, onglet incidents, 404, clôturée, WebSocket refresh).
+
+- 2026-03-24T17:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/events/TourneeARisqueDetectee.java
+  US-013 : domain event TourneeARisqueDetectee (record immuable).
+
+- 2026-03-24T17:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/service/RisqueDetector.java
+  US-013 : RisqueDetector domain service (seuil inactivité configurable).
+
+- 2026-03-24T17:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/DetecterTourneesARisqueHandler.java
+  US-013 : Application service de détection — EN_COURS→A_RISQUE, A_RISQUE→EN_COURS, broadcast 1×.
+
+- 2026-03-24T17:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/scheduler/RisqueDetectorScheduler.java, infrastructure/config/SupervisionConfig.java
+  US-013 : scheduler @Scheduled(60s) + @Bean RisqueDetector avec seuil configurable.
+
+- 2026-03-24T17:30Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/application/RisqueDetectorTest.java, DetecterTourneesARisqueHandlerTest.java
+  US-013 : 6 tests RisqueDetector + 5 tests handler. TDD.
+
+- 2026-03-24T17:30Z @developpeur UPDATE → /src/web/supervision/src/pages/TableauDeBordPage.tsx, __tests__/TableauDeBordPage.test.tsx
+  US-013 frontend : jouerAlerteAudio + alerte 1× useRef + point clignotant BandeauResume + surbrillance ligne A_RISQUE. 4 nouveaux tests Jest.
+
+- 2026-03-24T17:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-013-impl.md
+  Documentation vertical slice US-013 : RisqueDetector, scheduler, frontend alertes.
+
+- 2026-03-24T18:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/model/Instruction.java, TypeInstruction.java, StatutInstruction.java
+  US-014 : Instruction Aggregate Root + enums domaine.
+
+- 2026-03-24T18:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/events/InstructionEnvoyee.java, domain/repository/InstructionRepository.java
+  US-014 : domain event + port repository.
+
+- 2026-03-24T18:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/EnvoyerInstructionCommand.java, EnvoyerInstructionHandler.java, InstructionDejaEnAttenteException.java
+  US-014 : application layer — commande, handler, exception métier.
+
+- 2026-03-24T18:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/persistence/InstructionEntity.java, InstructionJpaRepository.java, InstructionRepositoryImpl.java
+  US-014 : infrastructure JPA — entité table instructions + repository impl.
+
+- 2026-03-24T18:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/rest/InstructionController.java, interfaces/dto/EnvoyerInstructionRequest.java, InstructionCreeDTO.java
+  US-014 : POST /api/supervision/instructions (201/409/422/403).
+
+- 2026-03-24T18:00Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/domain/InstructionTest.java, application/EnvoyerInstructionHandlerTest.java, interfaces/InstructionControllerTest.java
+  US-014 : 5 tests domaine + 3 tests handler + 4 tests controller. TDD.
+
+- 2026-03-24T18:00Z @developpeur CREATE → /src/web/supervision/src/pages/PanneauInstructionPage.tsx, __tests__/PanneauInstructionPage.test.tsx
+  US-014 frontend : panneau W-03 modal + 6 tests Jest TDD.
+
+- 2026-03-24T18:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-014-impl.md
+  Documentation vertical slice US-014 : Instruction aggregate, endpoint, W-03, note FCM déféré Sprint 3.
+
 - 2026-03-19T00:00Z @sponsor CREATE → /livrables/01-vision/vision-produit.md
   Création de la vision produit DocuPost à partir des entretiens terrain (Pierre, Mme Dubois, M. Garnier, M. Renaud).
 
