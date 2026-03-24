@@ -21,6 +21,7 @@ import {
 import { DetailColisScreen } from './DetailColisScreen';
 import { DeclarerEchecScreen } from './DeclarerEchecScreen';
 import { RecapitulatifTourneeScreen } from './RecapitulatifTourneeScreen';
+import { CapturePreuveScreen } from './CapturePreuveScreen';
 
 /**
  * Ecran M-02 — Liste des colis de la tournee
@@ -52,11 +53,12 @@ type EtatEcran =
   | { type: 'vide' }
   | { type: 'erreur'; message: string };
 
-// Navigation interne (US-004 + US-005 + US-007)
+// Navigation interne (US-004 + US-005 + US-007 + US-008/009)
 type NavigationColis =
   | { ecran: 'liste' }
   | { ecran: 'detail'; tourneeId: string; colisId: string }
   | { ecran: 'echec'; tourneeId: string; colisId: string; destinataireNom: string }
+  | { ecran: 'preuve'; tourneeId: string; colisId: string; destinataireNom: string }
   | { ecran: 'recapitulatif'; tourneeId: string };
 
 export const ListeColisScreen: React.FC = () => {
@@ -150,6 +152,29 @@ export const ListeColisScreen: React.FC = () => {
     chargerTournee();
   }, [chargerTournee]);
 
+  // ─── Navigation vers l'écran preuve depuis le détail (US-008/009) ─────────
+
+  const ouvrirCapturePreuve = useCallback(
+    (colisId: string) => {
+      if (etat.type === 'succes') {
+        const colis = etat.tournee.colis.find((c) => c.colisId === colisId);
+        setNavigation({
+          ecran: 'preuve',
+          tourneeId: etat.tournee.tourneeId,
+          colisId,
+          destinataireNom: colis?.destinataire.nom ?? '',
+        });
+      }
+    },
+    [etat]
+  );
+
+  const revenirAuDetailDepuisPreuve = useCallback(() => {
+    // Après la livraison confirmée, revenir à la liste pour que les statuts soient rafraîchis
+    setNavigation({ ecran: 'liste' });
+    chargerTournee();
+  }, [chargerTournee]);
+
   // ─── Rendu RecapitulatifTourneeScreen (US-007) ───────────────────────────
 
   if (navigation.ecran === 'recapitulatif') {
@@ -161,6 +186,24 @@ export const ListeColisScreen: React.FC = () => {
           setNavigation({ ecran: 'liste' });
           chargerTournee();
         }}
+      />
+    );
+  }
+
+  // ─── Rendu CapturePreuveScreen (US-008/009) ──────────────────────────────
+
+  if (navigation.ecran === 'preuve') {
+    return (
+      <CapturePreuveScreen
+        tourneeId={navigation.tourneeId}
+        colisId={navigation.colisId}
+        destinataireNom={navigation.destinataireNom}
+        onRetour={() => setNavigation({
+          ecran: 'detail',
+          tourneeId: navigation.tourneeId,
+          colisId: navigation.colisId,
+        })}
+        onLivraisonConfirmee={revenirAuDetailDepuisPreuve}
       />
     );
   }
@@ -192,6 +235,7 @@ export const ListeColisScreen: React.FC = () => {
         colisId={navigation.colisId}
         onRetour={revenirALaListe}
         onEchec={ouvrirDeclarerEchec}
+        onLivrer={ouvrirCapturePreuve}
       />
     );
   }

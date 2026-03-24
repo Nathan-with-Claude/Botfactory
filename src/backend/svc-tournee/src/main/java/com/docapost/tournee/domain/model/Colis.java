@@ -10,6 +10,7 @@ import java.util.Objects;
  * Invariants :
  * - Un Colis avec statut LIVRE doit etre associe a une PreuveLivraisonId.
  * - Les transitions de statut autorisees : A_LIVRER → LIVRE | A_LIVRER → ECHEC → A_REPRESENTER
+ * - Si statut ECHEC : motifNonLivraison et disposition sont obligatoires.
  *
  * Source : Ubiquitous Language DocuPost — M. Garnier, Pierre.
  */
@@ -21,6 +22,10 @@ public class Colis {
     private final Adresse adresseLivraison;
     private final Destinataire destinataire;
     private final List<Contrainte> contraintes;
+
+    // Ajoutés pour US-005 — nuls si statut != ECHEC
+    private MotifNonLivraison motifNonLivraison;
+    private Disposition disposition;
 
     public Colis(
             ColisId id,
@@ -36,6 +41,24 @@ public class Colis {
         this.adresseLivraison = Objects.requireNonNull(adresseLivraison, "Adresse est obligatoire");
         this.destinataire = Objects.requireNonNull(destinataire, "Destinataire est obligatoire");
         this.contraintes = contraintes != null ? List.copyOf(contraintes) : List.of();
+    }
+
+    /**
+     * Constructeur étendu incluant motif et disposition (colis déjà en échec, chargé depuis la persistance).
+     */
+    public Colis(
+            ColisId id,
+            TourneeId tourneeId,
+            StatutColis statut,
+            Adresse adresseLivraison,
+            Destinataire destinataire,
+            List<Contrainte> contraintes,
+            MotifNonLivraison motifNonLivraison,
+            Disposition disposition
+    ) {
+        this(id, tourneeId, statut, adresseLivraison, destinataire, contraintes);
+        this.motifNonLivraison = motifNonLivraison;
+        this.disposition = disposition;
     }
 
     /**
@@ -63,10 +86,21 @@ public class Colis {
     public Adresse getAdresseLivraison() { return adresseLivraison; }
     public Destinataire getDestinataire() { return destinataire; }
     public List<Contrainte> getContraintes() { return contraintes; }
+    public MotifNonLivraison getMotifNonLivraison() { return motifNonLivraison; }
+    public Disposition getDisposition() { return disposition; }
 
     // Package-private pour que Tournee puisse mettre a jour le statut
     void setStatut(StatutColis statut) {
         this.statut = statut;
+    }
+
+    // Package-private pour que Tournee puisse enregistrer motif et disposition
+    void setMotifNonLivraison(MotifNonLivraison motif) {
+        this.motifNonLivraison = motif;
+    }
+
+    void setDisposition(Disposition disposition) {
+        this.disposition = disposition;
     }
 
     @Override

@@ -177,13 +177,17 @@ class TourneeTest {
                 new ColisId("c-2"), tourneeId,
                 StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of()
         );
+        // ECHEC avec disposition RETOUR_DEPOT (echec definif, pas a representer)
         Colis echec = new Colis(
                 new ColisId("c-3"), tourneeId,
-                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of()
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of(),
+                MotifNonLivraison.ABSENT, Disposition.RETOUR_DEPOT
         );
+        // ECHEC avec disposition A_REPRESENTER (nouvelle tentative souhaitee)
         Colis aRepresenter = new Colis(
                 new ColisId("c-4"), tourneeId,
-                StatutColis.A_REPRESENTER, uneAdresse(), unDestinataire(), List.of()
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of(),
+                MotifNonLivraison.ABSENT, Disposition.A_REPRESENTER
         );
         Tournee tournee = new Tournee(
                 tourneeId, livreurId, today,
@@ -204,6 +208,67 @@ class TourneeTest {
         assertThat(event.recap().colisEchecs()).isEqualTo(1);
         assertThat(event.recap().colisARepresenter()).isEqualTo(1);
         assertThat(event.horodatage()).isNotNull();
+    }
+
+    // ─── BUG-C : RecapitulatifTournee.calculer() — A_REPRESENTER vs ECHEC ─────
+
+    @Test
+    @DisplayName("BUG-C : RecapitulatifTournee — colisARepresenter compte les ECHEC+A_REPRESENTER, pas les autres ECHEC")
+    void recapitulatif_distingue_echec_et_a_representer() {
+        // 3 colis livres
+        Colis livre1 = new Colis(new ColisId("c-1"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of());
+        Colis livre2 = new Colis(new ColisId("c-2"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of());
+        Colis livre3 = new Colis(new ColisId("c-3"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of());
+        // 2 colis echec definif (RETOUR_DEPOT)
+        Colis echecRetour1 = new Colis(new ColisId("c-4"), tourneeId,
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of(),
+                MotifNonLivraison.ABSENT, Disposition.RETOUR_DEPOT);
+        Colis echecRetour2 = new Colis(new ColisId("c-5"), tourneeId,
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of(),
+                MotifNonLivraison.REFUS_CLIENT, Disposition.DEPOT_CHEZ_TIERS);
+        // 1 colis a representer (ECHEC + A_REPRESENTER)
+        Colis aRepresenter = new Colis(new ColisId("c-6"), tourneeId,
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of(),
+                MotifNonLivraison.HORAIRE_DEPASSE, Disposition.A_REPRESENTER);
+
+        RecapitulatifTournee recap = RecapitulatifTournee.calculer(
+                List.of(livre1, livre2, livre3, echecRetour1, echecRetour2, aRepresenter)
+        );
+
+        assertThat(recap.colisTotal()).isEqualTo(6);
+        assertThat(recap.colisLivres()).isEqualTo(3);
+        assertThat(recap.colisEchecs()).isEqualTo(2);      // RETOUR_DEPOT + DEPOT_CHEZ_TIERS
+        assertThat(recap.colisARepresenter()).isEqualTo(1); // A_REPRESENTER seulement
+        // Verification de la somme totale
+        assertThat(recap.colisLivres() + recap.colisEchecs() + recap.colisARepresenter())
+                .isEqualTo(recap.colisTotal());
+    }
+
+    @Test
+    @DisplayName("BUG-C : RecapitulatifTournee — colisEchecs = 0 si tous les ECHEC sont A_REPRESENTER")
+    void recapitulatif_echecs_zero_si_tous_a_representer() {
+        Colis livre = new Colis(new ColisId("c-1"), tourneeId,
+                StatutColis.LIVRE, uneAdresse(), unDestinataire(), List.of());
+        Colis aRepresenter1 = new Colis(new ColisId("c-2"), tourneeId,
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of(),
+                MotifNonLivraison.ABSENT, Disposition.A_REPRESENTER);
+        Colis aRepresenter2 = new Colis(new ColisId("c-3"), tourneeId,
+                StatutColis.ECHEC, uneAdresse(), unDestinataire(), List.of(),
+                MotifNonLivraison.ACCES_IMPOSSIBLE, Disposition.A_REPRESENTER);
+
+        RecapitulatifTournee recap = RecapitulatifTournee.calculer(
+                List.of(livre, aRepresenter1, aRepresenter2)
+        );
+
+        assertThat(recap.colisTotal()).isEqualTo(3);
+        assertThat(recap.colisLivres()).isEqualTo(1);
+        assertThat(recap.colisEchecs()).isEqualTo(0);
+        assertThat(recap.colisARepresenter()).isEqualTo(2);
+        assertThat(recap.colisLivres() + recap.colisEchecs() + recap.colisARepresenter())
+                .isEqualTo(recap.colisTotal());
     }
 
     @Test

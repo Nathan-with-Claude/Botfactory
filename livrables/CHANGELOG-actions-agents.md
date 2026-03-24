@@ -5,6 +5,87 @@
 
 ---
 
+- 2026-03-24T08:30Z @qa CREATE → /livrables/07-tests/scenarios/US-004-scenarios.md
+  Rédaction 24 scénarios de test TC-074 à TC-097 (Domain/Application/Infrastructure/E2E) pour US-004 Détail Colis.
+
+- 2026-03-24T08:30Z @qa CREATE → /livrables/07-tests/scenarios/US-005-scenarios.md
+  Rédaction 25 scénarios de test TC-098 à TC-122 pour US-005 Déclarer Échec (invariants EchecLivraisonDeclare).
+
+- 2026-03-24T08:30Z @qa CREATE → /livrables/07-tests/scenarios/US-007-scenarios.md
+  Rédaction 23 scénarios de test TC-123 à TC-145 pour US-007 Clôture Tournée (invariants TourneeCloturee).
+
+- 2026-03-24T09:00Z @qa CREATE → /src/mobile/e2e/US-004-detail-colis.spec.ts
+  Spec Playwright E2E US-004 : 11 tests (navigation M-02→M-03, boutons, RGPD, API GET).
+
+- 2026-03-24T09:00Z @qa CREATE → /src/mobile/e2e/US-005-declarer-echec.spec.ts
+  Spec Playwright E2E US-005 : 5 tests (M-05, bouton désactivé, déclaration nominale, API POST /echec).
+
+- 2026-03-24T09:00Z @qa CREATE → /src/mobile/e2e/US-007-cloture-tournee.spec.ts
+  Spec Playwright E2E US-007 : 9 tests (API POST /cloture 409/200/404, bouton clôture UI, idempotence).
+
+- 2026-03-24T09:30Z @qa EXECUTE → /livrables/07-tests/scenarios/US-004-rapport-playwright.md
+  Exécution Playwright US-004 : 11/11 PASSÉ. Invariant RGPD validé, navigation sans rechargement confirmée.
+
+- 2026-03-24T09:30Z @qa EXECUTE → /livrables/07-tests/scenarios/US-005-rapport-playwright.md
+  Exécution Playwright US-005 : 5/5 PASSÉ. Bouton désactivé validé, déclaration nominale E2E complète.
+
+- 2026-03-24T09:30Z @qa EXECUTE → /livrables/07-tests/scenarios/US-007-rapport-playwright.md
+  Exécution Playwright US-007 : 9/9 PASSÉ. Invariant 409 validé, idempotence confirmée. Point d'attention : cohérence compteurs RecapitulatifTournee à vérifier.
+
+- 2026-03-24T09:35Z @qa CREATE → /livrables/07-tests/screenshots/US-004/, /US-005/, /US-007/
+  17 screenshots E2E capturés pour les 3 US (TC-087 à TC-145).
+
+- 2026-03-24T09:40Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  Mise à jour journal QA : statuts US-004/005/007 → Exécutés. Points d'attention ajoutés (testIDs manquants, idempotence, RGPD).
+
+- 2026-03-24T14:00Z @developpeur FIX → /src/mobile/src/screens/DetailColisScreen.tsx
+  BUG-A : ajout testID="detail-colis-screen" sur le root View de l'état succès (requis par QA Playwright).
+
+- 2026-03-24T14:00Z @developpeur FIX → /src/mobile/src/screens/DeclarerEchecScreen.tsx
+  BUG-B : ajout testID="declarer-echec-screen" sur le root View (requis par QA Playwright).
+
+- 2026-03-24T14:00Z @developpeur FIX → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/RecapitulatifTournee.java, TourneeTest.java
+  BUG-C : correction RecapitulatifTournee.calculer() — colisARepresenter filtre désormais ECHEC+disposition=A_REPRESENTER au lieu de StatutColis.A_REPRESENTER (jamais émis). Ajout 2 tests unitaires. Fix test existant cloturerTournee_emet_event_avec_recap.
+
+- 2026-03-24T14:30Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/preuves/
+  US-008/009 : BC-02 domain layer — TypePreuve, PreuveLivraisonId, Coordonnees, SignatureNumerique, PhotoPreuve, TiersIdentifie, DepotSecurise, PreuveLivraisonInvariantException, PreuveLivraison (Aggregate), PreuveCapturee (Domain Event), LivraisonConfirmee (Domain Event BC-01), PreuveLivraisonRepository (interface).
+
+- 2026-03-24T14:30Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/Tournee.java
+  US-008 : ajout méthode confirmerLivraison(ColisId, PreuveLivraisonId) + LivraisonConfirmee event.
+
+- 2026-03-24T14:30Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/ConfirmerLivraisonCommand.java, ConfirmerLivraisonHandler.java
+  US-008/009 : application layer — Command (4 factory methods) + Handler (orchestration create→save→confirm).
+
+- 2026-03-24T14:30Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/infrastructure/persistence/PreuveLivraisonEntity.java, PreuveLivraisonJpaRepository.java, PreuveLivraisonMapper.java, PreuveLivraisonRepositoryImpl.java
+  US-008/009 : infrastructure layer — JPA entity table preuves_livraison + mapper + repository impl.
+
+- 2026-03-24T14:30Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/rest/TourneeController.java
+  US-008/009 : ajout endpoint POST /livraison + injection ConfirmerLivraisonHandler.
+
+- 2026-03-24T14:30Z @developpeur CREATE → /src/backend/svc-tournee/src/test/java/com/docapost/tournee/domain/PreuveLivraisonTest.java, application/ConfirmerLivraisonHandlerTest.java, interfaces/ConfirmerLivraisonControllerTest.java
+  US-008/009 : 28 tests TDD backend (12 domain + 8 application + 8 intégration web). 97/97 tests verts.
+
+- 2026-03-24T14:30Z @developpeur CREATE → /src/mobile/src/screens/CapturePreuveScreen.tsx
+  US-008/009 : écran M-04 — sélection type preuve, pad signature MVP, champs TIERS/DEPOT, bouton caméra.
+
+- 2026-03-24T14:30Z @developpeur UPDATE → /src/mobile/src/api/tourneeTypes.ts, tourneeApi.ts
+  US-008/009 : types TypePreuve, ConfirmerLivraisonRequest, PreuveLivraisonDTO + fonction confirmerLivraison() + erreurs LivraisonDejaConfirmeeError/DonneesPreuveInvalidesError.
+
+- 2026-03-24T14:30Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-008/009 : import CapturePreuveScreen, navigation 'preuve', ouvrirCapturePreuve, onLivrer connecté dans DetailColisScreen.
+
+- 2026-03-24T14:30Z @developpeur CREATE → /src/mobile/src/__tests__/CapturePreuveScreen.test.tsx
+  US-008/009 : 19 tests Jest TDD (rendu, types, signature, tiers, depot, photo, erreur). 93/93 tests verts.
+
+- 2026-03-24T14:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-008-impl.md
+  Documentation vertical slice US-008 : signature numérique, BC-02 collocalisé, decisions architecturales.
+
+- 2026-03-24T14:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-009-impl.md
+  Documentation vertical slice US-009 : preuves alternatives (PHOTO, TIERS_IDENTIFIE, DEPOT_SECURISE).
+
+- 2026-03-24T14:30Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Mise à jour journal dev : US-008/009 → Implémenté, BUG-A/B/C → Résolus, décisions architecturales BC-02 ajoutées.
+
 - 2026-03-19T00:00Z @sponsor CREATE → /livrables/01-vision/vision-produit.md
   Création de la vision produit DocuPost à partir des entretiens terrain (Pierre, Mme Dubois, M. Garnier, M. Renaud).
 

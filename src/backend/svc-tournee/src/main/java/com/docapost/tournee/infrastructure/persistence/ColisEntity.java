@@ -1,5 +1,7 @@
 package com.docapost.tournee.infrastructure.persistence;
 
+import com.docapost.tournee.domain.model.Disposition;
+import com.docapost.tournee.domain.model.MotifNonLivraison;
 import com.docapost.tournee.domain.model.StatutColis;
 import com.docapost.tournee.domain.model.TypeContrainte;
 import jakarta.persistence.*;
@@ -13,6 +15,8 @@ import java.util.List;
  *
  * Les contraintes sont stockees en table separee (ColisContrainteEntity)
  * pour normalisation et requetabilite.
+ *
+ * US-005 : ajout de motifNonLivraison et disposition (nullable, renseignes si statut = ECHEC).
  */
 @Entity
 @Table(name = "colis")
@@ -52,6 +56,15 @@ public class ColisEntity {
 
     @Column(name = "destinataire_telephone", length = 20)
     private String destinataireTelephone;
+
+    // US-005 — Echec de livraison : motif et disposition (nullable)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "motif_non_livraison", length = 30)
+    private MotifNonLivraison motifNonLivraison;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "disposition", length = 20)
+    private Disposition disposition;
 
     @ElementCollection
     @CollectionTable(name = "colis_contraintes", joinColumns = @JoinColumn(name = "colis_id"))
@@ -100,6 +113,10 @@ public class ColisEntity {
     public String getAdresseZoneGeographique() { return adresseZoneGeographique; }
     public String getDestinataireNom() { return destinataireNom; }
     public String getDestinataireTeéléphone() { return destinataireTelephone; }
+    public MotifNonLivraison getMotifNonLivraison() { return motifNonLivraison; }
+    public void setMotifNonLivraison(MotifNonLivraison motifNonLivraison) { this.motifNonLivraison = motifNonLivraison; }
+    public Disposition getDisposition() { return disposition; }
+    public void setDisposition(Disposition disposition) { this.disposition = disposition; }
     public List<ColisContrainteEmbeddable> getContraintes() { return contraintes; }
     public void setContraintes(List<ColisContrainteEmbeddable> contraintes) { this.contraintes = contraintes; }
 }

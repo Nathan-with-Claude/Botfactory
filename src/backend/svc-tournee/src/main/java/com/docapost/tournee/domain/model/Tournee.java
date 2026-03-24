@@ -2,8 +2,10 @@ package com.docapost.tournee.domain.model;
 
 import com.docapost.tournee.domain.events.DomainEvent;
 import com.docapost.tournee.domain.events.EchecLivraisonDeclare;
+import com.docapost.tournee.domain.events.LivraisonConfirmee;
 import com.docapost.tournee.domain.events.TourneeCloturee;
 import com.docapost.tournee.domain.events.TourneeDemarree;
+import com.docapost.tournee.domain.preuves.model.PreuveLivraisonId;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -144,6 +146,57 @@ public class Tournee {
 
         // Emettre le Domain Event (pattern collect-and-publish)
         domainEvents.add(EchecLivraisonDeclare.of(id, colisId, motif, disposition, noteLibre));
+
+        return colis;
+    }
+
+    /**
+     * Confirme la livraison d'un colis apres capture de la preuve.
+     *
+     * Invariants appliques :
+     * - Le colis doit exister dans cette tournee.
+     * - La transition autorisee est : A_LIVRER → LIVRE uniquement.
+     *   Un colis deja LIVRE, ECHEC ou A_REPRESENTER ne peut pas repasser en LIVRE.
+     * - preuveLivraisonId est obligatoire (invariant "un colis LIVRE doit etre associe a une PreuveLivraisonId").
+     * - Emet LivraisonConfirmee horodate.
+     *
+     * Source : US-008/009 — "L'événement LivraisonConfirmée est émis." (Pierre)
+     *
+     * @param colisId           identifiant du colis livre
+     * @param preuveLivraisonId identifiant de la preuve capturee (obligatoire)
+     * @return le Colis mis a jour avec statut LIVRE
+     * @throws TourneeInvariantException si le colis n'existe pas, si preuveLivraisonId est null,
+     *                                   ou si la transition de statut est interdite.
+     */
+    public Colis confirmerLivraison(ColisId colisId, PreuveLivraisonId preuveLivraisonId) {
+        // Invariant : preuveLivraisonId obligatoire
+        if (preuveLivraisonId == null) {
+            throw new TourneeInvariantException(
+                    "La PreuveLivraisonId est obligatoire pour confirmer une livraison"
+            );
+        }
+
+        // Rechercher le colis dans la tournee
+        Colis colis = this.colis.stream()
+                .filter(c -> c.getId().equals(colisId))
+                .findFirst()
+                .orElseThrow(() -> new TourneeInvariantException(
+                        "Colis introuvable dans cette tournee : " + colisId.value()
+                ));
+
+        // Invariant : transition autorisee uniquement depuis A_LIVRER
+        if (colis.getStatut() != StatutColis.A_LIVRER) {
+            throw new TourneeInvariantException(
+                    "Transition interdite : seul un colis en statut A_LIVRER peut passer en LIVRE. "
+                            + "Statut actuel : " + colis.getStatut()
+            );
+        }
+
+        // Appliquer la transition
+        colis.setStatut(StatutColis.LIVRE);
+
+        // Emettre le Domain Event
+        domainEvents.add(LivraisonConfirmee.of(id, colisId, preuveLivraisonId));
 
         return colis;
     }

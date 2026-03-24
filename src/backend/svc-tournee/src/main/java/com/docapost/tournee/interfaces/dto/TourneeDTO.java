@@ -24,7 +24,8 @@ public record TourneeDTO(
         int resteALivrer,
         int colisTotal,
         int colisTraites,
-        LocalTime estimationFin
+        LocalTime estimationFin,
+        boolean estTerminee
 ) {
     public static TourneeDTO from(Tournee tournee) {
         Avancement avancement = tournee.calculerAvancement();
@@ -42,7 +43,8 @@ public record TourneeDTO(
                 avancement.resteALivrer(),
                 avancement.colisTotal(),
                 avancement.colisTraites(),
-                avancement.estimationFin()
+                avancement.estimationFin(),
+                avancement.estTerminee()
         );
     }
 }

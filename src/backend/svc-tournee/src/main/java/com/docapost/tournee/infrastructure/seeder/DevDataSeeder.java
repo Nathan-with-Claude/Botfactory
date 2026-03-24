@@ -61,27 +61,27 @@ public class DevDataSeeder implements CommandLineRunner {
         );
 
         List<ColisEntity> colis = List.of(
-                createColis("colis-dev-001", tournee,
+                createColis("colis-dev-001", tournee, StatutColis.A_LIVRER,
                         "12 Rue du Port", null, "69003", "Lyon", "Zone A",
                         "M. Dupont", "0601020304",
                         List.of(new ColisContrainteEmbeddable(TypeContrainte.HORAIRE, "Avant 14h00"))
                 ),
-                createColis("colis-dev-002", tournee,
+                createColis("colis-dev-002", tournee, StatutColis.A_LIVRER,
                         "4 Allée des Roses", "Apt 12", "69006", "Lyon", "Zone B",
                         "Mme Martin", "0607080910",
                         List.of()
                 ),
-                createColis("colis-dev-003", tournee,
+                createColis("colis-dev-003", tournee, StatutColis.A_LIVRER,
                         "8 Cours Gambetta", null, "69007", "Lyon", "Zone B",
                         "M. Leroy", "0611121314",
                         List.of(new ColisContrainteEmbeddable(TypeContrainte.FRAGILE, "Manipuler avec precaution"))
                 ),
-                createColis("colis-dev-004", tournee,
+                createColis("colis-dev-004", tournee, StatutColis.LIVRE,
                         "23 Avenue Jean Jaures", "Bat C", "69007", "Lyon", "Zone C",
                         "Mme Benoit", "0622232425",
                         List.of()
                 ),
-                createColis("colis-dev-005", tournee,
+                createColis("colis-dev-005", tournee, StatutColis.ECHEC,
                         "7 Rue de la Republique", null, "69002", "Lyon", "Zone A",
                         "M. Renard", "0633343536",
                         List.of(new ColisContrainteEmbeddable(TypeContrainte.DOCUMENT_SENSIBLE, "Document contractuel"))
@@ -97,6 +97,7 @@ public class DevDataSeeder implements CommandLineRunner {
     private ColisEntity createColis(
             String id,
             TourneeEntity tournee,
+            StatutColis statut,
             String rue,
             String complement,
             String codePostal,
@@ -107,7 +108,7 @@ public class DevDataSeeder implements CommandLineRunner {
             List<ColisContrainteEmbeddable> contraintes
     ) {
         ColisEntity colis = new ColisEntity(
-                id, tournee, StatutColis.A_LIVRER,
+                id, tournee, statut,
                 rue, complement, codePostal, ville, zone,
                 destinataireNom, destinataireTel
         );

@@ -296,3 +296,16 @@ Exemple :
 Après chaque modification de fichier dans /livrables/,
 ajouter une ligne dans /livrables/CHANGELOG-actions-agents.md
 en suivant le format ci-dessus.
+
+## Poste de commande tests manuels (Product / Expert métier)
+
+Pour chaque User Story livrée :
+
+1. Le développeur indique dans US-[NNN]-impl.md :
+   - les commandes pour lancer l'app en local
+   - les URLs à utiliser pour tester
+2. @qa génère une check-list de tests manuels simple dans
+   /livrables/06-dev/poste-de-commande-tests.md (section pour la US).
+3. @qa effectue l'ensemble des tests avec Playwright en suivant les consignes de test et si jamais il y a des erreurs, demande à @dev de corriger
+4. Le feedback structuré (bloquants / améliorations) est ensuite
+   transformé en feedback end-user via @end-user et en nouvelles US via @po.

@@ -3,6 +3,8 @@ package com.docapost.tournee.interfaces.rest;
 import com.docapost.tournee.application.CloturerTourneeCommand;
 import com.docapost.tournee.application.CloturerTourneeHandler;
 import com.docapost.tournee.application.ColisNotFoundException;
+import com.docapost.tournee.application.ConfirmerLivraisonCommand;
+import com.docapost.tournee.application.ConfirmerLivraisonHandler;
 import com.docapost.tournee.application.ConsulterDetailColisCommand;
 import com.docapost.tournee.application.ConsulterDetailColisHandler;
 import com.docapost.tournee.application.ConsulterListeColisCommand;
@@ -17,8 +19,13 @@ import com.docapost.tournee.domain.model.LivreurId;
 import com.docapost.tournee.domain.model.Tournee;
 import com.docapost.tournee.domain.model.TourneeId;
 import com.docapost.tournee.domain.model.TourneeInvariantException;
+import com.docapost.tournee.domain.preuves.model.Coordonnees;
+import com.docapost.tournee.domain.preuves.model.PreuveLivraison;
+import com.docapost.tournee.domain.preuves.model.PreuveLivraisonInvariantException;
 import com.docapost.tournee.interfaces.dto.ColisDTO;
+import com.docapost.tournee.interfaces.dto.ConfirmerLivraisonRequest;
 import com.docapost.tournee.interfaces.dto.DeclarerEchecRequest;
+import com.docapost.tournee.interfaces.dto.PreuveLivraisonDTO;
 import com.docapost.tournee.interfaces.dto.RecapitulatifTourneeDTO;
 import com.docapost.tournee.interfaces.dto.TourneeDTO;
 import org.springframework.http.HttpStatus;
@@ -68,17 +75,20 @@ public class TourneeController {
     private final ConsulterDetailColisHandler consulterDetailColisHandler;
     private final DeclarerEchecLivraisonHandler declarerEchecLivraisonHandler;
     private final CloturerTourneeHandler cloturerTourneeHandler;
+    private final ConfirmerLivraisonHandler confirmerLivraisonHandler;
 
     public TourneeController(
             ConsulterListeColisHandler consulterListeColisHandler,
             ConsulterDetailColisHandler consulterDetailColisHandler,
             DeclarerEchecLivraisonHandler declarerEchecLivraisonHandler,
-            CloturerTourneeHandler cloturerTourneeHandler
+            CloturerTourneeHandler cloturerTourneeHandler,
+            ConfirmerLivraisonHandler confirmerLivraisonHandler
     ) {
         this.consulterListeColisHandler = consulterListeColisHandler;
         this.consulterDetailColisHandler = consulterDetailColisHandler;
         this.declarerEchecLivraisonHandler = declarerEchecLivraisonHandler;
         this.cloturerTourneeHandler = cloturerTourneeHandler;
+        this.confirmerLivraisonHandler = confirmerLivraisonHandler;
     }
 
     /**
@@ -176,6 +186,76 @@ public class TourneeController {
             return ResponseEntity.notFound().build();
         } catch (TourneeInvariantException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
+
+    /**
+     * POST /api/tournees/{tourneeId}/colis/{colisId}/livraison
+     * Confirme la livraison d'un colis avec capture de la preuve (US-008 + US-009 — Ecran M-04).
+     *
+     * Corps de requete : { "typePreuve": "SIGNATURE|PHOTO|TIERS_IDENTIFIE|DEPOT_SECURISE",
+     *                      "coordonneesGps": {"latitude": ..., "longitude": ...}, // optionnel
+     *                      "donneesSignature": "...", // si SIGNATURE
+     *                      "urlPhoto": "...", "hashIntegrite": "...", // si PHOTO
+     *                      "nomTiers": "...", // si TIERS_IDENTIFIE
+     *                      "descriptionDepot": "..." // si DEPOT_SECURISE
+     *                    }
+     *
+     * Codes de retour :
+     * - 200 : livraison confirmee, retourne PreuveLivraisonDTO
+     * - 400 : donnees de preuve invalides (signature vide, nom tiers absent, etc.)
+     * - 404 : tournee ou colis introuvable
+     * - 409 : transition de statut interdite (colis deja livre ou en echec)
+     *
+     * @param tourneeId identifiant de la tournee
+     * @param colisId   identifiant du colis
+     * @param request   body contenant typePreuve et donnees associees
+     * @return PreuveLivraisonDTO avec l'identifiant de la preuve cree
+     */
+    @PostMapping("/{tourneeId}/colis/{colisId}/livraison")
+    public ResponseEntity<PreuveLivraisonDTO> confirmerLivraison(
+            @PathVariable String tourneeId,
+            @PathVariable String colisId,
+            @RequestBody ConfirmerLivraisonRequest request
+    ) {
+        try {
+            Coordonnees coordonnees = null;
+            if (request.coordonneesGps() != null) {
+                coordonnees = new Coordonnees(
+                        request.coordonneesGps().latitude(),
+                        request.coordonneesGps().longitude()
+                );
+            }
+
+            ConfirmerLivraisonCommand command = switch (request.typePreuve()) {
+                case "SIGNATURE" -> ConfirmerLivraisonCommand.pourSignature(
+                        new TourneeId(tourneeId), new ColisId(colisId),
+                        request.donneesSignature() != null ? request.donneesSignature().getBytes() : null,
+                        coordonnees
+                );
+                case "PHOTO" -> ConfirmerLivraisonCommand.pourPhoto(
+                        new TourneeId(tourneeId), new ColisId(colisId),
+                        request.urlPhoto(), request.hashIntegrite(), coordonnees
+                );
+                case "TIERS_IDENTIFIE" -> ConfirmerLivraisonCommand.pourTiers(
+                        new TourneeId(tourneeId), new ColisId(colisId),
+                        request.nomTiers(), coordonnees
+                );
+                case "DEPOT_SECURISE" -> ConfirmerLivraisonCommand.pourDepotSecurise(
+                        new TourneeId(tourneeId), new ColisId(colisId),
+                        request.descriptionDepot(), coordonnees
+                );
+                default -> throw new IllegalArgumentException("Type de preuve inconnu : " + request.typePreuve());
+            };
+
+            PreuveLivraison preuve = confirmerLivraisonHandler.handle(command);
+            return ResponseEntity.ok(PreuveLivraisonDTO.from(preuve));
+        } catch (TourneeNotFoundException | ColisNotFoundException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (TourneeInvariantException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (PreuveLivraisonInvariantException | IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
         }
     }
 

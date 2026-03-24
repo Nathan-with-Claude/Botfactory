@@ -1,4 +1,11 @@
-import { ColisDTO, DeclarerEchecRequest, RecapitulatifTourneeDTO, TourneeDTO } from './tourneeTypes';
+import {
+  ColisDTO,
+  ConfirmerLivraisonRequest,
+  DeclarerEchecRequest,
+  PreuveLivraisonDTO,
+  RecapitulatifTourneeDTO,
+  TourneeDTO,
+} from './tourneeTypes';
 
 /**
  * Client API — Tournee
@@ -122,6 +129,60 @@ export async function declarerEchecLivraison(
 }
 
 /**
+ * Confirme la livraison d'un colis avec capture de la preuve (US-008 + US-009 — ecran M-04).
+ *
+ * @param tourneeId identifiant de la tournée
+ * @param colisId   identifiant du colis
+ * @param request   typePreuve + données spécifiques (signature, photo, tiers, dépôt)
+ * @returns PreuveLivraisonDTO avec l'identifiant de la preuve créée
+ * @throws LivraisonDejaConfirmeeError si le colis est déjà livré (409)
+ * @throws ColisNonTrouveError si le colis n'existe pas dans la tournée (404)
+ * @throws DonneesPreuveInvalidesError si les données de preuve sont invalides (400)
+ */
+export async function confirmerLivraison(
+  tourneeId: string,
+  colisId: string,
+  request: ConfirmerLivraisonRequest
+): Promise<PreuveLivraisonDTO> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/tournees/${encodeURIComponent(tourneeId)}/colis/${encodeURIComponent(colisId)}/livraison`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        // TODO (US-019) : ajouter Authorization: `Bearer ${token}` depuis le store auth
+      },
+      body: JSON.stringify(request),
+    }
+  );
+
+  if (response.status === 404) {
+    throw new ColisNonTrouveError(
+      `Colis '${colisId}' introuvable dans la tournée '${tourneeId}'`
+    );
+  }
+
+  if (response.status === 409) {
+    throw new LivraisonDejaConfirmeeError(
+      `La livraison du colis '${colisId}' a déjà été confirmée`
+    );
+  }
+
+  if (response.status === 400) {
+    throw new DonneesPreuveInvalidesError(
+      'Les données de preuve sont invalides. Vérifiez la signature ou les informations saisies.'
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(`Erreur serveur : ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<PreuveLivraisonDTO>;
+}
+
+/**
  * Cloture la tournee du livreur (US-007 — POST /api/tournees/{tourneeId}/cloture).
  *
  * @param tourneeId identifiant de la tournee a cloturer
@@ -200,5 +261,27 @@ export class ColisEncoreALivrerError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ColisEncoreALivrerError';
+  }
+}
+
+/**
+ * Erreur metier : livraison déjà confirmée pour ce colis (US-008/009).
+ * Correspond au cas 409 — invariant PreuveLivraison (immuable).
+ */
+export class LivraisonDejaConfirmeeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LivraisonDejaConfirmeeError';
+  }
+}
+
+/**
+ * Erreur metier : données de preuve invalides (US-008/009).
+ * Correspond au cas 400 — signature vide, nom tiers absent, etc.
+ */
+export class DonneesPreuveInvalidesError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DonneesPreuveInvalidesError';
   }
 }

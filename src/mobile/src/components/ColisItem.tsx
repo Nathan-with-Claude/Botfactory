@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ColisDTO, StatutColis } from '../api/tourneeTypes';
 
 /**
@@ -12,11 +12,15 @@ import { ColisDTO, StatutColis } from '../api/tourneeTypes';
  * - Badge statut colore (A_LIVRER = bleu, LIVRE = vert, ECHEC = rouge, A_REPRESENTER = orange)
  * - Contraintes (mise en evidence si contrainte horaire)
  *
+ * Interactions :
+ * - Appui sur l'item : navigue vers M-03 (Detail du colis) via la prop onPress (US-004)
+ *
  * Source wireframe : M-02 — Liste des colis de la tournee.
  */
 
 interface ColisItemProps {
   colis: ColisDTO;
+  onPress?: (colisId: string) => void; // US-004 : navigation vers DetailColisScreen
 }
 
 const STATUT_LABELS: Record<StatutColis, string> = {
@@ -33,15 +37,19 @@ const STATUT_COLORS: Record<StatutColis, string> = {
   A_REPRESENTER: '#FF9800', // orange
 };
 
-export const ColisItem: React.FC<ColisItemProps> = ({ colis }) => {
+export const ColisItem: React.FC<ColisItemProps> = ({ colis, onPress }) => {
   const statutColor = STATUT_COLORS[colis.statut];
   const statutLabel = STATUT_LABELS[colis.statut];
-  const estTraite = colis.statut !== 'A_LIVRER';
+  const estTraite = colis.estTraite;
 
   return (
-    <View
+    <TouchableOpacity
       style={[styles.container, estTraite && styles.containerTraite]}
       testID="colis-item"
+      onPress={() => onPress?.(colis.colisId)}
+      accessibilityRole="button"
+      accessibilityLabel={`Voir le detail du colis ${colis.colisId}`}
+      activeOpacity={0.7}
     >
       {/* En-tete : adresse + badge statut */}
       <View style={styles.header}>
@@ -88,7 +96,7 @@ export const ColisItem: React.FC<ColisItemProps> = ({ colis }) => {
           ))}
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
 

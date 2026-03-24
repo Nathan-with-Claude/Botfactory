@@ -149,3 +149,99 @@ Quatre bugs trouvés et corrigés pendant l'implémentation de US-002 :
 - `src/mobile/src/screens/ListeColisScreen.tsx` (bouton clôture + styles)
 - `src/mobile/src/__tests__/ListeColisScreen.test.tsx` (+4 tests US-002)
 - `src/mobile/package.json` (bugfix setupFilesAfterEnv)
+
+---
+
+## Commandes de lancement (tests manuels)
+
+### Backend — svc-tournee
+
+Le wrapper `mvnw` n'est pas committé dans le dépôt (seul `.mvn/wrapper/maven-wrapper.properties` est present).
+Deux options selon l'environnement :
+
+#### Option A — Maven installé globalement (recommandé en local)
+
+```bash
+cd src/backend/svc-tournee
+mvn spring-boot:run
+# API disponible sur http://localhost:8080
+```
+
+#### Option B — Générer le wrapper mvnw puis l'utiliser
+
+```bash
+cd src/backend/svc-tournee
+mvn wrapper:wrapper       # genere mvnw / mvnw.cmd
+./mvnw spring-boot:run    # Linux/macOS
+mvnw.cmd spring-boot:run  # Windows
+# API disponible sur http://localhost:8080
+```
+
+Note JAVA_HOME (specifique a cette machine) : le PATH contient JDK 25 mais JAVA_HOME peut pointer sur JDK 20.
+Pour eviter les incompatibilites de compilation, lancer avec :
+
+```bash
+JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-25.0.2.10-hotspot" mvn spring-boot:run
+```
+
+### Mobile — React Native / Expo
+
+```bash
+cd src/mobile
+npm install        # si pas encore fait (installe les dependances node_modules/)
+npm start          # lance le serveur Expo (equivalent a : npx expo start)
+# Scanner le QR code avec l'application Expo Go (Android/iOS)
+# ou appuyer sur 'a' pour ouvrir Android Emulator
+# ou appuyer sur 'i' pour ouvrir iOS Simulator (macOS uniquement)
+```
+
+Pour cibler directement Android :
+
+```bash
+npm run android    # equivalent a : npx expo start --android
+```
+
+### URLs de test
+
+- **Liste des colis de la tournee** :
+
+  ```text
+  GET http://localhost:8080/api/tournees/{tourneeId}/colis
+  ```
+
+  Remplacer `{tourneeId}` par l'ID de la tournee seedee en profil dev.
+  Exemple : `GET http://localhost:8080/api/tournees/tournee-livreur-001/colis`
+
+- **Donnees de test seedees automatiquement (profil dev)** :
+  Le `DevDataSeeder` cree une tournee avec 5 colis au demarrage :
+  - 3 colis au statut `A_LIVRER`
+  - 1 colis au statut `LIVRE`
+  - 1 colis au statut `ECHEC`
+
+  Le bandeau de progression doit afficher : **"Reste a livrer : 3 / 5"**
+  Le bouton "Cloture la tournee" ne doit PAS etre visible (resteALivrer > 0).
+
+- **Verifier l'avancement via l'API** :
+
+  ```text
+  GET http://localhost:8080/api/tournees/today
+  ```
+
+  Le champ `resteALivrer` dans la reponse JSON doit valoir `3`.
+
+### Tests unitaires backend
+
+```bash
+cd src/backend/svc-tournee
+JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-25.0.2.10-hotspot" mvn test
+# Resultat attendu : 23 tests verts (TourneeTest, AvancementCalculatorTest, ConsulterListeColisHandlerTest)
+# Note : TourneeControllerTest peut echouer en raison de BUG-002 (Spring ASM + Java 25)
+```
+
+### Tests unitaires mobile
+
+```bash
+cd src/mobile
+npm test
+# Resultat attendu : tous les tests Jest verts (ListeColisScreen.test.tsx)
+```

@@ -54,6 +54,9 @@ class TourneeControllerTest {
     @MockBean
     private com.docapost.tournee.application.CloturerTourneeHandler cloturerTourneeHandler;
 
+    @MockBean
+    private com.docapost.tournee.application.ConfirmerLivraisonHandler confirmerLivraisonHandler;
+
     @Test
     @DisplayName("GET /api/tournees/today retourne 200 avec la liste des colis")
     @WithMockUser(username = "livreur-001", roles = "LIVREUR")

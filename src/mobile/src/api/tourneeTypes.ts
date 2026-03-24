@@ -87,6 +87,53 @@ export interface DeclarerEchecRequest {
   noteLibre?: string;
 }
 
+// ─── US-008 / US-009 : Types de preuve de livraison ─────────────────────────
+
+/** Types de preuve de livraison (BC-02). */
+export type TypePreuve =
+  | 'SIGNATURE'
+  | 'PHOTO'
+  | 'TIERS_IDENTIFIE'
+  | 'DEPOT_SECURISE';
+
+/** Labels affichés à l'écran M-04 pour chaque type de preuve. */
+export const TYPE_PREUVE_LABELS: Record<TypePreuve, string> = {
+  SIGNATURE: 'Signature du destinataire',
+  PHOTO: 'Photo du colis déposé',
+  TIERS_IDENTIFIE: 'Dépôt chez un tiers',
+  DEPOT_SECURISE: 'Dépôt sécurisé',
+};
+
+/** Coordonnées GPS optionnelles (null = mode dégradé GPS). */
+export interface CoordonneesGPS {
+  latitude: number;
+  longitude: number;
+}
+
+/** Requête POST /api/tournees/{tourneeId}/colis/{colisId}/livraison (US-008 + US-009). */
+export interface ConfirmerLivraisonRequest {
+  typePreuve: TypePreuve;
+  coordonneesGps?: CoordonneesGPS;
+  // SIGNATURE
+  donneesSignature?: string;
+  // PHOTO
+  urlPhoto?: string;
+  hashIntegrite?: string;
+  // TIERS_IDENTIFIE
+  nomTiers?: string;
+  // DEPOT_SECURISE
+  descriptionDepot?: string;
+}
+
+/** Réponse de POST /api/tournees/{tourneeId}/colis/{colisId}/livraison. */
+export interface PreuveLivraisonDTO {
+  preuveLivraisonId: string;
+  colisId: string;
+  typePreuve: TypePreuve;
+  horodatage: string; // ISO-8601
+  modeDegradeGps: boolean;
+}
+
 /** Récapitulatif retourné après clôture de tournée (US-007). */
 export interface RecapitulatifTourneeDTO {
   tourneeId: string;

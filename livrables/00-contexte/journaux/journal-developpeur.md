@@ -50,8 +50,8 @@ US-019/020 (SSO auth)
 | US-005 | Déclarer échec | BC-01 | Implémenté | Sprint 1 | feature/US-001 | MotifNonLivraison + Disposition enums, declarerEchecLivraison() Aggregate, POST /echec, écran M-05. 54/54 backend + 64/64 Jest verts. |
 | US-006 | Mode offline | BC-01 | À faire | — | — | SQLite + sync queue, taille L — reporté (dépend d'infra native WatermelonDB) |
 | US-007 | Clôturer tournée | BC-01 | Implémenté | Sprint 1 | feature/US-001 | RecapitulatifTournee VO + TourneeCloturee event + CloturerTourneeHandler + POST /cloture + RecapitulatifTourneeScreen M-07. 67/67 backend + 74/74 Jest verts. |
-| US-008 | Capturer signature | BC-02 | À faire | — | — | Écran M-04 |
-| US-009 | Capturer photo/tiers | BC-02 | À faire | — | — | Écran M-05 |
+| US-008 | Capturer signature | BC-02 | Implémenté | Sprint 1 | feature/US-001 | BC-02 collocalisé dans svc-tournee. PreuveLivraison Aggregate + 4 factory methods + LivraisonConfirmee event. 97/97 backend + 93/93 Jest verts. |
+| US-009 | Capturer photo/tiers | BC-02 | Implémenté | Sprint 1 | feature/US-001 | Partagé avec US-008. TIERS_IDENTIFIE + DEPOT_SECURISE + PHOTO. Capture caméra native déférée (US-010). 93/93 Jest verts. |
 | US-010 | Consulter preuve | BC-02 | À faire | — | — | Should Have |
 | US-011 | Tableau de bord | BC-03 | À faire | — | — | Écran W-01 |
 | US-012 | Détail tournée superviseur | BC-03 | À faire | — | — | Écran W-02 |
@@ -79,6 +79,11 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-23 | US-004 | Implémentation détail colis : ConsulterDetailColisCommand/Handler + ColisNotFoundException (backend) + endpoint GET /api/tournees/{tourneeId}/colis/{colisId} + DetailColisScreen M-03 (mobile) + ColisItem navigable + navigation interne ListeColisScreen. TDD : 11 tests backend + 16 tests Jest. 34/34 backend verts + 50/50 Jest verts. | /livrables/06-dev/vertical-slices/US-004-impl.md |
 | 2026-03-24 | US-005 | Implémentation déclaration d'échec : MotifNonLivraison + Disposition (enums domain), EchecLivraisonDeclare (Domain Event), Tournee.declarerEchecLivraison() (Aggregate, invariants), ColisEntity enrichie, POST /api/tournees/{tourneeId}/colis/{colisId}/echec (409 si transition interdite), écran M-05 DeclarerEchecScreen (motifs radio, dispositions radio, note optionnelle), navigation M-03→M-05→M-02. TDD : 20 tests backend + 14 tests Jest. 54/54 backend verts + 64/64 Jest verts. | /livrables/06-dev/vertical-slices/US-005-impl.md |
 | 2026-03-24 | US-007 | Implémentation clôture de tournée : RecapitulatifTournee (Value Object domain), TourneeCloturee (Domain Event), Tournee.cloturerTournee() (idempotent, invariant A_LIVRER), CloturerTourneeCommand + CloturerTourneeHandler + RecapitulatifTourneeResult (application), POST /api/tournees/{id}/cloture (200/404/409), RecapitulatifTourneeScreen M-07 (compteurs + satisfaction 1-5 + bouton Terminer), bouton Clôturer connecté dans ListeColisScreen. US-006 (offline, L) écartée — trop volumineuse. TDD : 13 tests backend + 10 tests Jest. 67/67 backend verts + 74/74 Jest verts. | /livrables/06-dev/vertical-slices/US-007-impl.md |
+| 2026-03-24 | BUG-A | Correction testID manquant sur root View DetailColisScreen (état succes) — requis par QA Playwright | /src/mobile/src/screens/DetailColisScreen.tsx |
+| 2026-03-24 | BUG-B | Correction testID manquant sur root View DeclarerEchecScreen — requis par QA Playwright | /src/mobile/src/screens/DeclarerEchecScreen.tsx |
+| 2026-03-24 | BUG-C | Correction RecapitulatifTournee.calculer() : colisARepresenter filtre désormais statut=ECHEC+disposition=A_REPRESENTER (et non StatutColis.A_REPRESENTER jamais utilisé). Ajout 2 tests unitaires. | /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/RecapitulatifTournee.java, TourneeTest.java |
+| 2026-03-24 | US-008 | Implémentation signature numérique : BC-02 collocalisé (domain/preuves/), PreuveLivraison Aggregate immuable + 4 factory methods, ConfirmerLivraisonHandler, POST /livraison endpoint, CapturePreuveScreen M-04 (pad signature MVP). TDD : 12+8+8 tests backend + 19 tests Jest. 97/97 backend verts + 93/93 Jest verts. | /livrables/06-dev/vertical-slices/US-008-impl.md |
+| 2026-03-24 | US-009 | Implémentation preuves alternatives (PHOTO, TIERS_IDENTIFIE, DEPOT_SECURISE) : VO TiersIdentifie + DepotSecurise + PhotoPreuve, factory methods, zones de capture dans CapturePreuveScreen. Capture caméra native déférée à US-010. Tests inclus dans les suites US-008. 93/93 Jest verts. | /livrables/06-dev/vertical-slices/US-009-impl.md |
 
 ---
 
@@ -111,6 +116,11 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | US-007 | RecapitulatifTourneeResult nommé avec suffixe "Result" (pas "Recap") | Collision de nom avec domain.model.RecapitulatifTournee — Java ne permet pas d'avoir le même nom simple dans application et domain dans le même contexte de compilation |
 | 2026-03-24 | US-007 | US-006 (Mode offline) écartée de cette session | Taille L (8 points), nécessite WatermelonDB natif, sync queue, idempotence UUID v7 backend, store objet preuves — hors périmètre d'une seule session. Implémentation US-007 (S = 3 points) conforme à la note dans la mission |
 | 2026-03-24 | US-007 | Scénario "clôture bloquée si sync offline en attente" non implémenté | Dépend de US-006 — invariant dans la spec mais non activé côté mobile (pas de sync queue existante) |
+| 2026-03-24 | BUG-C | RecapitulatifTournee.calculer() filtrait sur StatutColis.A_REPRESENTER (enum jamais émis par declarerEchecLivraison) | Corriger pour filtrer statut=ECHEC && disposition=A_REPRESENTER. Fix + 2 nouveaux tests + fix test cloturerTournee_emet_event_avec_recap qui utilisait le mauvais statut. |
+| 2026-03-24 | US-008/009 | BC-02 collocalisé dans svc-tournee (package domain/preuves/) pour le MVP | Coût de déploiement d'un second service non justifié au MVP. TODO : extraire vers svc-gestion-preuves quand BC-02 grandit. |
+| 2026-03-24 | US-008/009 | Pad signature MVP = TouchableOpacity simulé + event onSignatureCapturee | react-native-signature-canvas non installé. Testable via fireEvent(pad, 'signatureCapturee', data). Intégration réelle déférée à US-010. |
+| 2026-03-24 | US-008/009 | TourneeControllerTest / CloturerTourneeControllerTest / DetailColisControllerTest / EchecLivraisonControllerTest : ajout @MockBean ConfirmerLivraisonHandler | L'ajout de ConfirmerLivraisonHandler dans le constructeur TourneeController cassait toutes les suites @WebMvcTest existantes — le @MockBean est nécessaire pour que Spring crée le contexte. |
+| 2026-03-24 | US-009 | Capture caméra native (expo-image-picker + upload S3) déférée à US-010 | expo-image-picker non encore provisionné. Le VO PhotoPreuve et la factory capturePhoto() sont prêts côté backend. |
 
 ---
 

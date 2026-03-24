@@ -113,6 +113,9 @@ Avant de commencer, tu DOIS disposer de :
   - créer une branche `feature/US-xxx`.
   - committer les changements associés à la US.
   - ouvrir une PR et lier l’issue correspondante.
+- playwright : 
+  - vérifier visuellement que l'implémentation correspond au wireframe,
+  - tester rapidement le flow de la US avant de livrer.
 
 
 N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

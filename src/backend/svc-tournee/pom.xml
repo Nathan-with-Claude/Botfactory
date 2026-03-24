@@ -23,7 +23,7 @@
     <description>BC-01 Orchestration de Tournee — Service Spring Boot</description>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>20</java.version>
     </properties>
 
     <dependencies>
@@ -85,11 +85,15 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            <!-- Correction BUG-002 : Spring ASM ne supporte pas les .class Java 25.
-                 spring.classformat.ignore=true evite l'echec du scan de classpath
-                 lors des tests @WebMvcTest et @SpringBootTest.
-                 Passe en system property JVM (avant tout chargement de contexte Spring).
-                 A supprimer quand Spring Boot sera compatible avec Java 25+ ASM. -->
+            <!-- Correction BUG-002 : deux problemes avec Java 25 + Spring Boot 3.4.x
+                 1. Spring ASM 9.x ne supporte pas les .class Java 25 (format 69) :
+                    spring.classformat.ignore=true evite l'echec du scan de classpath
+                    lors des tests @WebMvcTest et @SpringBootTest.
+                 2. Mockito inline-mock-maker ne peut pas transformer java.lang.Object
+                    sur Java 25 (restriction JVM renforcee).
+                    Solution : fichier mockito-extensions/org.mockito.plugins.MockMaker
+                    configure mock-maker-subclass (CGLIB proxy, sans instrumentation bytecode).
+                 A revisiter lors de la migration vers Spring Boot 3.5+ / Mockito 6+. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

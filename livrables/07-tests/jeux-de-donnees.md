@@ -2,7 +2,7 @@
 
 **Produit par** : @qa
 **Date de création** : 2026-03-20
-**Dernière mise à jour** : 2026-03-20 (US-001)
+**Dernière mise à jour** : 2026-03-23 (US-003)
 
 > Ce fichier centralise les jeux de données de test pour tous les scénarios QA.
 > Il est alimenté au fur et à mesure des User Stories traitées.
@@ -208,3 +208,213 @@ Colis :
 **Résultat attendu** :
 - `calculerAvancement().colisTraites()` == 3 (COL-A + COL-B + COL-C).
 - `calculerAvancement().colisTotal()` == 5.
+
+---
+
+## Jeux de données US-003 : Filtrer et organiser les colis par zone géographique
+
+### JDD-US003-01 : Tournée standard 3 zones (22 colis) — Scénarios SC1 et SC2
+
+**Usage** : TC-057, TC-058, TC-059, TC-060, TC-061, TC-062, TC-063
+**Profil** : test composant (React Native Testing Library — mock API)
+**Contexte** : Tournée nominale Pierre Morel — données conformes au scénario SC1 de la US-003 (22 colis répartis en 3 zones, 20 restants à livrer).
+
+```
+Tournée :
+  tourneeId    = tournee-003
+  livreurId    = livreur-001
+  date         = 2026-03-23
+  statut       = DEMARREE
+  resteALivrer = 20
+  colisTotal   = 22
+  colisTraites = 2
+  estimationFin = null
+
+Zone A — 8 colis (tous A_LIVRER) :
+  zone-a-1 : 1 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+  zone-a-2 : 2 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+  zone-a-3 : 3 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+  zone-a-4 : 4 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+  zone-a-5 : 5 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+  zone-a-6 : 6 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+  zone-a-7 : 7 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+  zone-a-8 : 8 Rue Alpha, 69001 Lyon — Zone A — A_LIVRER
+
+Zone B — 9 colis (tous A_LIVRER) :
+  zone-b-1 : 1 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-2 : 2 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-3 : 3 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-4 : 4 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-5 : 5 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-6 : 6 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-7 : 7 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-8 : 8 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+  zone-b-9 : 9 Rue Beta, 69002 Lyon — Zone B — A_LIVRER
+
+Zone C — 5 colis (2 LIVRE + 3 A_LIVRER) :
+  zone-c-1 : 1 Rue Gamma, 69003 Lyon — Zone C — LIVRE
+  zone-c-2 : 2 Rue Gamma, 69003 Lyon — Zone C — LIVRE
+  zone-c-3 : 3 Rue Gamma, 69003 Lyon — Zone C — A_LIVRER
+  zone-c-4 : 4 Rue Gamma, 69003 Lyon — Zone C — A_LIVRER
+  zone-c-5 : 5 Rue Gamma, 69003 Lyon — Zone C — A_LIVRER
+```
+
+---
+
+### JDD-US003-02 : Tournée Zone C entièrement traitée — Scénario SC3
+
+**Usage** : TC-064
+**Profil** : test composant (React Native Testing Library — mock API)
+**Contexte** : Variante de JDD-US003-01 où tous les colis de Zone C sont LIVRE (resteALivrer = 17).
+
+```
+Tournée :
+  tourneeId    = tournee-003
+  livreurId    = livreur-001
+  date         = 2026-03-23
+  statut       = DEMARREE
+  resteALivrer = 17
+  colisTotal   = 22
+  colisTraites = 5
+  estimationFin = null
+
+Zone A — 8 colis (inchangé depuis JDD-US003-01, tous A_LIVRER)
+Zone B — 9 colis (inchangé depuis JDD-US003-01, tous A_LIVRER)
+
+Zone C — 5 colis (tous LIVRE) :
+  zone-c-1 : 1 Rue Gamma, 69003 Lyon — Zone C — LIVRE
+  zone-c-2 : 2 Rue Gamma, 69003 Lyon — Zone C — LIVRE
+  zone-c-3 : 3 Rue Gamma, 69003 Lyon — Zone C — LIVRE
+  zone-c-4 : 4 Rue Gamma, 69003 Lyon — Zone C — LIVRE
+  zone-c-5 : 5 Rue Gamma, 69003 Lyon — Zone C — LIVRE
+```
+
+**Résultat attendu (TC-064)** :
+- Filtre Zone C : 5 colis visibles, 0 avec statut A_LIVRER.
+- Bandeau : "Reste à livrer : 17 / 22" (inchangé par le filtre).
+
+---
+
+### JDD-US003-03 : Tournée sans zones définies — Edge case
+
+**Usage** : TC-065
+**Profil** : test composant (React Native Testing Library — mock API)
+**Contexte** : Tournée dont tous les colis ont `zoneGeographique = null`. Permet de valider que la barre d'onglets est absente.
+
+```
+Tournée :
+  tourneeId    = tournee-003
+  livreurId    = livreur-001
+  date         = 2026-03-23
+  statut       = DEMARREE
+  resteALivrer = 20
+  colisTotal   = 22
+  colisTraites = 2
+  estimationFin = null
+
+Colis (22 colis) :
+  Tous les colis sont identiques à JDD-US003-01 mais avec zoneGeographique = null
+  dans leur adresseLivraison.
+```
+
+**Résultat attendu (TC-065)** :
+- `onglets-zones` absent du rendu (queryByTestId retourne null).
+- `flatlist-colis` présent et affiche tous les 22 colis.
+- Aucune erreur React levée.
+
+---
+
+### JDD-US003-04 : DevDataSeeder — 5 colis 3 zones (tests manuels + E2E)
+
+**Usage** : TC-070, TC-071, TC-072, TC-073 (E2E), tests manuels poste de commande
+**Profil** : dev (DevDataSeeder Spring Boot — profil `dev`)
+**Contexte** : Données injectées automatiquement au démarrage du backend en profil dev. Représentatif d'une petite tournée pour valider visuellement les fonctionnalités.
+
+```
+Tournée :
+  id           = (généré par le DevDataSeeder)
+  livreurId    = LIV-001
+  date         = AUJOURD'HUI
+  statut       = PLANIFIEE
+
+Colis :
+  colis-dev-001 :
+    adresse       = 12 Rue du Port, 69003 Lyon
+    zone          = Zone A
+    statut        = A_LIVRER
+    destinataire  = M. Bertrand
+
+  colis-dev-002 :
+    adresse       = 4 Allée des Roses, 69006 Lyon
+    zone          = Zone B
+    statut        = A_LIVRER
+    destinataire  = Mme Faure
+
+  colis-dev-003 :
+    adresse       = 8 Cours Gambetta, 69007 Lyon
+    zone          = Zone B
+    statut        = A_LIVRER
+    destinataire  = M. Rousseau
+
+  colis-dev-004 :
+    adresse       = 23 Avenue Jean Jaurès, 69007 Lyon
+    zone          = Zone C
+    statut        = LIVRE
+    destinataire  = Mme Chen
+
+  colis-dev-005 :
+    adresse       = 7 Rue de la République, 69002 Lyon
+    zone          = Zone A
+    statut        = ECHEC
+    destinataire  = M. Petit
+```
+
+**Répartition attendue** :
+- Zone A : 2 colis (colis-001 A_LIVRER, colis-005 ECHEC)
+- Zone B : 2 colis (colis-002 et colis-003 A_LIVRER)
+- Zone C : 1 colis (colis-004 LIVRE)
+- resteALivrer = 3 (A_LIVRER uniquement), colisTotal = 5
+
+**URL de vérification** :
+```
+GET http://localhost:8080/api/tournees/today
+```
+
+---
+
+### JDD-US003-05 : Logique pure — Données de test pour extraireZonesDisponibles
+
+**Usage** : TC-046 à TC-056 (tests unitaires domain `filtreZone.domain.test.ts`)
+**Profil** : test unitaire pur (pas de persistance, pas de React)
+**Contexte** : Jeux de données en mémoire pour tester les fonctions pures du domaine.
+
+```
+Jeu A — 4 colis avec doublons et ordre non alphabétique :
+  c1 : zoneGeographique = 'Zone C'
+  c2 : zoneGeographique = 'Zone A'
+  c3 : zoneGeographique = 'Zone B'
+  c4 : zoneGeographique = 'Zone A'  ← doublon
+  → extraireZonesDisponibles → ['Zone A', 'Zone B', 'Zone C']
+
+Jeu B — colis avec zone null :
+  c1 : zoneGeographique = 'Zone A'
+  c2 : zoneGeographique = null
+  c3 : zoneGeographique = 'Zone B'
+  → extraireZonesDisponibles → ['Zone A', 'Zone B']
+
+Jeu C — zones vides et espaces :
+  c1 : zoneGeographique = 'Zone A'
+  c2 : zoneGeographique = ''
+  c3 : zoneGeographique = '   '
+  → extraireZonesDisponibles → ['Zone A']
+
+Jeu D — filtrerColisByZone ZONE_TOUS :
+  5 colis (Zone A ×2, Zone B ×1, Zone C ×1, sans zone ×1)
+  filtreZone = ZONE_TOUS
+  → tous les 5 colis retournés (même référence)
+
+Jeu E — filtrerColisByZone 'Zone Inexistante' :
+  5 colis sans colis de 'Zone Inexistante'
+  filtreZone = 'Zone Inexistante'
+  → [] (liste vide, pas d'erreur)
+```

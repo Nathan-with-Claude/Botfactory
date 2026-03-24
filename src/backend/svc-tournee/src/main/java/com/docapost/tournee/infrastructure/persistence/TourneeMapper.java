@@ -12,6 +12,8 @@ import java.util.List;
  * Regles :
  * - toDomain : entity → agregat domain
  * - toEntity : agregat domain → entity (pour sauvegarde)
+ *
+ * US-005 : mapping de motifNonLivraison et disposition sur ColisEntity ↔ Colis.
  */
 @Component
 public class TourneeMapper {
@@ -47,11 +49,23 @@ public class TourneeMapper {
     }
 
     /**
-     * Met a jour uniquement le statut d'une entite existante (optimisation : evite delete/insert).
+     * Met a jour le statut de la tournee et les statuts/motifs/dispositions de chaque colis.
+     * Appele par TourneeRepositoryImpl.save() pour une tournee existante.
      */
     public void updateStatut(TourneeEntity entity, Tournee tournee) {
         entity.setStatut(tournee.getStatut());
-        // Les statuts de colis individuels seront mis a jour dans US-004/005
+
+        // US-005 : mettre a jour les statuts, motifs et dispositions de chaque colis
+        for (Colis colis : tournee.getColis()) {
+            entity.getColis().stream()
+                    .filter(ce -> ce.getId().equals(colis.getId().value()))
+                    .findFirst()
+                    .ifPresent(ce -> {
+                        ce.setStatut(colis.getStatut());
+                        ce.setMotifNonLivraison(colis.getMotifNonLivraison());
+                        ce.setDisposition(colis.getDisposition());
+                    });
+        }
     }
 
     // ─── Helpers prive ────────────────────────────────────────────────────────
@@ -73,7 +87,9 @@ public class TourneeMapper {
                         colisEntity.getAdresseZoneGeographique()
                 ),
                 new Destinataire(colisEntity.getDestinataireNom(), colisEntity.getDestinataireTeéléphone()),
-                contraintes
+                contraintes,
+                colisEntity.getMotifNonLivraison(),
+                colisEntity.getDisposition()
         );
     }
 
@@ -90,6 +106,9 @@ public class TourneeMapper {
                 colis.getDestinataire().nom(),
                 colis.getDestinataire().telephoneChiffre()
         );
+
+        colisEntity.setMotifNonLivraison(colis.getMotifNonLivraison());
+        colisEntity.setDisposition(colis.getDisposition());
 
         List<ColisContrainteEmbeddable> contraintesEmb = colis.getContraintes().stream()
                 .map(c -> new ColisContrainteEmbeddable(c.type(), c.valeur()))
