@@ -568,3 +568,33 @@
 
 - 2026-03-24T10:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
   US-007 → statut "Implémenté". US-006 → reporté (taille L). Décisions et interventions ajoutées.
+
+- 2026-03-24T14:30Z @developpeur FIX → /src/mobile/src/screens/DetailColisScreen.tsx
+  BUG-A : ajout testID="detail-colis-screen" sur la View racine de l'état succès (requis par QA Playwright).
+
+- 2026-03-24T14:30Z @developpeur FIX → /src/mobile/src/screens/DeclarerEchecScreen.tsx
+  BUG-B : ajout testID="declarer-echec-screen" sur la View racine (requis par QA Playwright).
+
+- 2026-03-24T14:30Z @developpeur FIX → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/model/RecapitulatifTournee.java
+  BUG-C : colisARepresenter filtre désormais statut=ECHEC && disposition=A_REPRESENTER. Ajout 2 tests unitaires.
+
+- 2026-03-24T14:45Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/domain/preuves/
+  US-008/009 : BC-02 Preuves de Livraison collocalisé. PreuveLivraison Aggregate + 4 factory methods + VOs SignatureNumerique, TiersIdentifie, DepotSecurise, PhotoPreuve. PreuveCapturee event.
+
+- 2026-03-24T14:45Z @developpeur CREATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/application/ConfirmerLivraisonHandler.java
+  US-008 : application handler orchestrant la capture de preuve et la confirmation de livraison.
+
+- 2026-03-24T14:45Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/rest/TourneeController.java
+  US-008/009 : ajout endpoint POST /api/tournees/{tourneeId}/colis/{colisId}/livraison.
+
+- 2026-03-24T14:45Z @developpeur CREATE → /src/mobile/src/screens/CapturePreuveScreen.tsx
+  US-008/009 : écran M-04 avec pad signature MVP, options TIERS_IDENTIFIE, DEPOT_SECURISE, PHOTO.
+
+- 2026-03-24T14:45Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-008-impl.md
+  Documentation vertical slice US-008. 97/97 tests backend verts + 93/93 Jest verts.
+
+- 2026-03-24T14:45Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-009-impl.md
+  Documentation vertical slice US-009 (partagé avec US-008, preuves alternatives).
+
+- 2026-03-24T15:00Z @developpeur COMMIT → feature/US-001
+  Commit 08e670c : regroupement Sprint 1 — US-003 à US-009 + BUG-A/B/C. 104 fichiers, 97/97 backend + 93/93 Jest verts.

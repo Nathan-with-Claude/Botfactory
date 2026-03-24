@@ -121,6 +121,7 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | US-008/009 | Pad signature MVP = TouchableOpacity simulé + event onSignatureCapturee | react-native-signature-canvas non installé. Testable via fireEvent(pad, 'signatureCapturee', data). Intégration réelle déférée à US-010. |
 | 2026-03-24 | US-008/009 | TourneeControllerTest / CloturerTourneeControllerTest / DetailColisControllerTest / EchecLivraisonControllerTest : ajout @MockBean ConfirmerLivraisonHandler | L'ajout de ConfirmerLivraisonHandler dans le constructeur TourneeController cassait toutes les suites @WebMvcTest existantes — le @MockBean est nécessaire pour que Spring crée le contexte. |
 | 2026-03-24 | US-009 | Capture caméra native (expo-image-picker + upload S3) déférée à US-010 | expo-image-picker non encore provisionné. Le VO PhotoPreuve et la factory capturePhoto() sont prêts côté backend. |
+| 2026-03-24 | REPRISE | Vérification complète de l'état après interruption de session : tous les fichiers bien présents, 97/97 backend + 93/93 Jest verts confirmés. Commit 08e670c créé avec tous les fichiers non commités (Sprint 1 complet). | feature/US-001 |
 
 ---
 
