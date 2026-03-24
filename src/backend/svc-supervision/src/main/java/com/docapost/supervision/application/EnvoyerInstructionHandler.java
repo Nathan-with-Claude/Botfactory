@@ -58,16 +58,13 @@ public class EnvoyerInstructionHandler {
                 command.creneauCible()
         );
 
-        // Persister
-        Instruction sauvegardee = instructionRepository.save(instruction);
-
-        // Publier les événements (collect-and-publish)
-        // Dans le MVP, les événements sont loggués — Kafka à connecter en Sprint 3
-        sauvegardee.clearEvenements();
+        // Persister (collect-and-publish : publier après sauvegarde)
+        instructionRepository.save(instruction);
+        instruction.clearEvenements();
 
         // Broadcast WebSocket tableau de bord
         broadcaster.broadcastTableauDeBord();
 
-        return sauvegardee;
+        return instruction;
     }
 }

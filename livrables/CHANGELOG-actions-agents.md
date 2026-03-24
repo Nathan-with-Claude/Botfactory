@@ -652,3 +652,114 @@
 
 - 2026-03-24T15:00Z @developpeur COMMIT → feature/US-001
   Commit 08e670c : regroupement Sprint 1 — US-003 à US-009 + BUG-A/B/C. 104 fichiers, 97/97 backend + 93/93 Jest verts.
+
+- 2026-03-24T16:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/events/InstructionExecutee.java
+  US-015 : nouveau domain event InstructionExecutee (transition ENVOYEE → EXECUTEE).
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/model/Instruction.java
+  US-015 : ajout Instruction.marquerExecutee(livreurId) + List<Object> evenements.
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/repository/InstructionRepository.java
+  US-015/016 : ajout findById, findByTourneeId, update, findEnAttenteParTournee.
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/persistence/InstructionJpaRepository.java, InstructionRepositoryImpl.java, InstructionEntity.java
+  US-015 : findByTourneeIdOrderByHorodatageDesc, findByTourneeIdAndStatut, update(), setStatut(), toInstruction().
+
+- 2026-03-24T16:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/MarquerInstructionExecuteeCommand.java, MarquerInstructionExecuteeHandler.java, InstructionNotFoundException.java, ConsulterInstructionsParTourneeQuery.java, ConsulterInstructionsParTourneeHandler.java, ConsulterInstructionsEnAttenteQuery.java, ConsulterInstructionsEnAttenteHandler.java
+  US-015/016 : application layer — command, handlers, exception.
+
+- 2026-03-24T16:00Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/dto/InstructionDTO.java
+  US-015 : DTO réponse pour les instructions (GET tournee + GET en-attente + PATCH executer).
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/rest/InstructionController.java
+  US-015/016 : 3 nouveaux endpoints (GET /tournee/{id}, PATCH /{id}/executer, GET /en-attente).
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/seeder/DevDataSeeder.java
+  US-015 : ajout 2 instructions de test pour tournee-sup-001 (1 ENVOYEE, 1 EXECUTEE).
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/domain/InstructionTest.java, interfaces/InstructionControllerTest.java
+  US-015 : +3 tests domaine marquerExecutee, +4 tests controller nouveaux endpoints.
+
+- 2026-03-24T16:00Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/application/MarquerInstructionExecuteeHandlerTest.java, ConsulterInstructionsParTourneeHandlerTest.java
+  US-015 : 3 + 2 tests handler (TDD).
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/web/supervision/src/pages/DetailTourneePage.tsx, __tests__/DetailTourneePage.test.tsx
+  US-015 : onglet Instructions (badge orange, statuts En attente / Exécutée) + 3 nouveaux tests Jest.
+
+- 2026-03-24T16:00Z @developpeur CREATE → /src/mobile/src/api/supervisionApi.ts
+  US-015/016 : client API svc-supervision — getInstructionsEnAttente + marquerInstructionExecutee.
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/mobile/src/screens/DetailColisScreen.tsx
+  US-015 : auto-marquer instruction ENVOYEE comme exécutée au chargement M-03 (transparent, silencieux).
+
+- 2026-03-24T16:00Z @developpeur CREATE → /src/mobile/src/components/BandeauInstructionOverlay.tsx
+  US-016 : composant M-06 — bandeau overlay orange, slide-down animation, auto-fermeture 10s, bouton VOIR.
+
+- 2026-03-24T16:00Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-016 : polling toutes les 10s + affichage BandeauInstructionOverlay si nouvelle instruction détectée.
+
+- 2026-03-24T16:00Z @developpeur CREATE → /src/mobile/src/__tests__/BandeauInstructionOverlay.test.tsx
+  US-016 : 5 tests Jest (rendu, onVoir, onFermer, auto-fermeture timer, bouton VOIR).
+
+- 2026-03-24T16:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-015-impl.md
+  Documentation vertical slice US-015. 50 tests backend + 3 tests web Jest verts.
+
+- 2026-03-24T16:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-016-impl.md
+  Documentation vertical slice US-016. 5 tests Jest mobile verts. FCM déféré Sprint 3.
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/planification/
+  BC-07 Planification Domain Layer : TourneePlanifiee Aggregate Root + ZoneTournee + ContrainteHoraire + Anomalie VOs + StatutAffectation + PlanificationInvariantException + 4 Domain Events + TourneePlanifieeRepository interface.
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/planification/
+  BC-07 Application Layer : ConsulterPlanDuJourHandler/Query + ConsulterDetailHandler + ValiderCompositionHandler + AffecterLivreurVehiculeHandler + LancerTourneeHandler + exceptions métier (LivreurDejaAffecte, VehiculeDejaAffecte, TourneePlanifieeNotFound).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/planification/
+  BC-07 Infrastructure Layer : TourneePlanifieeEntity JPA + TourneePlanifieeJpaRepository + TourneePlanifieeMapper (JSON) + TourneePlanifieeRepositoryImpl (upsert).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/planification/
+  BC-07 Interface Layer : PlanificationController (7 endpoints) + DTOs (PlanDuJourDTO, TourneePlanifieeDTO, TourneePlanifieeDetailDTO, ZoneTourneeDTO, ContrainteHoraireDTO, AnomalieDTO, AffecterRequest, LancerToutesResponse).
+
+- 2026-03-24T19:30Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/seeder/DevDataSeeder.java
+  Enrichissement DevDataSeeder BC-07 : 4 TourneePlanifiee seederées (T-201 NON_AFFECTEE, T-202 AFFECTEE, T-203 SURCHARGE, T-204 LANCEE).
+
+- 2026-03-24T19:30Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/security/SecurityConfig.java
+  Ajout routes /api/planification/** (SUPERVISEUR) + correction SecurityConfig pour routes LIVREUR (en-attente + executer).
+
+- 2026-03-24T19:30Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/EnvoyerInstructionHandler.java
+  Correction BUG NPE : pattern collect-and-publish corrigé (save sans retour, clearEvenements sur l'objet domaine).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/domain/planification/TourneePlanifieeTest.java
+  15 tests domaine BC-07 (TDD) : statut initial, VOs, verifierComposition, affecter, lancer, invariants.
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/application/planification/
+  11 tests Application Layer BC-07 (TDD) : ConsulterPlanDuJour (3), AffecterLivreurVehicule (4), LancerTournee (4).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/interfaces/planification/PlanificationControllerTest.java
+  10 tests @WebMvcTest BC-07 : plan du jour, composition, affectation, lancement, lancement groupé, 403.
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/web/supervision/src/pages/PreparationPage.tsx
+  W-04 React : bandeau résumé, filtres statut, tableau tournées (badges colorés, anomalies, actions contextuelles).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/web/supervision/src/pages/DetailTourneePlanifieePage.tsx
+  W-05 React : onglets Composition (zones/contraintes/anomalies) + Affectation (sélecteurs livreur/véhicule, boutons).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/web/supervision/src/__tests__/PreparationPage.test.tsx
+  11 tests Jest W-04 (bandeau, badges statut, anomalie, actions, erreur réseau, lancement).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /src/web/supervision/src/__tests__/DetailTourneePlanifieePage.test.tsx
+  14 tests Jest W-05 (composition, anomalies, validation, affectation, readonly LANCEE).
+
+- 2026-03-24T19:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-021-impl.md
+  Documentation vertical slice US-021. 83/83 tests backend verts + 25/25 tests Jest verts.
+
+- 2026-03-24T19:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-022-impl.md
+  Documentation vertical slice US-022. BC-07 composition vérification.
+
+- 2026-03-24T19:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-023-impl.md
+  Documentation vertical slice US-023. BC-07 affectation livreur+véhicule, invariants unicité.
+
+- 2026-03-24T19:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-024-impl.md
+  Documentation vertical slice US-024. BC-07 lancement tournée + TourneeLancee event BC inter.
+
+- 2026-03-24T19:30Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Mise à jour statuts US-021/022/023/024 → Implémenté. Nouvelles décisions BC-07 et bugfixes.

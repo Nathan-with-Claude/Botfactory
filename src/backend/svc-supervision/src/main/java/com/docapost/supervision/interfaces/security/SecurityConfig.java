@@ -48,7 +48,11 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()          // WebSocket endpoint
+                        // Routes accessibles aux LIVREURS (polling instructions + marquage exécution)
+                        .requestMatchers(HttpMethod.GET, "/api/supervision/instructions/en-attente").hasAnyRole("LIVREUR", "SUPERVISEUR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/supervision/instructions/*/executer").hasAnyRole("LIVREUR", "SUPERVISEUR")
                         .requestMatchers("/api/supervision/**").hasRole("SUPERVISEUR")
+                        .requestMatchers("/api/planification/**").hasRole("SUPERVISEUR")
                         .anyRequest().authenticated()
                 );
 

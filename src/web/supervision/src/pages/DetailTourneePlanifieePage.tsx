@@ -1,0 +1,435 @@
+import React, { useEffect, useState } from 'react';
+
+// ─── Types BC-07 Planification ────────────────────────────────────────────────
+
+export interface ZoneTourneeDTO { nom: string; nbColis: number; }
+export interface ContrainteHoraireDTO { libelle: string; nbColisAffectes: number; }
+export interface AnomalieDTO { code: string; description: string; }
+
+export interface TourneePlanifieeDetailDTO {
+  id: string;
+  codeTms: string;
+  date: string;
+  nbColis: number;
+  zones: ZoneTourneeDTO[];
+  contraintes: ContrainteHoraireDTO[];
+  anomalies: AnomalieDTO[];
+  statut: string;
+  livreurId: string | null;
+  livreurNom: string | null;
+  vehiculeId: string | null;
+  importeeLe: string;
+  affecteeLe: string | null;
+  lancee: string | null;
+  compositionVerifiee: boolean;
+}
+
+export interface LivreurDisponible { id: string; nom: string; disponible: boolean; tourneeAffectee?: string; }
+export interface VehiculeDisponible { id: string; disponible: boolean; tourneeAffectee?: string; }
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface DetailTourneePlanifieePageProps {
+  tourneePlanifieeId: string;
+  apiBaseUrl?: string;
+  fetchFn?: (url: string, options?: RequestInit) => Promise<Response>;
+  onRetour?: () => void;
+  livreurs?: LivreurDisponible[];
+  vehicules?: VehiculeDisponible[];
+}
+
+/**
+ * DetailTourneePlanifieePage — Écran W-05 (US-022 + US-023 + US-024)
+ *
+ * Deux onglets :
+ * - Composition : zones, contraintes, anomalies (US-022)
+ * - Affectation : sélecteurs livreur + véhicule, boutons Valider / Valider et Lancer (US-023)
+ *
+ * Source : US-022, US-023, US-024
+ */
+export default function DetailTourneePlanifieePage({
+  tourneePlanifieeId,
+  apiBaseUrl = 'http://localhost:8082',
+  fetchFn = fetch.bind(window),
+  onRetour,
+  livreurs = livreursMock,
+  vehicules = vehiculesMock,
+}: DetailTourneePlanifieePageProps) {
+
+  const [detail, setDetail] = useState<TourneePlanifieeDetailDTO | null>(null);
+  const [ongletActif, setOngletActif] = useState<'composition' | 'affectation'>('composition');
+  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [messageSucces, setMessageSucces] = useState<string | null>(null);
+
+  // Affectation
+  const [livreurSelectionne, setLivreurSelectionne] = useState('');
+  const [vehiculeSelectionne, setVehiculeSelectionne] = useState('');
+  const [actionEnCours, setActionEnCours] = useState(false);
+
+  useEffect(() => {
+    chargerDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourneePlanifieeId]);
+
+  const chargerDetail = async () => {
+    setLoading(true);
+    setErreur(null);
+    try {
+      const res = await fetchFn(`${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}`);
+      if (res.status === 404) { setErreur('Tournée introuvable.'); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: TourneePlanifieeDetailDTO = await res.json();
+      setDetail(data);
+      if (data.livreurId) setLivreurSelectionne(data.livreurId);
+      if (data.vehiculeId) setVehiculeSelectionne(data.vehiculeId);
+    } catch {
+      setErreur('Impossible de charger le détail de la tournée.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validerComposition = async () => {
+    setActionEnCours(true);
+    try {
+      const res = await fetchFn(
+        `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/composition/valider`,
+        { method: 'POST' }
+      );
+      if (res.ok) {
+        const data: TourneePlanifieeDetailDTO = await res.json();
+        setDetail(data);
+        setMessageSucces('Composition vérifiée et enregistrée.');
+        setTimeout(() => setMessageSucces(null), 3000);
+      }
+    } catch {
+      setErreur('Erreur lors de la validation de la composition.');
+    } finally {
+      setActionEnCours(false);
+    }
+  };
+
+  const affecterSeulement = async () => {
+    await execAffectation(false);
+  };
+
+  const affecterEtLancer = async () => {
+    if (!detail) return;
+    const msg = `Lancer la tournée ${detail.codeTms} pour ${livreurNomSelectionne()} ? Cette action est irréversible.`;
+    if (!window.confirm(msg)) return;
+    await execAffectation(true);
+  };
+
+  const execAffectation = async (etLancer: boolean) => {
+    setActionEnCours(true);
+    setErreur(null);
+    try {
+      const livreurObj = livreurs.find(l => l.id === livreurSelectionne);
+      const res = await fetchFn(
+        `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/affecter`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            livreurId: livreurSelectionne,
+            livreurNom: livreurObj?.nom ?? livreurSelectionne,
+            vehiculeId: vehiculeSelectionne,
+          }),
+        }
+      );
+      if (res.status === 409) {
+        setErreur('Ce livreur ou ce véhicule est déjà affecté à une autre tournée ce jour.');
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setMessageSucces(`Affectation enregistrée pour ${detail?.codeTms} — ${livreurNomSelectionne()} / ${vehiculeSelectionne}.`);
+      setTimeout(() => setMessageSucces(null), 3000);
+
+      if (etLancer) {
+        const resLancer = await fetchFn(
+          `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/lancer`,
+          { method: 'POST' }
+        );
+        if (resLancer.ok) {
+          setMessageSucces(`Tournée ${detail?.codeTms} lancée ! ${livreurNomSelectionne()} a reçu sa tournée.`);
+          setTimeout(() => setMessageSucces(null), 4000);
+        } else if (resLancer.status === 409) {
+          setErreur('Affectation enregistrée mais impossible de lancer la tournée.');
+        }
+      }
+      chargerDetail();
+    } catch {
+      setErreur('Erreur réseau lors de l\'affectation.');
+    } finally {
+      setActionEnCours(false);
+    }
+  };
+
+  const livreurNomSelectionne = () => livreurs.find(l => l.id === livreurSelectionne)?.nom ?? livreurSelectionne;
+  const peutValider = livreurSelectionne && vehiculeSelectionne;
+  const tourneeVerrouillee = detail?.statut === 'LANCEE';
+
+  // ─── Rendu ──────────────────────────────────────────────────────────────────
+
+  if (loading) return <div data-testid="chargement-detail">Chargement...</div>;
+  if (erreur && !detail) return <div data-testid="erreur-detail" style={{ color: '#842029' }}>{erreur}</div>;
+  if (!detail) return null;
+
+  return (
+    <div data-testid="detail-tournee-planifiee-page" style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 900 }}>
+
+      {/* Header */}
+      <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <button onClick={onRetour} data-testid="btn-retour" style={btnSecondaire}>
+          {'< Plan du jour'}
+        </button>
+        <h2 style={{ margin: 0, fontSize: 18 }}>
+          Tournée {detail.codeTms} —{' '}
+          <span style={{ color: detail.statut === 'NON_AFFECTEE' ? '#dc3545' : detail.statut === 'AFFECTEE' ? '#198754' : '#0d6efd' }}>
+            {detail.statut === 'NON_AFFECTEE' ? 'Non affectée' : detail.statut === 'AFFECTEE' ? 'Affectée' : 'Lancée'}
+          </span>
+          {detail.anomalies.length > 0 && (
+            <span data-testid="indicateur-anomalie" style={{ marginLeft: 10, color: '#856404' }}>⚠ Surcharge</span>
+          )}
+        </h2>
+      </header>
+
+      {/* Méta */}
+      <div style={{ background: '#f8f9fa', borderRadius: 4, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#495057' }}>
+        Import TMS du {detail.date} à {new Date(detail.importeeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+        &nbsp;|&nbsp;{detail.nbColis} colis&nbsp;|&nbsp;{detail.zones.length} zone(s)
+      </div>
+
+      {/* Messages */}
+      {messageSucces && (
+        <div data-testid="message-succes" style={{ background: '#d1e7dd', borderRadius: 4, padding: '8px 12px', marginBottom: 8, color: '#0f5132' }}>
+          {messageSucces}
+        </div>
+      )}
+      {erreur && (
+        <div data-testid="message-erreur" style={{ background: '#f8d7da', borderRadius: 4, padding: '8px 12px', marginBottom: 8, color: '#842029' }}>
+          {erreur}
+        </div>
+      )}
+
+      {/* Onglets */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #dee2e6', marginBottom: 16 }}>
+        <button
+          data-testid="onglet-composition"
+          onClick={() => setOngletActif('composition')}
+          style={{
+            ...ongletStyle,
+            borderBottom: ongletActif === 'composition' ? '2px solid #0d6efd' : '2px solid transparent',
+            color: ongletActif === 'composition' ? '#0d6efd' : '#6c757d',
+          }}
+        >
+          Composition
+          {detail.compositionVerifiee && (
+            <span data-testid="badge-composition-verifiee" style={{ marginLeft: 6, color: '#198754', fontSize: 11 }}>✓</span>
+          )}
+        </button>
+        <button
+          data-testid="onglet-affectation"
+          onClick={() => setOngletActif('affectation')}
+          style={{
+            ...ongletStyle,
+            borderBottom: ongletActif === 'affectation' ? '2px solid #0d6efd' : '2px solid transparent',
+            color: ongletActif === 'affectation' ? '#0d6efd' : '#6c757d',
+          }}
+        >
+          Affectation
+        </button>
+      </div>
+
+      {/* Onglet Composition */}
+      {ongletActif === 'composition' && (
+        <div data-testid="contenu-composition">
+          {/* Zones */}
+          <section style={{ marginBottom: 16 }}>
+            <h3 style={h3Style}>Zones couvertes</h3>
+            {detail.zones.map(z => (
+              <span key={z.nom} style={{ marginRight: 12, background: '#e9ecef', borderRadius: 4, padding: '3px 8px', fontSize: 13 }}>
+                {z.nom} — {z.nbColis} colis
+              </span>
+            ))}
+          </section>
+
+          {/* Contraintes */}
+          {detail.contraintes.length > 0 && (
+            <section style={{ marginBottom: 16 }}>
+              <h3 style={h3Style}>Contraintes horaires</h3>
+              {detail.contraintes.map(c => (
+                <div key={c.libelle} style={{ fontSize: 13, marginBottom: 4 }}>
+                  ⚑ {c.libelle} — {c.nbColisAffectes} colis
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* Anomalies */}
+          <section data-testid="section-anomalies" style={{ marginBottom: 16 }}>
+            <h3 style={h3Style}>Anomalies</h3>
+            {detail.anomalies.length === 0 ? (
+              <div data-testid="aucune-anomalie" style={{ color: '#198754', fontSize: 13 }}>
+                Aucune anomalie détectée ✓
+              </div>
+            ) : (
+              detail.anomalies.map(a => (
+                <div
+                  key={a.code}
+                  data-testid={`anomalie-${a.code}`}
+                  style={{
+                    background: '#fff3cd', border: '1px solid #ffc107',
+                    borderRadius: 4, padding: '10px 12px', marginBottom: 8, fontSize: 13
+                  }}
+                >
+                  <strong>⚠ {a.code}</strong> — {a.description}
+                </div>
+              ))
+            )}
+          </section>
+
+          {/* Bouton Valider vérification */}
+          {!tourneeVerrouillee && (
+            <button
+              data-testid="btn-valider-composition"
+              onClick={validerComposition}
+              disabled={actionEnCours || detail.compositionVerifiee}
+              style={{
+                ...btnPrimaire,
+                opacity: detail.compositionVerifiee ? 0.6 : 1,
+              }}
+            >
+              {detail.compositionVerifiee ? 'Composition déjà vérifiée ✓' : 'Valider la vérification'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Onglet Affectation */}
+      {ongletActif === 'affectation' && (
+        <div data-testid="contenu-affectation">
+          {tourneeVerrouillee ? (
+            <div data-testid="tournee-lancee-readonly" style={{ color: '#6c757d', fontSize: 14 }}>
+              Tournée lancée à {detail.lancee ? new Date(detail.lancee).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--'}
+              &nbsp;— {detail.livreurNom} / {detail.vehiculeId}
+            </div>
+          ) : (
+            <>
+              {/* Sélecteur Livreur */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6, fontSize: 14 }}>
+                  Livreur
+                </label>
+                <select
+                  data-testid="select-livreur"
+                  value={livreurSelectionne}
+                  onChange={e => setLivreurSelectionne(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">Sélectionner un livreur disponible...</option>
+                  {livreurs.map(l => (
+                    <option key={l.id} value={l.id} disabled={!l.disponible}>
+                      {l.nom}{!l.disponible ? ` — Indisponible (${l.tourneeAffectee ?? 'déjà affecté'})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: 12, color: '#6c757d', marginTop: 4 }}>
+                  Livreurs disponibles : {livreurs.filter(l => l.disponible).map(l => l.nom).join(', ') || 'Aucun'}
+                  &nbsp;({livreurs.filter(l => l.disponible).length}/{livreurs.length})
+                </div>
+              </div>
+
+              {/* Sélecteur Véhicule */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6, fontSize: 14 }}>
+                  Véhicule
+                </label>
+                <select
+                  data-testid="select-vehicule"
+                  value={vehiculeSelectionne}
+                  onChange={e => setVehiculeSelectionne(e.target.value)}
+                  style={selectStyle}
+                  disabled={!livreurSelectionne}
+                >
+                  <option value="">Sélectionner un véhicule disponible...</option>
+                  {vehicules.map(v => (
+                    <option key={v.id} value={v.id} disabled={!v.disponible}>
+                      {v.id}{!v.disponible ? ` — Indisponible (${v.tourneeAffectee ?? 'déjà affecté'})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: 12, color: '#6c757d', marginTop: 4 }}>
+                  Véhicules disponibles : {vehicules.filter(v => v.disponible).map(v => v.id).join(', ') || 'Aucun'}
+                  &nbsp;({vehicules.filter(v => v.disponible).length}/{vehicules.length})
+                </div>
+              </div>
+
+              {/* Message si sélection incomplète */}
+              {!peutValider && (
+                <div data-testid="msg-selection-incomplete" style={{ fontSize: 13, color: '#6c757d', marginBottom: 12 }}>
+                  Veuillez sélectionner un livreur{!livreurSelectionne ? ' et un véhicule' : ''} pour valider l'affectation.
+                </div>
+              )}
+
+              {/* Boutons */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  data-testid="btn-valider-affectation"
+                  onClick={affecterSeulement}
+                  disabled={!peutValider || actionEnCours}
+                  style={{ ...btnPrimaire, opacity: !peutValider ? 0.5 : 1 }}
+                >
+                  VALIDER L'AFFECTATION
+                </button>
+
+                <button
+                  data-testid="btn-valider-et-lancer"
+                  onClick={affecterEtLancer}
+                  disabled={!peutValider || actionEnCours}
+                  style={{
+                    ...btnSucces,
+                    opacity: !peutValider ? 0.5 : 1,
+                  }}
+                >
+                  {detail.anomalies.length > 0
+                    ? 'Lancer malgré l\'anomalie'
+                    : 'VALIDER ET LANCER'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Données mock pour les tests ──────────────────────────────────────────────
+
+const livreursMock: LivreurDisponible[] = [
+  { id: 'livreur-001', nom: 'P. Morel', disponible: true },
+  { id: 'livreur-002', nom: 'L. Petit', disponible: true },
+  { id: 'livreur-003', nom: 'S. Roger', disponible: true },
+  { id: 'livreur-004', nom: 'J. Dupont', disponible: false, tourneeAffectee: 'T-042' },
+];
+
+const vehiculesMock: VehiculeDisponible[] = [
+  { id: 'VH-04', disponible: true },
+  { id: 'VH-07', disponible: true },
+  { id: 'VH-11', disponible: true },
+  { id: 'VH-03', disponible: false, tourneeAffectee: 'T-204' },
+];
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const ongletStyle: React.CSSProperties = {
+  padding: '8px 20px', background: 'none', border: 'none',
+  cursor: 'pointer', fontWeight: 'bold', fontSize: 14,
+};
+const h3Style: React.CSSProperties = { fontSize: 14, fontWeight: 'bold', marginBottom: 8, color: '#495057' };
+const btnPrimaire: React.CSSProperties = { background: '#0d6efd', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
+const btnSecondaire: React.CSSProperties = { background: '#6c757d', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 12px', cursor: 'pointer', fontSize: 13 };
+const btnSucces: React.CSSProperties = { background: '#198754', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
+const selectStyle: React.CSSProperties = { width: '100%', padding: '8px', borderRadius: 4, border: '1px solid #ced4da', fontSize: 14 };
