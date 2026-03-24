@@ -37,8 +37,8 @@ US-019/020 (SSO auth)
 
 | US | Titre court | BC | Statut | Sprint | Branche git | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| US-019 | Auth SSO mobile | BC-06 | À faire | — | — | Keycloak OAuth2 |
-| US-020 | Auth SSO web | BC-06 | À faire | — | — | Keycloak OAuth2 |
+| US-019 | Auth SSO mobile | BC-06 | Implémenté | Sprint 3 | feature/US-001 | authStore + ConnexionScreen M-01 + SecurityConfig OAuth2 prod. 16 tests store + 8 tests screen + 4 tests backend. |
+| US-020 | Auth SSO web | BC-06 | Implémenté | Sprint 3 | feature/US-001 | webAuthService + ConnexionPage + AuthCallbackPage + SecurityConfig svc-supervision. 8 tests authService + 7 tests page. |
 | US-021 | Visualiser plan du jour | BC-07 | Implémenté | Sprint 3 | feature/US-001 | DevDataSeeder mock TMS. GET /api/planification/plans/{date}. PreparationPage W-04. |
 | US-022 | Vérifier composition | BC-07 | Implémenté | Sprint 3 | feature/US-001 | GET /api/planification/tournees/{id} + POST /composition/valider. W-05 onglet Composition. |
 | US-023 | Affecter livreur + véhicule | BC-07 | Implémenté | Sprint 3 | feature/US-001 | POST /affecter. Invariants unicité livreur/véhicule/jour. W-05 onglet Affectation. |
@@ -48,7 +48,7 @@ US-019/020 (SSO auth)
 | US-003 | Filtrer par zone | BC-01 | Implémenté | Sprint 1 | feature/US-001 | Filtrage local mobile (FiltreZones + filtreZone.ts). 34/34 tests Jest verts. |
 | US-004 | Détail colis | BC-01 | Implémenté | Sprint 1 | feature/US-001 | ConsulterDetailColisHandler + endpoint GET /colis/{id} + DetailColisScreen M-03. 34/34 backend + 50/50 Jest verts. |
 | US-005 | Déclarer échec | BC-01 | Implémenté | Sprint 1 | feature/US-001 | MotifNonLivraison + Disposition enums, declarerEchecLivraison() Aggregate, POST /echec, écran M-05. 54/54 backend + 64/64 Jest verts. |
-| US-006 | Mode offline | BC-01 | À faire | — | — | SQLite + sync queue, taille L — reporté (dépend d'infra native WatermelonDB) |
+| US-006 | Mode offline | BC-01 | Implémenté | Sprint 3 | feature/US-001 | offlineQueue (FIFO, idempotence commandId) + SyncIndicator + syncExecutor + CommandIdempotencyFilter backend. WatermelonDB déféré Sprint 4. 14+5+7+6=32 tests verts. |
 | US-007 | Clôturer tournée | BC-01 | Implémenté | Sprint 1 | feature/US-001 | RecapitulatifTournee VO + TourneeCloturee event + CloturerTourneeHandler + POST /cloture + RecapitulatifTourneeScreen M-07. 67/67 backend + 74/74 Jest verts. |
 | US-008 | Capturer signature | BC-02 | Implémenté | Sprint 1 | feature/US-001 | BC-02 collocalisé dans svc-tournee. PreuveLivraison Aggregate + 4 factory methods + LivraisonConfirmee event. 97/97 backend + 93/93 Jest verts. |
 | US-009 | Capturer photo/tiers | BC-02 | Implémenté | Sprint 1 | feature/US-001 | Partagé avec US-008. TIERS_IDENTIFIE + DEPOT_SECURISE + PHOTO. Capture caméra native déférée (US-010). 93/93 Jest verts. |
@@ -86,6 +86,9 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | US-009 | Implémentation preuves alternatives (PHOTO, TIERS_IDENTIFIE, DEPOT_SECURISE) : VO TiersIdentifie + DepotSecurise + PhotoPreuve, factory methods, zones de capture dans CapturePreuveScreen. Capture caméra native déférée à US-010. Tests inclus dans les suites US-008. 93/93 Jest verts. | /livrables/06-dev/vertical-slices/US-009-impl.md |
 | 2026-03-24 | US-017 | Création svc-oms (BC-05, port 8083) : OmsApiPort + OmsApiClient (simulé MVP) + SynchroniserPendingEvenementsHandler + OutboxPoller @Scheduled 10s. 5 tests handler + 6 tests controller verts. | /livrables/06-dev/vertical-slices/US-017-impl.md |
 | 2026-03-24 | US-018 | Event Store append-only : EvenementLivraison record immuable + 4 attributs obligatoires (qui/quoi/quand/géo) + mode dégradé GPS + EvenementStoreImpl JPA (updatable=false) + EnregistrerEvenementHandler (idempotence 409) + DevDataSeeder 4 événements. 9+3+6=23 tests verts. | /livrables/06-dev/vertical-slices/US-018-impl.md |
+| 2026-03-24 | US-019 | Auth SSO mobile : authStore factory (login/refresh/logout/getAuthHeader) + ConnexionScreen M-01 + SecurityConfig OAuth2 Resource Server conditionnel (profil prod uniquement) + isProdProfile() évite le JwtDecoder en test. 16 tests store + 8 tests screen + 4 tests SecurityConfig + SecurityConfig svc-tournee mis à jour. 109/109 backend + 153/153 mobile verts. | /livrables/06-dev/vertical-slices/US-019-impl.md |
+| 2026-03-24 | US-020 | Auth SSO web : webAuthService (OAuth2 Auth Code, state anti-CSRF, refresh, logout) + ConnexionPage (unauthenticated/forbidden/session-expired) + AuthCallbackPage + SecurityConfig svc-supervision mis à jour. 15 tests web + 83/83 tests backend svc-supervision verts. | /livrables/06-dev/vertical-slices/US-020-impl.md |
+| 2026-03-24 | US-006 | Mode offline (MVP partiel) : offlineQueue domain (FIFO, idempotence commandId) + syncExecutor (X-Command-Id) + useOfflineSyncState + SyncIndicator. CommandIdempotencyFilter backend (ConcurrentHashMap MVP, Redis déféré). WatermelonDB déféré Sprint 4. 32 tests mobiles. | /livrables/06-dev/vertical-slices/US-006-impl.md |
 
 ---
 
@@ -152,8 +155,18 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | US-024 | Implémentation lancement tournée : TourneePlanifiee.lancer() + TourneeLancee event (inter-BC) + LancerTourneeHandler (individuel + groupé) + POST /tournees/{id}/lancer + POST /plans/{date}/lancer-toutes + LancerToutesResponse + bouton Lancer W-04 + bouton VALIDER ET LANCER W-05. TourneeLancee loggué MVP (bus Kafka Sprint 3). 4 tests handler + 3 tests controller + 2 tests Jest. | /livrables/06-dev/vertical-slices/US-024-impl.md |
 | 2026-03-24 | BUG-InstructionController | Correction 3 tests InstructionControllerTest rouge : routes /en-attente et /{id}/executer accessibles LIVREUR bloquées par SecurityConfig globale (hasRole SUPERVISEUR prime sur @PreAuthorize). Ajout de règles précises pour ces 2 routes LIVREUR|SUPERVISEUR dans SecurityConfig. | /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/security/SecurityConfig.java |
 | 2026-03-24 | BUG-EnvoyerInstruction | Correction NPE dans EnvoyerInstructionHandler : instructionRepository.save() retournait null (Mockito), sauvegardee.clearEvenements() causait NPE. Pattern collect-and-publish corrigé : save(instruction) sans retour + instruction.clearEvenements(). | /src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/EnvoyerInstructionHandler.java |
+| 2026-03-24 | US-019 | Auth SSO mobile : authStore (factory, login/refresh/logout), ConnexionScreen M-01, SecurityConfig OAuth2 Resource Server conditionnel isProdProfile(), httpClient.ts Bearer interceptor. 16 tests store + 8 tests screen + 4 tests SecurityConfig. 109/109 backend + 153/153 mobile verts. | /livrables/06-dev/vertical-slices/US-019-impl.md |
+| 2026-03-24 | US-020 | Auth SSO web : webAuthService OAuth2 Auth Code (redirectToSso, state CSRF, exchangeCode, refresh, logout), ConnexionPage (4 statuts), AuthCallbackPage. SecurityConfig svc-supervision OAuth2 prod conditionnel. 15 tests web. 83/83 backend verts. | /livrables/06-dev/vertical-slices/US-020-impl.md |
+| 2026-03-24 | US-006 | Mode offline MVP : offlineQueue (FIFO, idempotence commandId, SC3-SC5), syncExecutor (X-Command-Id), SyncIndicator.tsx, useOfflineSyncState, CommandIdempotencyFilter backend (ConcurrentHashMap MVP). WatermelonDB + Redis déférés Sprint 4. 32 tests mobiles. 109/109 backend verts. | /livrables/06-dev/vertical-slices/US-006-impl.md |
 
 ---
+
+| 2026-03-24 | US-019 | isProdProfile() dans SecurityConfig — OAuth2 Resource Server uniquement en profil prod | Spring Boot auto-configure un JwtDecoder quand oauth2-resource-server est sur le classpath. Sans cette garde, @WebMvcTest échoue (no JwtDecoder bean). isProdProfile() évite l'activation du JwtDecoder en test ou dev. |
+| 2026-03-24 | US-019 | authStore pattern factory (createAuthStore) — pas de Zustand/Redux | Store léger sans dépendance externe. Pattern pub/sub via Set<listeners>. Testable par injection des fonctions authorize/refresh/revoke. Compatible avec les tests Jest (pas de DOM). |
+| 2026-03-24 | US-020 | Tokens stockés en sessionStorage (scope session) | RGPD : tokens effacés à la fermeture de l'onglet. Alternative recommandée prod : Cookie HttpOnly côté serveur. sessionStorage est suffisant pour le MVP. |
+| 2026-03-24 | US-006 | offlineQueue en mémoire (Map+Array) — WatermelonDB déféré | WatermelonDB nécessite des bindings natifs non provisionnés dans Expo. La Map en mémoire garantit le comportement FIFO et l'idempotence commandId pour la session courante. |
+| 2026-03-24 | US-006 | CommandIdempotencyFilter avec ConcurrentHashMap — Redis déféré Sprint 4 | Redis n'est pas dans les dépendances du projet. ConcurrentHashMap assure la thread-safety pour un déploiement mono-instance. TODO : migrer vers RedisTemplate pour multi-instance prod. |
+| 2026-03-24 | US-006 | @react-native-community/netinfo non installé — useOfflineSync utilise useOfflineSyncState testable | NetInfo n'est pas dans les dépendances. Le hook est architecturé pour accepter une factory NetInfo injectable. Les tests utilisent createOfflineSyncState (logique pure sans NetInfo). |
 
 ## Points d'attention
 

@@ -46,6 +46,12 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- OAuth2 Resource Server — validation JWT Keycloak (US-020, profil prod) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
         <!-- Spring Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

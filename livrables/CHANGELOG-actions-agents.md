@@ -5,6 +5,32 @@
 
 ---
 
+- 2026-03-24T23:30Z @developpeur CREATE → src/mobile/src/store/authStore.ts, src/mobile/src/screens/ConnexionScreen.tsx, src/mobile/src/api/httpClient.ts
+  US-019 — Store d'authentification OAuth2 PKCE mobile + écran M-01 ConnexionScreen + intercepteur HTTP Bearer.
+
+- 2026-03-24T23:31Z @developpeur UPDATE → src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/security/SecurityConfig.java, pom.xml, application.yml
+  US-019 — SecurityConfig OAuth2 Resource Server conditionnel (isProdProfile) + oauth2-resource-server + issuer-uri prod.
+
+- 2026-03-24T23:32Z @developpeur CREATE → src/web/supervision/src/auth/webAuthService.ts, src/web/supervision/src/pages/ConnexionPage.tsx, src/web/supervision/src/pages/AuthCallbackPage.tsx
+  US-020 — Service OAuth2 Auth Code web + ConnexionPage + AuthCallbackPage.
+
+- 2026-03-24T23:33Z @developpeur UPDATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/security/SecurityConfig.java, pom.xml, application.yml
+  US-020 — SecurityConfig svc-supervision OAuth2 Resource Server conditionnel + ROLE_DSI sur preuves.
+
+- 2026-03-24T23:34Z @developpeur CREATE → src/mobile/src/domain/offlineQueue.ts, src/mobile/src/hooks/useOfflineSync.ts, src/mobile/src/hooks/useOfflineSyncState.ts, src/mobile/src/api/syncExecutor.ts, src/mobile/src/components/SyncIndicator.tsx
+  US-006 — File offline FIFO + indicateur sync + exécuteur de commandes offline.
+
+- 2026-03-24T23:35Z @developpeur CREATE → src/backend/svc-tournee/src/main/java/com/docapost/tournee/interfaces/rest/CommandIdempotencyFilter.java
+  US-006 — Filtre d'idempotence backend (X-Command-Id, ConcurrentHashMap MVP).
+
+- 2026-03-24T23:36Z @developpeur CREATE → livrables/06-dev/vertical-slices/US-019-impl.md, US-020-impl.md, US-006-impl.md
+  Documentation des 3 vertical slices (US-019, US-020, US-006).
+
+- 2026-03-24T23:37Z @developpeur UPDATE → livrables/00-contexte/journaux/journal-developpeur.md
+  Mise à jour du journal : US-019/020/006 marquées Implémenté, décisions techniques, interventions.
+
+---
+
 - 2026-03-24T20:30Z @developpeur CREATE → src/backend/svc-oms/ (nouveau microservice BC-05)
   Création svc-oms (port 8083) : pom.xml, SvcOmsApplication, application.properties, mockito-extensions.
 

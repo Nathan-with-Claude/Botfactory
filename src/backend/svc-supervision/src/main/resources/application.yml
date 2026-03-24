@@ -41,5 +41,12 @@ spring:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
+  # OAuth2 Resource Server — SSO corporate Docaposte (US-020)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SSO_ISSUER_URI:https://sso.docaposte.fr/realms/docupost}
+
 server:
   port: 8082

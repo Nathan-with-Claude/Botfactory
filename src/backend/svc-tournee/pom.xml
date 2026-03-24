@@ -45,6 +45,15 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- OAuth2 Resource Server — validation JWT Keycloak (US-019/020, profil prod)
+             En profil dev, le MockJwtAuthFilter court-circuite la validation JWT.
+             En profil prod, spring.security.oauth2.resourceserver.jwt.issuer-uri
+             est configuré dans application.yml pour pointer vers le SSO corporate. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
         <!-- Spring Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
