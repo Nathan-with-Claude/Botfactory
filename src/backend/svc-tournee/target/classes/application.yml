@@ -56,3 +56,12 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # OAuth2 Resource Server — SSO corporate Docaposte (US-019/020)
+  # Le JWKS endpoint est déduit automatiquement depuis l'issuer-uri
+  # via /.well-known/openid-configuration.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SSO_ISSUER_URI:https://sso.docaposte.fr/realms/docupost}

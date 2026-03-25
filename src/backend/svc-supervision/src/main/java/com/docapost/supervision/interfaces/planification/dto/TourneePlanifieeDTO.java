@@ -23,7 +23,7 @@ public record TourneePlanifieeDTO(
         String vehiculeId,
         Instant importeeLe,
         Instant affecteeLe,
-        Instant lancee,
+        Instant lanceeLe,
         boolean compositionVerifiee,
         boolean aDesAnomalies
 ) {
@@ -42,7 +42,7 @@ public record TourneePlanifieeDTO(
                 tournee.getVehiculeId(),
                 tournee.getImporteeLe(),
                 tournee.getAffecteeLe(),
-                tournee.getLancee(),
+                tournee.getLancee(),  // domaine "lancee" → DTO "lanceeLe"
                 tournee.isCompositionVerifiee(),
                 tournee.aDesAnomalies()
         );

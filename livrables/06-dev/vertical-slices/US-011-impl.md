@@ -79,3 +79,19 @@ JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-25.0.2.10-hotspot" mvn spring-b
 # Tests backend
 JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-25.0.2.10-hotspot" mvn test
 ```
+
+---
+
+## Corrections post-QA (2026-03-25)
+
+**Anomalie OBS-011-01** — Rapport : `livrables/07-tests/scenarios/US-011-rapport-playwright.md`
+
+**Symptôme** : Les tests Playwright (et ceux couvrant US-013, US-020) échouaient sur `expect(body.bandeau).toBeDefined()`. L'API retournait les compteurs à la racine du JSON : `{"aRisque":1,"actives":2,"cloturees":0,"tournees":[...]}`.
+
+**Correction** : Le record `TableauDeBordDTO` a été restructuré pour encapsuler les compteurs dans un sous-record `BandeauResume`. La réponse JSON est maintenant : `{"bandeau":{"actives":2,"aRisque":1,"cloturees":0},"tournees":[...]}`.
+
+Le test unitaire `SupervisionControllerTest` a également été mis à jour pour vérifier `$.bandeau.actives` au lieu de `$.actives`.
+
+**Fichiers modifiés** :
+- `src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/dto/TableauDeBordDTO.java`
+- `src/backend/svc-supervision/src/test/java/com/docapost/supervision/interfaces/SupervisionControllerTest.java`

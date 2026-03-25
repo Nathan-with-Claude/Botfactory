@@ -82,3 +82,15 @@ curl http://localhost:8082/api/planification/plans/$(date +%Y-%m-%d) \
 cd src/web/supervision && npm start
 # Accès : http://localhost:3000 (page W-04 via route /preparation)
 ```
+
+---
+
+## Corrections post-QA (2026-03-25)
+
+**Anomalie OBS-021-01 (BLOQUANT)** — Rapport : `livrables/07-tests/scenarios/US-021-rapport-playwright.md`
+
+**Symptôme** : `GET /api/planification/plans/{today}` retournait 0 tournées. Le DevDataSeeder BC-07 créait les tournées avec `LocalDate.now()` au premier démarrage, mais en cas de redémarrage, le `save()` JPA effectuait un `merge` sur les IDs existants (`tp-201` à `tp-204`) sans mettre à jour la date — si les données avaient été créées lors d'un démarrage précédent avec une ancienne date, elles restaient intactes en base.
+
+**Correction** : Ajout d'un `tourneePlanifieeJpaRepository.deleteAll()` en début de section BC-07 dans `DevDataSeeder.java`. Cela garantit que les tournées sont toujours recréées avec `LocalDate.now()` à chaque démarrage.
+
+**Fichier modifié** : `src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/seeder/DevDataSeeder.java`

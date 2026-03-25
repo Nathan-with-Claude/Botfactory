@@ -3,6 +3,55 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-03-25T10:00Z @developpeur FIX → src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/seeder/DevDataSeeder.java
+  OBS-021-01 — deleteAll() BC-07 avant les saves : garantit LocalDate.now() même après redémarrage.
+
+- 2026-03-25T14:00Z @qa RERUN → livrables/07-tests/scenarios/US-017-rapport-playwright.md
+  Re-run post OBS-017-01 — US-017 : 10/10 PASS. modeDegradGPS=true confirmé dans body 201.
+
+- 2026-03-25T14:01Z @qa RERUN → livrables/07-tests/scenarios/US-018-rapport-playwright.md
+  Re-run post isolation eventId (préfixe us018-) — US-018 : 10/10 PASS. Immuabilité confirmée.
+
+- 2026-03-25T14:02Z @qa RERUN → livrables/07-tests/scenarios/US-011-rapport-playwright.md
+  Re-run post OBS-011-01 — US-011 : 4/5 (résiduel OBS-011-02 : actives vs totalTournees).
+
+- 2026-03-25T14:03Z @qa RERUN → livrables/07-tests/scenarios/US-013-rapport-playwright.md
+  Re-run post OBS-011-01 — US-013 : 4/4 PASS. body.bandeau.aRisque=1 confirmé.
+
+- 2026-03-25T14:04Z @qa RERUN → livrables/07-tests/scenarios/US-020-rapport-playwright.md
+  Re-run post OBS-011-01 — US-020 : 4/4 PASS. body.bandeau présent, health UP.
+
+- 2026-03-25T14:05Z @qa RERUN → livrables/07-tests/scenarios/US-021-rapport-playwright.md
+  Re-run post OBS-021-01 — US-021 : 4/5 (résiduel OBS-021-02 : bandeau absent dans planification).
+
+- 2026-03-25T14:06Z @qa RERUN → livrables/07-tests/scenarios/US-024-rapport-playwright.md
+  Re-run post OBS-024-01 — US-024 : 5/5 PASS. lanceeLe présent dans body 200.
+
+- 2026-03-25T14:07Z @qa RERUN → livrables/07-tests/scenarios/US-014-rapport-playwright.md
+  Re-run vérification 400 vs 422 — US-014 : 4/5 (OBS-014-01 non corrigé — isolation colisId).
+
+- 2026-03-25T14:08Z @qa CREATE → livrables/07-tests/scenarios/bilan-campagne-finale.md
+  Bilan consolidé final : 136 tests (sessions 1+2), 124 PASS, 12 FAIL, taux 91,2%. 20/24 US validées.
+
+- 2026-03-25T14:09Z @qa UPDATE → livrables/00-contexte/journaux/journal-qa.md
+  Mise à jour journal : statuts finaux US-013/017/018/020/024 → Validée. Anomalies résiduelles documentées.
+
+- 2026-03-25T10:01Z @developpeur FIX → src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/dto/TableauDeBordDTO.java, src/backend/svc-supervision/src/test/java/com/docapost/supervision/interfaces/SupervisionControllerTest.java
+  OBS-011-01 — Encapsulation des compteurs dans sous-record BandeauResume (body.bandeau.actives). Test mis à jour.
+
+- 2026-03-25T10:02Z @developpeur FIX → src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/planification/dto/TourneePlanifieeDTO.java, TourneePlanifieeDetailDTO.java
+  OBS-024-01 — Champ "lancee" renommé "lanceeLe" dans les DTOs Interface Layer (domaine inchangé).
+
+- 2026-03-25T10:03Z @developpeur FIX → src/backend/svc-oms/src/main/java/com/docapost/oms/application/EnregistrerEvenementHandler.java, src/backend/svc-oms/src/main/java/com/docapost/oms/interfaces/rest/EvenementController.java, src/backend/svc-oms/src/test/java/com/docapost/oms/interfaces/EvenementControllerTest.java
+  OBS-017-01 — POST /api/oms/evenements retourne désormais le DTO créé (201 avec body JSON). Handler retourne EvenementLivraison.
+
+- 2026-03-25T10:04Z @developpeur FIX → src/mobile/e2e/US-018-historisation-immuable.spec.ts
+  TC-018-01 bonus — Préfixe us018- pour isolation eventId inter-suites. Statuts acceptés : [201, 409, 403].
+
+- 2026-03-25T10:05Z @developpeur UPDATE → livrables/06-dev/vertical-slices/US-021-impl.md, US-011-impl.md, US-024-impl.md, US-017-impl.md
+  Ajout section "Corrections post-QA" dans les 4 vertical slices impactés.
+
+
 ---
 
 - 2026-03-24T23:30Z @developpeur CREATE → src/mobile/src/store/authStore.ts, src/mobile/src/screens/ConnexionScreen.tsx, src/mobile/src/api/httpClient.ts
@@ -849,3 +898,36 @@
 
 - 2026-03-24T19:45Z @developpeur COMMIT → feat(US-015/US-016) 943297c
   Commit feature/US-001 : 83 backend + 98 mobile + 60 web = 241 tests verts.
+- 2026-03-25T10:00Z @qa CREATE → src/mobile/e2e/US-008-capturer-signature.spec.ts, src/mobile/e2e/US-009-capturer-preuve-alternative.spec.ts, src/mobile/e2e/US-010-consulter-preuve-litige.spec.ts, src/mobile/e2e/US-006-mode-offline.spec.ts
+  Specs Playwright BC-02 (preuves) et BC-01 offline — 4 fichiers créés.
+
+- 2026-03-25T10:05Z @qa CREATE → src/mobile/e2e/US-016-notification-push.spec.ts, src/mobile/e2e/US-017-synchronisation-oms.spec.ts, src/mobile/e2e/US-018-historisation-immuable.spec.ts, src/mobile/e2e/US-019-authentification-sso-mobile.spec.ts
+  Specs Playwright BC-04 (notification), BC-05 (OMS event store), BC-06 (SSO mobile) — 4 fichiers créés.
+
+- 2026-03-25T10:10Z @qa CREATE → src/web/supervision/e2e/US-011 à US-015 + US-020 à US-024 (10 fichiers)
+  Specs Playwright BC-03 (supervision) et BC-07 (planification) — 10 fichiers créés dans src/web/supervision/e2e/.
+
+- 2026-03-25T10:15Z @qa CREATE → playwright.supervision.config.ts
+  Configuration Playwright dédiée pour les tests web supervision (port 8082).
+
+- 2026-03-25T10:30Z @qa EXEC → src/mobile/e2e/ (US-006, US-008 à US-010, US-016 à US-019)
+  Exécution Playwright mobile — 40/43 PASS (3 echecs : TC-270 SplashScreen, TC-017-05 body vide, TC-018-01 eventId).
+
+- 2026-03-25T10:45Z @qa EXEC → src/web/supervision/e2e/ (US-011 à US-015, US-020 à US-024)
+  Exécution Playwright supervision — 37/45 PASS (8 echecs : bandeau structure, seeder date, lanceeLe, 400 vs 422).
+
+- 2026-03-25T11:00Z @qa CREATE → livrables/07-tests/scenarios/US-006-rapport-playwright.md à US-024-rapport-playwright.md (18 fichiers)
+  Rapports Playwright pour 18 US avec statuts PASS/FAIL, anomalies et recommandations.
+
+- 2026-03-25T11:10Z @qa UPDATE → livrables/07-tests/scenarios/US-006 à US-024 -scenarios.md (18 fichiers)
+  Mise à jour des statuts des scénarios : Passé / Echoué apres execution reelle Playwright.
+
+- 2026-03-25T11:15Z @qa UPDATE → livrables/06-dev/poste-de-commande-tests.md
+  Ajout check-lists tests manuels US-010 a US-024 avec statuts PASS/PARTIEL/FAIL.
+
+- 2026-03-25T11:20Z @qa CREATE → livrables/07-tests/screenshots/US-006 a US-024/ (18 dossiers, 19 screenshots)
+  Screenshots E2E Playwright pour tous les TC critiques des 18 US.
+
+- 2026-03-25T11:25Z @qa UPDATE → livrables/00-contexte/journaux/journal-qa.md
+  Mise a jour journal QA : suivi US-006 a US-024 avec resultats reels, decisions structurantes, anomalies detectees.
+

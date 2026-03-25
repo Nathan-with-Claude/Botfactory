@@ -236,3 +236,199 @@ curl http://localhost:8081/api/tournees/TRN-2026-001/colis/colis-001
 - [ ] GPS automatique en mode normal — latitude/longitude dans la preuve (US-010)
 
 ---
+
+---
+
+## US-010 : Consulter les preuves de livraison en cas de litige
+
+### Pré-requis
+
+Backend svc-tournee sur port 8081 (profil dev).
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Accès superviseur | GET http://localhost:8081/api/preuves/colis/colis-001 | HTTP 200 avec la preuve | PASS |
+| 2 | Accès livreur refusé | GET avec header X-Role: LIVREUR | HTTP 403 Forbidden | PASS |
+| 3 | Colis inexistant | GET /api/preuves/colis/inexistant | HTTP 404 Not Found | PASS |
+| 4 | Immuabilité | PUT /api/preuves/... | HTTP 405 Method Not Allowed | PASS |
+
+---
+
+## US-011 : Tableau de bord de supervision
+
+### Pré-requis
+
+Backend svc-supervision sur port 8082 (profil dev).
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Tableau de bord | GET http://localhost:8082/api/supervision/tableau-de-bord | HTTP 200 avec tournees[] | PASS |
+| 2 | Compteurs | body.actives, body.aRisque, body.cloturees | Valeurs numériques | PASS |
+| 3 | Bandeau wrapper | body.bandeau | ABSENT (structure plate) | FAIL (spec vs impl) |
+
+---
+
+## US-012 : Consulter le detail d'une tournee
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Detail tournee | GET http://localhost:8082/api/supervision/tournees/tournee-sup-001 | HTTP 200 + champs details | PASS |
+| 2 | Tournee inexistante | GET /api/supervision/tournees/INEXISTANT | HTTP 404 | PASS |
+| 3 | RBAC livreur | GET avec ROLE_LIVREUR | HTTP 403 | PASS |
+
+---
+
+## US-013 : Alertes tournees a risque
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Tournee A_RISQUE | GET /api/supervision/tableau-de-bord | body.tournees contient A_RISQUE | PASS |
+| 2 | Compteur aRisque | body.aRisque | >= 1 (tournee-sup-003) | PASS |
+
+---
+
+## US-014 : Envoyer une instruction a un livreur
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Instruction PRIORITAIRE | POST /api/supervision/instructions | HTTP 201 | PASS |
+| 2 | REPROGRAMMER sans creneau | POST sans nouveauCreneau | HTTP 422 ou 400 | PARTIEL (400 recu) |
+| 3 | Double PENDING | 2e instruction PENDING meme tournee | HTTP 409 | PASS |
+
+---
+
+## US-015 : Suivre l'execution d'une instruction
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Liste instructions | GET /api/supervision/instructions | HTTP 200 avec statuts | PASS |
+| 2 | Marquer executee | PATCH /api/supervision/instructions/{id}/executer | HTTP 200 | PASS |
+| 3 | Vue livreur | GET /instructions/en-attente?tourneeId=X | HTTP 200 | PASS |
+
+---
+
+## US-016 : Notification push instruction livreur
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Polling endpoint | GET /instructions/en-attente?tourneeId=X | HTTP 200 | PASS |
+| 2 | Bandeau overlay | testID="bandeau-instruction-overlay" | Visible si instruction | PASS |
+| 3 | Bouton VOIR | testID="bouton-voir-instruction" | Accessible | PASS |
+
+---
+
+## US-017 : Synchronisation OMS
+
+### Pré-requis
+
+Backend svc-oms sur port 8083 (profil dev).
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Creer evenement | POST http://localhost:8083/api/oms/evenements | HTTP 201 | PASS |
+| 2 | Idempotence | Renvoi meme eventId | HTTP 409 | PASS |
+| 3 | Historique colis | GET /api/oms/evenements/colis/colis-001 | Liste ASC | PASS |
+| 4 | Mode degrade GPS | POST sans coordonnees | HTTP 201 (body vide) | PARTIEL (pas de modeDegradGPS dans reponse) |
+
+---
+
+## US-018 : Historisation immuable OMS
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Immuabilite PUT | PUT /api/oms/evenements/... | HTTP 405 | PASS |
+| 2 | Immuabilite DELETE | DELETE /api/oms/evenements/... | HTTP 405 | PASS |
+| 3 | Ordre chronologique | GET /api/oms/evenements/colis/{id} | Timestamps ASC | PASS |
+
+---
+
+## US-019 : Authentification SSO mobile
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Sans token | GET http://localhost:8081/api/tournees/today | HTTP 401 | PASS |
+| 2 | RBAC LIVREUR | GET /api/supervision/** avec ROLE_LIVREUR | HTTP 403 | PASS |
+| 3 | Avec MockJwt | GET /api/tournees/today (dev) | HTTP 200 | PASS |
+| 4 | App mobile | Ouvrir http://localhost:8090 | App chargee | PASS |
+
+---
+
+## US-020 : Authentification SSO web supervision
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Health check | GET http://localhost:8082/actuator/health | HTTP 200 | PASS |
+| 2 | Dashboard superviseur | GET /api/supervision/tableau-de-bord | HTTP 200 | PASS |
+| 3 | Bandeau | body.bandeau present | ABSENT (structure plate) | FAIL (spec) |
+
+---
+
+## US-021 : Plan du jour
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Plan du jour | GET http://localhost:8082/api/planification/plans/2026-03-25 | HTTP 200 | PASS |
+| 2 | Date invalide | GET /api/planification/plans/not-a-date | HTTP 400 | PASS |
+| 3 | Tournees | body.tournees.length >= 4 | FAIL (seeder date fixe) | FAIL (OBS-021-01) |
+
+---
+
+## US-022 : Composition d'une tournee
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Detail tournee | GET http://localhost:8082/api/planification/tournees/tp-201 | HTTP 200 + zones[], contraintes | PASS |
+| 2 | Valider composition | POST /composition/valider | compositionVerifiee=true | PASS |
+| 3 | 404 inexistante | GET /api/planification/tournees/INEXISTANT | HTTP 404 | PASS |
+
+---
+
+## US-023 : Affecter livreur et vehicule
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Affectation reussie | POST /tournees/tp-201/affecter {"livreurId":"X","vehiculeId":"Y"} | HTTP 200 + AFFECTEE | PASS |
+| 2 | Sans livreurId | POST sans livreurId | HTTP 400 | PASS |
+| 3 | Livreur double | Affecter meme livreur 2 tournees | HTTP 409 | PASS |
+| 4 | Tournee LANCEE | POST sur tp-204 | HTTP 409 | PASS |
+
+---
+
+## US-024 : Lancer une tournee
+
+### Check-list de tests manuels
+
+| # | Scénario | URL / Action | Résultat attendu | Statut |
+|---|----------|-------------|-----------------|--------|
+| 1 | Lancer AFFECTEE | POST /tournees/tp-202/lancer | HTTP 200 + LANCEE | PARTIEL (lanceeLe absent) |
+| 2 | NON_AFFECTEE | POST sur tp-203 | HTTP 409 | PASS |
+| 3 | Lancer-toutes | POST /plans/2026-03-25/lancer-toutes | HTTP 200 + nbTourneesLancees | PASS |
+| 4 | Date invalide | POST /plans/not-a-date/lancer-toutes | HTTP 400 | PASS |

@@ -66,19 +66,28 @@ class EvenementControllerTest {
     @Test
     @WithMockUser(roles = {"SYSTEME"})
     void devrait_retourner_201_lors_enregistrement_evenement() throws Exception {
-        doNothing().when(enregistrerHandler).handle(any());
+        EvenementLivraison evenementCree = new EvenementLivraison(
+                "evt-001", "tournee-001", "colis-001", "livreur-001",
+                TypeEvenement.LIVRAISON_CONFIRMEE, NOW,
+                new Coordonnees(48.8566, 2.3522), false, null, null,
+                StatutSynchronisation.PENDING, 0
+        );
+        when(enregistrerHandler.handle(any())).thenReturn(evenementCree);
 
         mockMvc.perform(post("/api/oms/evenements")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buildRequest("evt-001"))))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.eventId").value("evt-001"))
+                .andExpect(jsonPath("$.statutSynchronisation").value("PENDING"))
+                .andExpect(jsonPath("$.modeDegradGPS").value(false));
     }
 
     @Test
     @WithMockUser(roles = {"SYSTEME"})
     void devrait_retourner_409_si_eventId_deja_existant() throws Exception {
-        doThrow(new EvenementDejaExistantException("evt-dupliquer"))
-                .when(enregistrerHandler).handle(any());
+        when(enregistrerHandler.handle(any()))
+                .thenThrow(new EvenementDejaExistantException("evt-dupliquer"));
 
         mockMvc.perform(post("/api/oms/evenements")
                         .contentType(MediaType.APPLICATION_JSON)

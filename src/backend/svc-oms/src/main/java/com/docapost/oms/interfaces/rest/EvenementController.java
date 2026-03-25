@@ -40,18 +40,19 @@ public class EvenementController {
 
     /**
      * POST /api/oms/evenements — Enregistrer un événement dans l'Event Store.
-     * Retourne 201 Created, ou 409 si l'eventId existe déjà (idempotence US-017 SC3).
+     * Retourne 201 Created avec le DTO de l'événement créé (incl. modeDegradGPS),
+     * ou 409 si l'eventId existe déjà (idempotence US-017 SC3).
      */
     @PostMapping
     public ResponseEntity<?> enregistrer(@RequestBody EnregistrerEvenementRequest req) {
         try {
-            enregistrerHandler.handle(new EnregistrerEvenementCommand(
+            var evenement = enregistrerHandler.handle(new EnregistrerEvenementCommand(
                     req.eventId(), req.tourneeId(), req.colisId(), req.livreurId(),
                     req.type(), req.horodatage(),
                     req.latitude(), req.longitude(),
                     req.preuveLivraisonId(), req.motifEchec()
             ));
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            return ResponseEntity.status(HttpStatus.CREATED).body(EvenementDTO.from(evenement));
         } catch (EvenementDejaExistantException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("erreur", e.getMessage()));

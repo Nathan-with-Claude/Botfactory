@@ -23,7 +23,7 @@ public class EnregistrerEvenementHandler {
         this.evenementStore = evenementStore;
     }
 
-    public void handle(EnregistrerEvenementCommand cmd) {
+    public EvenementLivraison handle(EnregistrerEvenementCommand cmd) {
         // Idempotence : rejeter les doublons
         if (evenementStore.findById(cmd.eventId()).isPresent()) {
             throw new EvenementDejaExistantException(cmd.eventId());
@@ -51,5 +51,6 @@ public class EnregistrerEvenementHandler {
         );
 
         evenementStore.append(evenement);
+        return evenement;
     }
 }

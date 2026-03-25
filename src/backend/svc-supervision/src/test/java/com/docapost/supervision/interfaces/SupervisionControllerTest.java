@@ -55,9 +55,9 @@ class SupervisionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tournees").isArray())
                 .andExpect(jsonPath("$.tournees", hasSize(3)))
-                .andExpect(jsonPath("$.actives").value(2))
-                .andExpect(jsonPath("$.aRisque").value(1))
-                .andExpect(jsonPath("$.cloturees").value(0));
+                .andExpect(jsonPath("$.bandeau.actives").value(2))
+                .andExpect(jsonPath("$.bandeau.aRisque").value(1))
+                .andExpect(jsonPath("$.bandeau.cloturees").value(0));
     }
 
     @Test

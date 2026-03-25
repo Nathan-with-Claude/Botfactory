@@ -110,6 +110,10 @@ public class DevDataSeeder implements CommandLineRunner {
                 Instant.now().minusSeconds(4000), "Portail électrique en panne"));
 
         // ─── BC-07 Planification — Plan du jour (US-021 à US-024) ────────────────
+        // Nettoyage préalable pour garantir que les tournées sont toujours créées
+        // avec la date du jour (évite les conflits si des données avec une ancienne
+        // date existent en base suite à un précédent démarrage).
+        tourneePlanifieeJpaRepository.deleteAll();
 
         LocalDate today = LocalDate.now();
         Instant importHeure = Instant.now().minusSeconds(3600); // simulé : importé à 06h14

@@ -81,3 +81,17 @@ curl -X POST http://localhost:8082/api/planification/plans/$(date +%Y-%m-%d)/lan
 curl http://localhost:8082/api/planification/plans/$(date +%Y-%m-%d) \
   -H "Authorization: Bearer mock-superviseur"
 ```
+
+---
+
+## Corrections post-QA (2026-03-25)
+
+**Anomalie OBS-024-01** — Rapport : `livrables/07-tests/scenarios/US-024-rapport-playwright.md`
+
+**Symptôme** : `expect(body.lanceeLe).toBeTruthy()` échouait. Le DTO de réponse du `POST /lancer` exposait un champ `lancee` (nom du champ dans le domaine) au lieu de `lanceeLe` (nom attendu par le contrat API).
+
+**Correction** : Renommage du champ `lancee` en `lanceeLe` dans les deux DTOs de l'Interface Layer. Le domaine (`TourneePlanifiee.getLancee()`) n'est pas modifié.
+
+**Fichiers modifiés** :
+- `src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/planification/dto/TourneePlanifieeDTO.java`
+- `src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/planification/dto/TourneePlanifieeDetailDTO.java`
