@@ -75,3 +75,5 @@ flowchart LR
   - analyser la structure du repo.
   - proposer ou créer des fichiers workflow (GitHub Actions).
 - (optionnel) cloud MCP (AWS/GCP/Azure) si tu veux simuler l’infra.
+
+N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

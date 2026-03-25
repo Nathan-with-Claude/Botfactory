@@ -34,7 +34,17 @@ Boucle itérative : 6 (Dev) → 7 (QA) → 9 (End User) pour chaque User Story d
 
 ```text
 /livrables/
-├── 00-contexte/              # documents d’entreprise (optionnel)
+├── 00-contexte/              # documents d’entreprise + journaux agents
+│   └── journaux/
+│       ├── journal-sponsor.md
+│       ├── journal-ux.md
+│       ├── journal-architecte-metier.md
+│       ├── journal-architecte-technique.md
+│       ├── journal-po.md
+│       ├── journal-developpeur.md
+│       ├── journal-qa.md
+│       ├── journal-devops.md
+│       └── journal-end-user.md
 ├── 01-vision/                # Sponsor
 │   ├── vision-produit.md
 │   ├── kpis.md
@@ -220,3 +230,82 @@ Donne un feedback priorisé dans /livrables/09-feedback/.
 - /livrables/05-backlog/user-stories/ rempli et definition-mvp.md → backlog MVP prêt.
 - premier vertical slice en prod (via Dev + QA + DevOps) → MVP en cours de vie.
 - /livrables/09-feedback/ alimenté → boucle de feedback terrain active.
+
+## Gestion des nouveaux besoins métier (en cours de cadrage)
+
+Quand un nouveau besoin métier apparaît (ex. rôle oublié, nouveau parcours clé) :
+
+1. L’ajouter dans /livrables/00-entretiens/synthese-entretiens.md avec la date.
+2. Si impact business majeur → demander à @sponsor de mettre à jour vision + périmètre MVP.
+3. Demander à @ux de mettre à jour personas, user journeys, wireframes concernés.
+4. Demander à @architecte-metier de mettre à jour domain-model, capability-map,
+   modules-fonctionnels.
+5. Demander à @architecte-technique de mettre à jour architecture-applicative,
+   schemas-integration, design-decisions, exigences-non-fonctionnelles.
+6. Demander à @po de créer / ajuster les Epics, Features et User Stories
+   correspondantes dans 05-backlog/.
+
+Ne jamais modifier directement le code ou le backlog sans passer par cette mini-chaîne.
+
+## Journaux de bord des agents
+
+Chaque agent dispose d’un fichier de journal dans `/livrables/00-contexte/journaux/` :
+
+| Agent | Journal |
+|-------|---------|
+| @sponsor | `journal-sponsor.md` |
+| @ux | `journal-ux.md` |
+| @architecte-metier | `journal-architecte-metier.md` |
+| @architecte-technique | `journal-architecte-technique.md` |
+| @po | `journal-po.md` |
+| @developpeur | `journal-developpeur.md` |
+| @qa | `journal-qa.md` |
+| @devops | `journal-devops.md` |
+| @end-user | `journal-end-user.md` |
+
+### Règle obligatoire — protocole de session
+
+**EN DÉBUT de session** :
+1. Lire son journal de bord (`/livrables/00-contexte/journaux/journal-[agent].md`).
+2. Ne PAS relire l’intégralité des livrables déjà synthétisés dans le journal — sauf si la tâche demandée le justifie explicitement.
+
+**EN FIN de session** :
+1. Mettre à jour son journal :
+   - Section **"Interventions réalisées"** : ajouter la ligne de l’intervention (date, version, sujet, fichiers)
+   - Section **"Décisions structurantes"** : ajouter toute décision non triviale prise pendant la session
+   - Section **"Suivi des travaux"** (si applicable) : mettre à jour les statuts (@developpeur, @qa)
+   - Section **"Points d’attention"** : mettre à jour si de nouveaux risques ou dépendances ont été identifiés
+2. Ajouter une entrée dans `/livrables/CHANGELOG-actions-agents.md`.
+
+### Format CHANGELOG
+
+Toutes les actions importantes réalisées par les agents
+doivent être journalisées dans /livrables/CHANGELOG-actions-agents.md.
+
+Format attendu d’une entrée :
+
+- [date ISO] [agent] [type d’action] → [fichier(s) impacté(s)]
+  [résumé très court]
+
+Exemple :
+- 2026-03-19T22:15Z @ux UPDATE → /livrables/02-ux/user-journeys.md
+  Ajout du parcours "Préparer les tournées du jour" pour le respo logistique.
+
+### Règle CHANGELOG pour tous les agents
+
+Après chaque modification de fichier dans /livrables/,
+ajouter une ligne dans /livrables/CHANGELOG-actions-agents.md
+en suivant le format ci-dessus.
+
+## Poste de commande tests manuels (Product / Expert métier)
+
+Pour chaque User Story livrée :
+
+1. Le développeur indique dans US-[NNN]-impl.md :
+   - les commandes pour lancer l'app en local
+   - les URLs à utiliser pour tester
+2. @qa génère une check-list de tests manuels simple dans
+   /livrables/06-dev/poste-de-commande-tests.md (section pour la US).
+3. @qa effectue l'ensemble des tests avec Playwright en suivant les consignes de test et si jamais il y a des erreurs, demande à @dev de corriger
+4. Le feedback structuré (bloquants / améliorations) est ensuite
+   transformé en feedback end-user via @end-user et en nouvelles US via @po.

@@ -1,6 +1,6 @@
 # Architecture Applicative DocuPost
 
-> Document de référence — Version 1.1 — 2026-03-19
+> Document de référence — Version 1.2 — 2026-03-20
 > Produit par l'Architecte Technique à partir des entretiens métier (Pierre livreur,
 > Mme Dubois DSI, M. Garnier Architecte Technique, M. Renaud Responsable Exploitation
 > Logistique), de la vision produit, des livrables UX et de l'architecture métier
@@ -12,6 +12,10 @@
 >
 > Mise à jour v1.1 : abandon de Kotlin + Jetpack Compose au profit de React Native
 > (iOS + Android) et d'un monorepo front unifié (React Native + React web).
+>
+> Mise à jour v1.2 : ajout du TMS externe comme système tiers (C4 contexte) ;
+> ajout du composant ImporteurTMS (scheduled cron 6h00) ; enrichissement du backend
+> et du frontend web pour le Module 8 Planification de Tournée (BC-07, Parcours 0).
 
 ---
 
@@ -21,22 +25,26 @@
 C4Context
     title Contexte système DocuPost
 
-    Person(livreur, "Livreur terrain", "Pierre Morel. Exécute la tournée\ndepuis l'application mobile iOS ou Android.\n80-120 colis/jour.")
-    Person(superviseur, "Superviseur logistique", "M. Renaud. Pilote les tournées\nen temps réel depuis l'interface web.")
-    Person(support, "Support client / DSI", "Mme Dubois. Consulte les preuves\net les KPIs pour les litiges et audits.")
+    Person(livreur, "Livreur terrain", "Pierre Morel. Exécute la tournée\\ndepuis l'application mobile iOS ou Android.\\n80-120 colis/jour.")
+    Person(superviseur, "Superviseur logistique", "M. Renaud. Pilote les tournées\\nen temps réel depuis l'interface web.")
+    Person(resp_logistique, "Responsable logistique", "M. Renaud. Prépare les tournées du matin\\n: import TMS, affectation livreur/véhicule,\\nlancement. Interface web. Parcours 0.")
+    Person(support, "Support client / DSI", "Mme Dubois. Consulte les preuves\\net les KPIs pour les litiges et audits.")
 
-    System(docupost, "Plateforme DocuPost", "Gestion de tournées de livraison.\nApplication mobile iOS + Android (React Native)\n+ interface web de supervision (React) + API backend.")
+    System(docupost, "Plateforme DocuPost", "Gestion de tournées de livraison.\\nApplication mobile iOS + Android (React Native)\\n+ interface web de supervision et planification (React) + API backend.")
 
-    System_Ext(oms, "OMS Docaposte", "Order Management System.\nRéférentiel des colis assignés.\nReçoit les événements de statut.")
-    System_Ext(sso, "SSO Corporate Docaposte", "Fournisseur d'identité OAuth2.\nAuthentifie livreurs et superviseurs.")
-    System_Ext(maps, "Service de cartographie", "Google Maps ou équivalent.\nNavigation et géolocalisation.")
-    System_Ext(push, "Firebase Cloud Messaging", "Service de notifications push\nvers l'application mobile (iOS + Android).")
+    System_Ext(oms, "OMS Docaposte", "Order Management System.\\nRéférentiel des colis assignés.\\nReçoit les événements de statut.")
+    System_Ext(tms, "TMS Externe", "Transport Management System.\\nGénère les tournées du jour (colis, zones,\\ncontraintes horaires). Export API REST\\nou batch fichier. Consulté chaque matin à 6h00.")
+    System_Ext(sso, "SSO Corporate Docaposte", "Fournisseur d'identité OAuth2.\\nAuthentifie livreurs et superviseurs.")
+    System_Ext(maps, "Service de cartographie", "Google Maps ou équivalent.\\nNavigation et géolocalisation.")
+    System_Ext(push, "Firebase Cloud Messaging", "Service de notifications push\\nvers l'application mobile (iOS + Android).")
 
     Rel(livreur, docupost, "Exécute la tournée", "Application mobile iOS / Android / HTTPS")
     Rel(superviseur, docupost, "Pilote les tournées", "Interface web / HTTPS")
+    Rel(resp_logistique, docupost, "Prépare les tournées du matin", "Interface web / HTTPS")
     Rel(support, docupost, "Consulte preuves et KPIs", "Interface web / HTTPS")
     Rel(docupost, oms, "Émet les événements de statut colis", "API REST / HTTPS < 30s")
     Rel(oms, docupost, "Fournit le référentiel colis du jour", "API REST / HTTPS")
+    Rel(tms, docupost, "Fournit les tournées du jour (import 6h00)", "API REST pull ou batch fichier (H6)")
     Rel(sso, docupost, "Fournit les tokens JWT", "OAuth2 / OIDC")
     Rel(docupost, maps, "Navigation et géocodage", "API Maps SDK")
     Rel(docupost, push, "Notifications push livreur", "FCM API")
@@ -52,68 +60,86 @@ C4Container
 
     Person(livreur, "Livreur terrain")
     Person(superviseur, "Superviseur / DSI")
+    Person(resp_logistique, "Responsable logistique")
 
     System_Boundary(docupost, "Plateforme DocuPost") {
 
-        Container(mobile, "Application Mobile Livreur", "React Native / TypeScript\n(Expo ou CLI — iOS + Android)",
-            "BC-01 Orchestration de Tournée (UI + logique offline)\nBC-02 Gestion des Preuves (capture caméra, signature).\nClient du Backend API.")
+        Container(mobile, "Application Mobile Livreur", "React Native / TypeScript\\n(Expo ou CLI — iOS + Android)",
+            "BC-01 Orchestration de Tournée (UI + logique offline)\\nBC-02 Gestion des Preuves (capture caméra, signature).\\nClient du Backend API.")
 
-        Container(webapp, "Application Web Superviseur", "React 19 / TypeScript 5.6",
-            "BC-03 Supervision (tableau de bord, alertes, instructions)\nBC-07 Reporting opérationnel.\nCommunique avec le Backend via REST + WebSocket.")
+        Container(webapp, "Application Web Superviseur / Planification", "React 19 / TypeScript 5.6",
+            "BC-03 Supervision (tableau de bord, alertes, instructions)\\nBC-07 Planification de Tournée (écrans W-04 et W-05 :\\n  visualisation plan du jour, affectation, lancement)\\nBC-07 Reporting opérationnel.\\nCommunique avec le Backend via REST + WebSocket.")
 
         Container(api_gateway, "API Gateway / BFF", "Spring Boot 4 / Java 21",
-            "Point d'entrée unique. Authentification JWT.\nRouting vers les services backend.\nRate limiting et sécurité périmétrique.")
+            "Point d'entrée unique. Authentification JWT.\\nRouting vers les services backend.\\nRate limiting et sécurité périmétrique.")
 
         Container(svc_tournee, "Service Orchestration Tournée", "Spring Boot 4 / Java 21",
-            "BC-01. Core Domain.\nGère Tournée, Colis, Incident.\nPublie les Domain Events.")
+            "BC-01. Core Domain.\\nGère Tournée, Colis, Incident.\\nPublie les Domain Events.")
+
+        Container(svc_planification, "Service Planification de Tournée", "Spring Boot 4 / Java 21",
+            "BC-07. Core Domain.\\nGère PlanDuJour, TournéesTMS, Affectations.\\nExpose 4 endpoints REST :\\n  GET /plans/{date}\\n  GET /plans/{date}/tournees\\n  POST /affectations\\n  POST /tournees/{id}/lancer\\nPublie TournéeLancée → BC-01.")
+
+        Container(importeur_tms, "ImporteurTMS", "Spring Boot 4 / Java 21\\n@Scheduled — cron 6h00",
+            "Composant planifié (scheduler Spring).\\nDéclenche l'import depuis le TMS chaque matin à 6h00.\\nApplique l'ACL : TournéeTMS (modèle TMS) → PlanDuJour / TournéesTMS (modèle DocuPost).\\nAlerte superviseur si import en échec.\\nFait partie du périmètre du svc-planification.")
 
         Container(svc_preuves, "Service Gestion des Preuves", "Spring Boot 4 / Java 21",
-            "BC-02. Supporting.\nCapture, stocke et expose\nles preuves immuables.")
+            "BC-02. Supporting.\\nCapture, stocke et expose\\nles preuves immuables.")
 
         Container(svc_supervision, "Service Supervision", "Spring Boot 4 / Java 21",
-            "BC-03. Core Domain.\nRead models, détection tournées à risque,\ngestion des Instructions.")
+            "BC-03. Core Domain.\\nRead models, détection tournées à risque,\\ngestion des Instructions.")
 
         Container(svc_notification, "Service Notification", "Spring Boot 4 / Java 21",
-            "BC-04. Supporting.\nAcheminement push (FCM)\net alertes superviseur (WebSocket).")
+            "BC-04. Supporting.\\nAcheminement push (FCM)\\net alertes superviseur (WebSocket).")
 
         Container(svc_integration, "Service Intégration SI (ACL)", "Spring Boot 4 / Java 21",
-            "BC-05. Generic.\nAnti-Corruption Layer OMS.\nEvent store immuable. Rejeu offline.")
+            "BC-05. Generic.\\nAnti-Corruption Layer OMS.\\nEvent store immuable. Rejeu offline.")
 
-        Container(event_bus, "Bus d'événements interne", "Spring ApplicationEventPublisher\n(+ outbox pattern en base)",
-            "Transport des Domain Events\nentre les services backend.\nGarantie at-least-once delivery.")
+        Container(event_bus, "Bus d'événements interne", "Spring ApplicationEventPublisher\\n(+ outbox pattern en base)",
+            "Transport des Domain Events\\nentre les services backend.\\nGarantie at-least-once delivery.")
 
         ContainerDb(db_tournee, "BDD Tournée", "PostgreSQL 16",
-            "Agrégats Tournée et Colis.\nÉvénements outbox.")
+            "Agrégats Tournée et Colis.\\nÉvénements outbox.")
+
+        ContainerDb(db_planification, "BDD Planification", "PostgreSQL 16",
+            "PlanDuJour, TournéesTMS, Affectations.\\nÉtat d'import TMS (succès, échec, timestamp).")
 
         ContainerDb(db_preuves, "BDD Preuves", "PostgreSQL 16 + stockage objet S3-compatible",
-            "Métadonnées PreuveLivraison.\nFichiers (signatures, photos) en objet store.")
+            "Métadonnées PreuveLivraison.\\nFichiers (signatures, photos) en objet store.")
 
         ContainerDb(db_supervision, "BDD Supervision", "PostgreSQL 16",
-            "Read models VueTournee, VueColis.\nInstructions.")
+            "Read models VueTournee, VueColis.\\nInstructions.")
 
         ContainerDb(db_events, "Event Store immuable", "PostgreSQL 16 (append-only)",
-            "Historisation de tous les\nDomain Events (qui/quoi/quand/coordonnées).\nAudit et rejeu OMS.")
+            "Historisation de tous les\\nDomain Events (qui/quoi/quand/coordonnées).\\nAudit et rejeu OMS.")
 
-        ContainerDb(db_offline, "Stockage local mobile", "WatermelonDB (SQLite)\n(React Native)",
-            "Tournée, Colis, Preuves en attente.\nFile de synchronisation offline.")
+        ContainerDb(db_offline, "Stockage local mobile", "WatermelonDB (SQLite)\\n(React Native)",
+            "Tournée, Colis, Preuves en attente.\\nFile de synchronisation offline.")
     }
 
+    System_Ext(tms, "TMS Externe", "API REST / batch fichier (H6)")
     System_Ext(oms, "OMS Docaposte", "API REST")
     System_Ext(sso, "SSO Corporate", "OAuth2 / OIDC")
     System_Ext(push_svc, "Firebase Cloud Messaging")
 
     Rel(livreur, mobile, "Exécute la tournée", "Touch / HTTPS — iOS + Android")
     Rel(superviseur, webapp, "Pilote les tournées", "HTTPS / WS")
+    Rel(resp_logistique, webapp, "Prépare les tournées du matin", "HTTPS")
 
     Rel(mobile, api_gateway, "Commandes et queries", "HTTPS / REST + JWT")
     Rel(webapp, api_gateway, "Commandes, queries, temps réel", "HTTPS / REST + WebSocket")
 
     Rel(api_gateway, svc_tournee, "Routes commandes tournée", "HTTP interne")
+    Rel(api_gateway, svc_planification, "Routes commandes planification", "HTTP interne")
     Rel(api_gateway, svc_preuves, "Routes commandes preuves", "HTTP interne")
     Rel(api_gateway, svc_supervision, "Routes queries supervision", "HTTP interne")
 
+    Rel(importeur_tms, tms, "Import tournées du jour (pull 6h00)", "HTTPS / REST ou batch fichier")
+    Rel(importeur_tms, svc_planification, "Crée PlanDuJour et TournéesTMS", "Interne Spring")
+
     Rel(svc_tournee, db_tournee, "Lecture/écriture agrégats", "JDBC")
     Rel(svc_tournee, event_bus, "Publie Domain Events", "Spring Events + outbox")
+    Rel(svc_planification, db_planification, "Lecture/écriture PlanDuJour", "JDBC")
+    Rel(svc_planification, event_bus, "Publie TournéeLancée", "Spring Events + outbox")
     Rel(svc_preuves, db_preuves, "Stocke preuves", "JDBC + S3")
     Rel(svc_supervision, db_supervision, "Lit/écrit read models", "JDBC")
     Rel(svc_integration, db_events, "Append events immuables", "JDBC")
@@ -124,6 +150,7 @@ C4Container
     Rel(event_bus, svc_supervision, "Domain Events tournée", "")
     Rel(event_bus, svc_integration, "Domain Events pour OMS", "")
     Rel(event_bus, svc_notification, "InstructionEnvoyée, Alertes", "")
+    Rel(event_bus, svc_tournee, "TournéeLancée → création Tournée livreur", "")
 
     Rel(mobile, db_offline, "Persistence offline", "WatermelonDB / SQLite")
 ```
@@ -293,6 +320,56 @@ svc-integration-si/
     └── (aucune — module consommateur pur)
 ```
 
+### BC-07 — Planification de Tournée (Core Domain)
+
+```
+svc-planification-tournee/
+├── domain/
+│   ├── model/
+│   │   ├── PlanDuJour.java              # Aggregate Root
+│   │   ├── TourneeTMS.java              # Entity
+│   │   ├── Affectation.java             # Entity
+│   │   ├── Vehicule.java                # Entity
+│   │   ├── CompositionTournee.java      # Value Object
+│   │   └── StatutAffectation.java       # Value Object (enum)
+│   ├── events/
+│   │   ├── TourneeImporteeTMS.java
+│   │   ├── CompositionVerifiee.java
+│   │   ├── AffectationEnregistree.java
+│   │   └── TourneeLancee.java
+│   ├── repository/
+│   │   ├── PlanDuJourRepository.java    # Interface (port)
+│   │   └── AffectationRepository.java  # Interface (port)
+│   └── service/
+│       └── ConflitAffectationDetector.java  # Domain Service
+├── application/
+│   ├── usecase/
+│   │   ├── ImporterTourneesUseCase.java
+│   │   ├── VerifierCompositionUseCase.java
+│   │   ├── EnregistrerAffectationUseCase.java
+│   │   └── LancerTourneeUseCase.java
+│   └── port/
+│       └── PlanificationEventPublisher.java  # Port vers bus
+├── infrastructure/
+│   ├── persistence/
+│   │   ├── PlanDuJourRepositoryImpl.java
+│   │   └── AffectationRepositoryImpl.java
+│   ├── tms/
+│   │   ├── TmsApiAdapter.java           # ACL : appels API REST TMS
+│   │   ├── TmsResponseTranslator.java   # Mapping TournéeTMS (TMS) → PlanDuJour / TournéesTMS (DocuPost)
+│   │   └── ImporteurTMSScheduler.java   # @Scheduled cron("0 0 6 * * MON-SAT") — import 6h00
+│   └── messaging/
+│       └── SpringPlanificationEventPublisher.java
+└── interface/
+    ├── rest/
+    │   ├── PlanificationController.java  # GET /plans/{date}, GET /plans/{date}/tournees
+    │   └── AffectationController.java   # POST /affectations, POST /tournees/{id}/lancer
+    └── dto/
+        ├── PlanDuJourDto.java
+        ├── TourneeTMSDto.java
+        └── AffectationRequest.java
+```
+
 ---
 
 ## Choix de stack technique — Justifications
@@ -307,10 +384,11 @@ svc-integration-si/
 | Event store | PostgreSQL 16 (table append-only) | Simplicité MVP. Pas de Kafka ni d'EventStoreDB au MVP pour limiter la complexité opérationnelle. Évolutif vers Kafka en R2. |
 | Outbox pattern | PostgreSQL (table outbox) + scheduler | Garantit la livraison at-least-once des Domain Events même en cas de crash. |
 | Stockage fichiers | MinIO (S3-compatible) | Stockage des signatures et photos de preuves. Compatible avec une migration vers S3 AWS ou Azure Blob. |
-| API | REST / JSON | Imposé par M. Garnier. Interopérabilité maximale avec l'OMS et les clients mobiles/web. |
+| API | REST / JSON | Imposé par M. Garnier. Interopérabilité maximale avec l'OMS, le TMS et les clients mobiles/web. |
 | Temps réel superviseur | WebSocket (Spring WebSocket + STOMP) | Mise à jour du tableau de bord < 30 secondes sans polling. |
+| Scheduler import TMS | Spring `@Scheduled` | Import cron 6h00 du lundi au samedi. Déclenche ImporteurTMSScheduler. |
 
-### Frontend web (Superviseur)
+### Frontend web (Superviseur / Planification)
 
 | Composant | Technologie | Justification |
 |---|---|---|
@@ -318,6 +396,7 @@ svc-integration-si/
 | State management | Zustand ou React Query | Légèreté vs Redux pour le MVP. React Query pour la synchronisation serveur. |
 | WebSocket client | @stomp/stompjs | Compatible Spring WebSocket / STOMP côté serveur. |
 | UI | Tailwind CSS + composants Radix UI | Productivité MVP, accessibilité native. |
+| Domaine fonctionnel Planification | Écrans W-04 et W-05 | Vue liste des tournées du matin (W-04) et détail d'une tournée à préparer (W-05). Voir /livrables/02-ux/wireframes.md. |
 
 ### Application mobile (Livreur)
 
@@ -337,7 +416,7 @@ svc-integration-si/
 | Composant | Technologie | Justification |
 |---|---|---|
 | Gestionnaire de monorepo | Nx ou Turborepo | Partage de code maximal entre l'app mobile (React Native) et l'app web (React). Pipelines de build parallélisés, cache local et distant. |
-| Packages partagés | `@docupost/shared-ui`, `@docupost/domain-hooks`, `@docupost/api-client` | Composants UI adaptables, hooks métier (useConfirmerLivraison, useEtatTournee), client REST typé — consommés par le mobile et le web. |
+| Packages partagés | `@docupost/shared-ui`, `@docupost/domain-hooks`, `@docupost/api-client` | Composants UI adaptables, hooks métier (useConfirmerLivraison, useEtatTournee, usePlanDuJour), client REST typé — consommés par le mobile et le web. |
 | Langage unique | TypeScript 5.6 | Cohérence totale du typage entre les packages partagés, l'app web et l'app mobile. |
 
 Voir DD-009 pour la justification détaillée du choix monorepo.
@@ -387,6 +466,10 @@ App → API Gateway                  App → WatermelonDB (local)
    (BGTaskScheduler). La synchronisation est garantie dès que l'app repasse au premier plan
    si le background fetch n'a pas encore pu s'exécuter.
 
+Note : la planification de tournée (Parcours 0) est une action web superviseur uniquement.
+Elle ne présente pas de contrainte offline : l'interface de planification requiert une
+connexion active et n'est pas utilisée depuis l'application mobile livreur.
+
 ---
 
 ## Hébergement cloud et environnements
@@ -405,6 +488,7 @@ App → API Gateway                  App → WatermelonDB (local)
 │  │ API Gateway│  │ svc-tournee│  │ svc-preuves           │    │
 │  │ (Ingress)  │  │ svc-superv.│  │ svc-notification      │    │
 │  │            │  │ svc-integr.│  │ svc-reporting         │    │
+│  │            │  │ svc-planif.│  │                       │    │
 │  └────────────┘  └────────────┘  └───────────────────────┘    │
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -457,9 +541,11 @@ Internet
    ├──→ [API Gateway / BFF]  ──→ JWT validation (SSO corporate)
    │         │
    │         ├──→ [svc-orchestration-tournee]  ──→ [PostgreSQL tournee]
+   │         ├──→ [svc-planification-tournee]  ──→ [PostgreSQL planification]
+   │         │         └── [ImporteurTMSScheduler cron 6h00] ──→ [TMS Externe API REST / batch]
    │         ├──→ [svc-gestion-preuves]        ──→ [PostgreSQL preuves + MinIO]
    │         ├──→ [svc-supervision]            ──→ [PostgreSQL supervision]
-   │         │         └──(WebSocket)──→  [Navigateur superviseur]
+   │         │         └──(WebSocket)──→  [Navigateur superviseur / planification]
    │         ├──→ [svc-notification]    ──→ [FCM → App iOS + Android]
    │         └──→ [svc-integration-si]  ──→ [PostgreSQL event-store]
    │                                    ──→ [OMS Docaposte API REST]
@@ -469,9 +555,9 @@ Internet
 
 Monorepo frontend (Nx / Turborepo)
    ├── apps/mobile     → React Native (iOS + Android)
-   ├── apps/web        → React 19 (Superviseur SPA)
+   ├── apps/web        → React 19 (Superviseur + Planification SPA)
    └── packages/
        ├── shared-ui           → Composants UI partagés
-       ├── domain-hooks        → Hooks métier (tournée, colis, livraison)
+       ├── domain-hooks        → Hooks métier (tournée, colis, livraison, planification)
        └── api-client          → Client REST typé TypeScript
 ```

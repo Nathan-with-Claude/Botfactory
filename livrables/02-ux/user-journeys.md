@@ -1,9 +1,12 @@
 # User Journeys DocuPost
 
-> Document de référence — Version 1.0 — 2026-03-19
-> Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
-> Architecte Technique, M. Renaud Responsable Exploitation) et des livrables de vision
-> (/livrables/01-vision/).
+> Document de référence — Version 1.1 — 2026-03-20
+> Mis à jour suite à l'entretien complémentaire du 2026-03-20 avec M. Renaud :
+> ajout du Parcours 0 — Responsable logistique : Préparer les tournées du jour.
+>
+> Version 1.0 produite le 2026-03-19 à partir des entretiens métier (Pierre livreur,
+> Mme Dubois DSI, M. Garnier Architecte Technique, M. Renaud Responsable Exploitation)
+> et des livrables de vision (/livrables/01-vision/).
 >
 > Chaque parcours est décrit en deux versions :
 > - AS-IS : le parcours tel qu'il existe aujourd'hui, avec les pain points documentés.
@@ -11,6 +14,64 @@
 >
 > Les verbatims d'entretiens sont cités en italique pour ancrer les pain points dans la
 > réalité terrain.
+
+---
+
+## Parcours 0 — Responsable logistique : Préparer les tournées du jour
+
+**Persona principal** : Laurent Renaud (Responsable Exploitation Logistique)
+**Déclencheur** : Arrivée au dépôt le matin (entre 6h00 et 6h30), réception des données TMS
+
+> Ce parcours est un **prérequis bloquant** au Parcours 1 : sans *lancement de tournée*,
+> aucun livreur n'a de *tournée* visible dans l'application mobile.
+
+---
+
+### Version AS-IS (aujourd'hui)
+
+| # | Étape                          | Actions de Laurent                                                              | Émotions          | Pain points                                                                                                       |
+|---|--------------------------------|---------------------------------------------------------------------------------|-------------------|-------------------------------------------------------------------------------------------------------------------|
+| 1 | Réception de la liste TMS      | Consulte l'interface partielle du TMS ou un export par email pour obtenir le *plan du jour* | Neutre / Routinier | Données fragmentées. L'export TMS est incomplet : pas de vue consolidée de toutes les *tournées TMS* en un écran. |
+| 2 | Vérification de composition    | Contrôle manuellement sur papier ou tableur : nombre de *colis* par *tournée*, zones géographiques, contraintes horaires | Charge mentale     | *Vérification de composition* entièrement manuelle. Comptage à la main. Risque d'erreur non détecté avant le départ. |
+| 3 | Affectation livreur et véhicule | Note sur un tableau papier ou un tableur le livreur et le *véhicule* assigné à chaque *tournée* | Concentration / Stress | *Affectation* sans traçabilité, sans détection de conflit (livreur absent, *véhicule* indisponible). Aucune validation formelle. |
+| 4 | Communication aux livreurs     | Affiche le tableau papier ou appelle les livreurs un par un pour leur communiquer leur *tournée* | Pression temporelle | Communication non numérique. Si un livreur manque l'affichage ou l'appel, il part sans information. Aucune confirmation de réception. |
+
+**Pain points majeurs AS-IS :**
+- *Plan du jour* non consolidé : données éparpillées entre email, TMS et tableur.
+- *Vérification de composition* entièrement manuelle, source d'erreurs silencieuses.
+- *Affectation* sur papier ou tableur : aucune traçabilité, aucune détection de conflit.
+- Aucun mécanisme de *lancement de tournée* formel : les livreurs partent sans confirmation numérique.
+- En cas d'erreur découverte après le départ : rappel téléphonique, retour au dépôt, perte de temps pour toute la journée.
+
+---
+
+### Version TO-BE MVP
+
+| # | Étape                           | Actions de Laurent                                                                     | Système DocuPost                                                                                                       | Émotions attendues    | Domain Events                                      |
+|---|---------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|-----------------------|----------------------------------------------------|
+| 1 | Connexion et réception TMS      | Ouvre l'interface web DocuPost, consulte la liste des *tournées TMS* importées du matin | Affiche la liste consolidée des *tournées TMS* avec pour chaque tournée : code *tournée*, nombre de *colis*, zones, statut d'*affectation* (non affectée / affectée / lancée). | Clarté / Maîtrise     | **TournéeImportéeTMS**                             |
+| 2 | Vérification de composition     | Clique sur une *tournée* pour vérifier sa *composition de tournée* : liste des *colis*, zones couvertes, contraintes horaires | Affiche le détail de la *tournée* : liste des *colis* avec adresses, zones, contraintes. Indicateurs visuels si anomalie détectée (surcharge, zone inhabituelle). | Confiance             | **TournéeVérifiée**                                |
+| 3 | Affectation livreur et véhicule | Sélectionne un livreur disponible et un *véhicule* disponible pour la *tournée* via des sélecteurs dans l'interface | Affiche la liste des livreurs disponibles et des *véhicules* disponibles. Enregistre l'*affectation*. Met à jour le statut de la *tournée* : affectée. | Efficacité / Contrôle | **AffectationEnregistrée**                         |
+| 4 | Validation et lancement         | Une fois toutes les *tournées* affectées, valide et lance les *tournées* via un bouton de *lancement de tournée* | Transmet les *tournées* lancées aux applications mobiles des livreurs concernés. Statut de la *tournée* passe à : lancée. | Soulagement           | **TournéeLancée**                                  |
+| 5 | Confirmation de réception       | (Automatique) Vérifie que les livreurs ont bien reçu leur *tournée* sur l'application mobile | Affiche pour chaque livreur l'état de réception : *tournée* reçue / en attente. Alerte si un livreur n'a pas ouvert l'application avant son heure de départ. | Sérénité              | **TournéeChargée** (côté livreur, Parcours 1)      |
+
+---
+
+**Domain Events identifiés (Parcours 0) :**
+TournéeImportéeTMS, TournéeVérifiée, AffectationEnregistrée, TournéeLancée
+
+**Termes du domaine captés :**
+*tournée TMS*, *plan du jour*, *affectation*, *vérification de composition*, *lancement de tournée*,
+*véhicule*, *composition de tournée*, *colis*, *tournée*
+
+**Frontières de Bounded Contexts suggérées :**
+- Le Parcours 0 se déroule entièrement dans le contexte "Préparation et affectation des
+  tournées" (Core Domain identifié dans le périmètre MVP v1.1).
+- Le passage de l'étape 4 (TournéeLancée) à la réception livreur (TournéeChargée) marque
+  la frontière entre le contexte "Préparation des tournées" et le contexte "Exécution de
+  tournée" (Parcours 1).
+- L'import TMS (étape 1) marque la frontière avec le contexte "Intégration SI" :
+  l'*Anti-Corruption Layer* TMS traduit les données TMS dans le modèle DocuPost.
 
 ---
 
@@ -85,7 +146,7 @@ SynchronisationOMS
 ### Version AS-IS (aujourd'hui)
 
 | # | Étape                    | Actions de Laurent                                           | Émotions        | Pain points                                                                                        |
-|---|--------------------------|--------------------------------------------------------------|-----------------|----------------------------------------------------------------------------------------------------|
+|---|--------------------------|--------------------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------|
 | 1 | Ouverture de journée     | Lance les *tournées*, livreurs partent avec feuille papier  | Neutre           | Dès le départ, Laurent perd la visibilité : "Je pilote à l'aveugle."                              |
 | 2 | Suivi en journée         | Attend les appels des livreurs ou appelle lui-même          | Anxiété chronique | Pilotage entièrement téléphonique. Non tracé. Interrompt les livreurs dans leur travail.          |
 | 3 | Détection d'un retard    | Apprend qu'une *tournée* est en retard quand elle est déjà en retard | Stress réactif  | Aucune détection proactive. Trop tard pour corriger efficacement.                                 |
@@ -253,7 +314,14 @@ InstructionEnvoyée, InstructionReçue, TournéeModifiée, InstructionExécutée
 
 | Terme terrain            | Définition selon l'utilisateur                                                        | Contexte d'usage            |
 |--------------------------|--------------------------------------------------------------------------------------|-----------------------------|
-| Tournée                  | Ensemble des colis à livrer par un livreur sur une journée, organisé par zone        | Parcours 1, 2, 3, 4, 5      |
+| Tournée                  | Ensemble des colis à livrer par un livreur sur une journée, organisé par zone        | Parcours 0, 1, 2, 3, 4, 5   |
+| Tournée TMS              | Tournée générée automatiquement par le TMS chaque matin, avant affectation          | Parcours 0                  |
+| Plan du jour             | Ensemble des tournées TMS à affecter et lancer avant le départ des livreurs         | Parcours 0                  |
+| Affectation              | Opération consistant à associer un livreur et un véhicule à une tournée TMS         | Parcours 0                  |
+| Vérification de composition | Contrôle de la cohérence d'une tournée : colis, zones, contraintes horaires      | Parcours 0                  |
+| Composition de tournée   | Détail du contenu d'une tournée : colis, zones géographiques couvertes, contraintes | Parcours 0                  |
+| Lancement de tournée     | Acte formel de validation d'une tournée affectée, la rendant visible aux livreurs   | Parcours 0                  |
+| Véhicule                 | Moyen de transport identifié affecté à une tournée lors de la préparation           | Parcours 0                  |
 | Colis                    | Unité de livraison avec adresse, contraintes et statut évolutif                       | Tous les parcours            |
 | Reste à livrer           | Nombre de colis non encore traités dans la tournée en cours                           | Parcours 1                  |
 | Arrêt                    | Point géographique d'une livraison dans la tournée                                    | Parcours 1                  |

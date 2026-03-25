@@ -1,0 +1,23 @@
+node_modules
+
+# Maven build output
+target/
+*.class
+
+# Expo / React Native
+.expo/
+src/mobile/.expo/
+src/mobile/node_modules/
+src/mobile/package-lock.json
+
+# IDE
+.vscode/
+.idea/
+
+# Playwright reports
+playwright-report/
+test-results/
+playwright-results.json
+
+# Docs non versionnées
+"doc test humain.md"

@@ -1,0 +1,21 @@
+spring:
+  classformat:
+    ignore: true
+  datasource:
+    url: jdbc:h2:mem:docupost-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  # US-019/020 — Désactive l'auto-configuration OAuth2 Resource Server dans les tests.
+  # Les tests @WebMvcTest utilisent @WithMockUser qui court-circuite la validation JWT.
+  # Sans cette propriété, Spring Boot tente de résoudre l'issuer-uri au démarrage.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration

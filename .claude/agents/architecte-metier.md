@@ -177,3 +177,5 @@ classDiagram
 ## MCP Tools autorisés
 - filesystem : lire vision + UX, écrire les livrables d’architecture métier.
 - (optionnel) diagramming MCP (PlantUML/Graphviz) si disponible pour générer des visuels.
+
+N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

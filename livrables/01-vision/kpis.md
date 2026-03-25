@@ -1,10 +1,30 @@
 # KPIs DocuPost
 
-> Document de référence — Version 1.0 — 2026-03-19
-> Les indicateurs ci-dessous sont directement issus des pain points et enjeux exprimés lors
-> des entretiens métier avec Pierre (livreur), Mme Dubois (DSI), M. Garnier (Architecte
-> Technique) et M. Renaud (Responsable Exploitation Logistique). Chaque KPI est rattaché
-> à l'objectif business qu'il mesure et à la source terrain qui le justifie.
+> Document de référence — Version 1.1 — 2026-03-20
+> Mis à jour suite à l'entretien complémentaire du 2026-03-20 avec M. Renaud
+> (Responsable Exploitation Logistique) : ajout des KPIs du Parcours 0 (Préparation
+> des tournées).
+>
+> Version 1.0 produite le 2026-03-19. Les indicateurs sont directement issus des pain
+> points et enjeux exprimés lors des entretiens métier avec Pierre (livreur), Mme Dubois
+> (DSI), M. Garnier (Architecte Technique) et M. Renaud (Responsable Exploitation
+> Logistique). Chaque KPI est rattaché à l'objectif business qu'il mesure et à la source
+> terrain qui le justifie.
+
+---
+
+## KPIs responsable logistique — Preparation des tournees (Parcours 0)
+
+Ces KPIs mesurent l'efficacité et la fiabilité du processus de préparation matinale des
+tournées, qui constitue le prérequis bloquant à l'exécution terrain. Ils remplacent un
+processus entièrement manuel (papier / tableur) sans baseline quantifiée à ce jour.
+
+| KPI | Definition | Cible MVP | Source entretien |
+|---|---|---|---|
+| Temps moyen de preparation des tournees du matin | Durée entre la réception des tournées TMS et la validation de l'ensemble des affectations (livreur + véhicule) pour toutes les tournées du jour | < 30 minutes pour l'ensemble des tournées du jour | M. Renaud (entretien complémentaire 2026-03-20) |
+| Taux d'affectation complete avant le depart des livreurs | Part des tournées ayant un livreur et un véhicule affectés avant l'heure de départ planifiée | 100 % | M. Renaud (entretien complémentaire 2026-03-20) |
+| Reduction des erreurs d'affectation vs baseline papier | Nombre d'erreurs d'affectation détectées après le départ des livreurs (mauvais livreur, mauvais véhicule, tournée manquante) | Réduction de 90 % vs baseline papier (baseline à établir avant déploiement MVP) | M. Renaud (entretien complémentaire 2026-03-20) |
+| Taux de tournees TMS importees sans intervention manuelle | Part des tournées du jour importées automatiquement depuis le TMS sans ressaisie | > 95 % (sous réserve de validation de l'hypothèse H6 sur l'API TMS) | M. Renaud, M. Garnier |
 
 ---
 
@@ -65,13 +85,21 @@
 
 ## Modalites de mesure
 
-- Les KPIs terrain (livreur, superviseur) sont mesurés dès la mise en production du MVP,
-  à partir d'un échantillon de tournées pilotes.
+- Les KPIs terrain (livreur, superviseur, responsable logistique) sont mesurés dès la mise
+  en production du MVP, à partir d'un échantillon de tournées pilotes.
 - Les KPIs SI sont instrumentés via les logs applicatifs et les événements OMS dès le
   premier déploiement.
-- Une baseline des indicateurs actuels (temps papier, nombre d'appels, litiges) doit être
-  établie avant le lancement du MVP pour permettre la comparaison.
+- Une baseline des indicateurs actuels (temps papier, nombre d'appels, litiges, erreurs
+  d'affectation) doit être établie avant le lancement du MVP pour permettre la comparaison.
+  Cette baseline est particulièrement critique pour les KPIs du Parcours 0 car aucune
+  mesure formelle n'existe aujourd'hui sur le processus d'affectation manuel.
 - Le score de satisfaction livreur est collecté via une micro-enquête in-app à la clôture
   de chaque tournée.
 - Les KPIs marqués "Mesure de référence au MVP" n'ont pas d'objectif cible au démarrage :
   ils servent à établir la baseline et à fixer les objectifs pour la Release 2.
+- Le KPI "Taux de tournées TMS importées sans intervention manuelle" est conditionné à la
+  validation de l'hypothèse H6 (disponibilité d'une API TMS) ; si H6 est invalide, ce KPI
+  est remplacé par un indicateur de temps de saisie manuelle.
+
+
+---

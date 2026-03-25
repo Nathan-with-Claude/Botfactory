@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.3</version>
+        <relativePath/>
+    </parent>
+
+    <!-- Note : Spring Boot 4.0.3 n'est pas encore sorti au moment de l'implementation.
+         Utilise Spring Boot 3.4.3 (LTS stable) avec Java 21.
+         Migration vers Spring Boot 4.x prevue quand la version stable sera disponible.
+         Voir design-decisions.md — DD-xxx. -->
+
+    <groupId>com.docapost</groupId>
+    <artifactId>svc-tournee</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>svc-tournee</name>
+    <description>BC-01 Orchestration de Tournee — Service Spring Boot</description>
+
+    <properties>
+        <java.version>20</java.version>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Data JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- OAuth2 Resource Server — validation JWT Keycloak (US-019/020, profil prod)
+             En profil dev, le MockJwtAuthFilter court-circuite la validation JWT.
+             En profil prod, spring.security.oauth2.resourceserver.jwt.issuer-uri
+             est configuré dans application.yml pour pointer vers le SSO corporate. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <!-- Spring Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- H2 — base de donnees en memoire (profil dev uniquement) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- PostgreSQL — profil prod -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Tests -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- Correction BUG-002 : deux problemes avec Java 25 + Spring Boot 3.4.x
+                 1. Spring ASM 9.x ne supporte pas les .class Java 25 (format 69) :
+                    spring.classformat.ignore=true evite l'echec du scan de classpath
+                    lors des tests @WebMvcTest et @SpringBootTest.
+                 2. Mockito inline-mock-maker ne peut pas transformer java.lang.Object
+                    sur Java 25 (restriction JVM renforcee).
+                    Solution : fichier mockito-extensions/org.mockito.plugins.MockMaker
+                    configure mock-maker-subclass (CGLIB proxy, sans instrumentation bytecode).
+                 A revisiter lors de la migration vers Spring Boot 3.5+ / Mockito 6+. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dspring.classformat.ignore=true</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
