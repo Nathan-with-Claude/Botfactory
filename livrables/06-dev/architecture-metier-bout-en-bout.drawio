@@ -1,0 +1,357 @@
+<mxfile host="app.diagrams.net" modified="2026-04-01T00:00:00.000Z" agent="Claude Architecte Metier" version="21.0.0" type="device">
+  <diagram id="docupost-architecture-metier" name="Architecture Metier DocuPost">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2340" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============================================================ -->
+        <!-- TITRE                                                         -->
+        <!-- ============================================================ -->
+        <mxCell id="title_main" value="DocuPost — Architecture Metier de Bout en Bout" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#1a1a2e;" vertex="1" parent="1">
+          <mxGeometry x="600" y="10" width="1800" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="title_sub" value="Version MVP — 2026-04-01 | Architecte Metier DocuPost" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="600" y="55" width="1800" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- LEGENDE                                                        -->
+        <!-- ============================================================ -->
+        <mxCell id="legend_box" value="LEGENDE" style="swimlane;startSize=30;fillColor=#ffffff;strokeColor=#333333;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1280" width="560" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_core" value="BC Core Domain" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1330" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_supporting" value="BC Supporting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1390" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_generic" value="BC Generic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1450" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_actor" value="Acteur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="1330" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_ext" value="Systeme Externe" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="1390" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_event_lbl" value="Domain Event (inter-BC)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="1455" width="180" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_event_arrow" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="legend_event_src" target="legend_event_tgt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_event_src" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#0066cc;strokeColor=#0066cc;width=8;height=8;" vertex="1" parent="1">
+          <mxGeometry x="445" y="1458" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_event_tgt" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#0066cc;strokeColor=#0066cc;width=8;height=8;" vertex="1" parent="1">
+          <mxGeometry x="555" y="1458" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_sync_lbl" value="Integration synchrone (REST/OAuth2)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="1485" width="220" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_sync_arrow_src" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#9673a6;strokeColor=#9673a6;width=8;height=8;" vertex="1" parent="1">
+          <mxGeometry x="445" y="1488" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_sync_arrow_tgt" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#9673a6;strokeColor=#9673a6;width=8;height=8;" vertex="1" parent="1">
+          <mxGeometry x="555" y="1488" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_sync_arrow" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="legend_sync_arrow_src" target="legend_sync_arrow_tgt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ACTEURS                                                        -->
+        <!-- ============================================================ -->
+        <mxCell id="actor_livreur" value="Livreur&#xa;(App Mobile)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="230" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_superviseur" value="Superviseur / Logisticien&#xa;(App Web)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="610" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_dsi" value="DSI / Support&#xa;(Admin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="930" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- SYSTEMES EXTERNES                                              -->
+        <!-- ============================================================ -->
+        <mxCell id="ext_tms" value="TMS Externe&#xa;(Import 6h00 cron)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="370" y="70" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_oms" value="OMS Docaposte&#xa;(Sync statuts REST)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2600" y="560" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_sso" value="SSO Corporate&#xa;(OAuth2 / OIDC)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2600" y="80" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_fcm" value="Firebase FCM&#xa;(Push Notifications)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="1185" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BC-07 PLANIFICATION DE TOURNEE (Core)                         -->
+        <!-- ============================================================ -->
+        <mxCell id="bc07_container" value="BC-07 — Planification de Tournee" style="swimlane;startSize=45;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="310" y="160" width="500" height="500" as="geometry" />
+        </mxCell>
+        <mxCell id="bc07_badge" value="CORE DOMAIN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6c8ebf;strokeColor=#6c8ebf;fontStyle=1;fontSize=9;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="340" y="168" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bc07_content" value="AGREGATS&#xa;&#xa;PlanDuJour (Aggregate Root)&#xa;  - PlanId, Date, Statut&#xa;  - contient : TourneeTMS[]&#xa;&#xa;TourneeTMS (Entity)&#xa;  - TourneeId, ListeColis&#xa;  - PoidsTotal : PoidsValue (VO)&#xa;  - Creneau : CreneauHoraire (VO)&#xa;&#xa;Affectation (Entity)&#xa;  - LivreurId, VehiculeId&#xa;  - TypeVehicule (VO)&#xa;&#xa;REGLES METIER&#xa;&#xa;  1 livreur + 1 vehicule / tournee / jour&#xa;  Compatibilite poids vehicule obligatoire&#xa;  Import TMS declenche a 6h00 (cron)&#xa;&#xa;DOMAIN EVENTS EMIS&#xa;&#xa;  TourneeImporteeTMS&#xa;  AffectationEnregistree&#xa;  TourneeLancee &#x2192; BC-01" style="text;html=1;strokeColor=#6c8ebf;fillColor=#ebf4ff;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="320" y="215" width="480" height="430" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BC-01 ORCHESTRATION DE TOURNEE (Core)                         -->
+        <!-- ============================================================ -->
+        <mxCell id="bc01_container" value="BC-01 — Orchestration de Tournee" style="swimlane;startSize=45;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="900" y="160" width="560" height="500" as="geometry" />
+        </mxCell>
+        <mxCell id="bc01_badge" value="CORE DOMAIN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6c8ebf;strokeColor=#6c8ebf;fontStyle=1;fontSize=9;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="930" y="168" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bc01_content" value="AGREGATS&#xa;&#xa;Tournee (Aggregate Root)&#xa;  - TourneeId, LivreurId, Statut&#xa;  - Date : DateValue (VO)&#xa;  - Colis[] (entites internes)&#xa;  - commandeIds[] : idempotence&#xa;&#xa;Colis (Entity)&#xa;  - ColisId, StatutColis&#xa;  - Adresse : AdresseLivraison (VO)&#xa;  - Preuve : PreuveRef (VO)&#xa;  - MotifEchec (VO, obligatoire si echec)&#xa;&#xa;REGLES METIER&#xa;&#xa;  Offline-first : commandes idempotentes (commandId)&#xa;  Preuve immuable apres capture&#xa;  MotifEchec obligatoire sur echec livraison&#xa;  Tournee demarre uniquement si &gt;= 1 colis&#xa;&#xa;DOMAIN EVENTS EMIS&#xa;&#xa;  TourneeDemarree &#x2192; BC-03&#xa;  LivraisonConfirmee &#x2192; BC-02, BC-03, BC-05&#xa;  EchecLivraisonDeclare &#x2192; BC-03, BC-05&#xa;  TourneeCloturee &#x2192; BC-03, BC-05" style="text;html=1;strokeColor=#6c8ebf;fillColor=#ebf4ff;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="910" y="215" width="540" height="430" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BC-02 GESTION DES PREUVES (Supporting)                        -->
+        <!-- ============================================================ -->
+        <mxCell id="bc02_container" value="BC-02 — Gestion des Preuves" style="swimlane;startSize=45;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1560" y="160" width="450" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="bc02_badge" value="SUPPORTING" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#82b366;strokeColor=#82b366;fontStyle=1;fontSize=9;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="1590" y="168" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bc02_content" value="AGREGATS&#xa;&#xa;PreuveLivraison (Aggregate Root)&#xa;  - PreuveId, ColisId, TourneeId&#xa;  - TypePreuve (VO) :&#xa;      Signature | Photo&#xa;      Tiers | DepotSecurise&#xa;  - Contenu : MediaRef (VO)&#xa;  - Horodatage : Timestamp (VO)&#xa;  - GPS : Coordonnees (VO)&#xa;  IMMUABLE apres creation&#xa;&#xa;REGLES METIER&#xa;&#xa;  Preuve obligatoire pour LivraisonConfirmee&#xa;  Immuabilite : aucune modification post-capture&#xa;  Horodatage et GPS enregistres a la capture&#xa;&#xa;DOMAIN EVENTS EMIS&#xa;&#xa;  PreuveCapturee &#x2192; BC-01 (confirmation)" style="text;html=1;strokeColor=#82b366;fillColor=#f0fff0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1570" y="215" width="430" height="310" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BC-03 SUPERVISION TEMPS REEL (Core)                           -->
+        <!-- ============================================================ -->
+        <mxCell id="bc03_container" value="BC-03 — Supervision Temps Reel" style="swimlane;startSize=45;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="700" y="780" width="530" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="bc03_badge" value="CORE DOMAIN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6c8ebf;strokeColor=#6c8ebf;fontStyle=1;fontSize=9;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="730" y="788" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bc03_content" value="AGREGATS&#xa;&#xa;Instruction (Aggregate Root)&#xa;  - InstructionId, TourneeId&#xa;  - Contenu : TexteInstruction (VO)&#xa;  - StatutInstruction (VO) :&#xa;      EN_ATTENTE | ENVOYEE | ACQUITTEE&#xa;&#xa;READ MODELS (CQRS)&#xa;&#xa;  VueTournee&#xa;  - TourneeId, LivreurId, Statut&#xa;  - NbColis, NbLivres, NbEchecs&#xa;  - DerniereActivite : Timestamp (VO)&#xa;&#xa;  VueColis&#xa;  - ColisId, Adresse, Statut, Preuve&#xa;&#xa;CAPACITES&#xa;&#xa;  Tableau de bord superviseur (WebSocket)&#xa;  Detection risque tournee (&lt; 15 min)&#xa;  Envoi instruction livreur&#xa;  Planification : compat. vehicule + CSV export&#xa;&#xa;DOMAIN EVENTS EMIS&#xa;&#xa;  InstructionEnvoyee &#x2192; BC-04&#xa;  TourneeARisqueDetectee &#x2192; BC-04" style="text;html=1;strokeColor=#6c8ebf;fillColor=#ebf4ff;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="710" y="835" width="510" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BC-04 NOTIFICATIONS (Supporting)                              -->
+        <!-- ============================================================ -->
+        <mxCell id="bc04_container" value="BC-04 — Notifications" style="swimlane;startSize=45;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="780" width="420" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="bc04_badge" value="SUPPORTING" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#82b366;strokeColor=#82b366;fontStyle=1;fontSize=9;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="788" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bc04_content" value="SERVICES DE NOTIFICATION&#xa;&#xa;NotificationService (Domain Service)&#xa;  - Canal MOBILE : FCM Push (Firebase)&#xa;  - Canal WEB : WebSocket (superviseur)&#xa;&#xa;VALUE OBJECTS&#xa;&#xa;  MessageNotification (VO)&#xa;    - Titre, Corps, Priorite&#xa;  DestinataireId (VO)&#xa;    - LivreurId | SuperviseurId&#xa;&#xa;EVENTS CONSOMMES&#xa;&#xa;  InstructionEnvoyee (depuis BC-03)&#xa;  AlerteDeclenche (depuis BC-03)&#xa;&#xa;EVENTS EMIS&#xa;&#xa;  NotificationEnvoyeeFCM &#x2192; FCM Firebase&#xa;  TourneeModifiee &#x2192; BC-01 (acquittement)" style="text;html=1;strokeColor=#82b366;fillColor=#f0fff0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="835" width="400" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BC-05 INTEGRATION SI (Generic)                                -->
+        <!-- ============================================================ -->
+        <mxCell id="bc05_container" value="BC-05 — Integration SI" style="swimlane;startSize=45;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2100" y="380" width="400" height="450" as="geometry" />
+        </mxCell>
+        <mxCell id="bc05_badge" value="GENERIC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#666666;fontStyle=1;fontSize=9;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="2130" y="388" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bc05_content" value="COMPOSANTS D&apos;INTEGRATION&#xa;&#xa;EventStore (Domain Service)&#xa;  - Stockage immuable des Domain Events&#xa;  - EventId, Payload, Timestamp (VO)&#xa;  - AggregateId, AggregateType (VO)&#xa;&#xa;OutboxPoller (Infrastructure Service)&#xa;  - Lecture periodique EventStore&#xa;  - Publication vers OMS via ACL&#xa;&#xa;OmsAcl (Anti-Corruption Layer)&#xa;  - Traduit Domain Events en appels OMS&#xa;  - Isole le Core du modele OMS externe&#xa;&#xa;PATTERN&#xa;&#xa;  Transactional Outbox + Polling&#xa;  Idempotence cle : EventId&#xa;  Retry avec backoff exponentiel&#xa;&#xa;EVENTS CONSOMMES&#xa;&#xa;  Tous events BC-01 (via Outbox)&#xa;  AffectationEnregistree (BC-07)&#xa;&#xa;INTEGRATION&#xa;&#xa;  &#x2192; OMS Docaposte (REST API)" style="text;html=1;strokeColor=#999999;fillColor=#fafafa;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="2110" y="435" width="380" height="380" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BC-06 IDENTITE ET ACCES (Generic)                             -->
+        <!-- ============================================================ -->
+        <mxCell id="bc06_container" value="BC-06 — Identite &amp; Acces" style="swimlane;startSize=45;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2100" y="70" width="400" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="bc06_badge" value="GENERIC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#666666;fontStyle=1;fontSize=9;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="2130" y="78" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bc06_content" value="SERVICES D&apos;IDENTITE&#xa;&#xa;AuthService (Domain Service)&#xa;  - Authentification via SSO Corporate&#xa;  - Emission JWT (access + refresh)&#xa;&#xa;VALUE OBJECTS&#xa;&#xa;  Token : JwtToken (VO) — expirable&#xa;  Role (VO) : LIVREUR | SUPERVISEUR | ADMIN&#xa;  UserId (VO) : identifiant unique utilisateur&#xa;&#xa;PROTOCOLES&#xa;&#xa;  OAuth2 Authorization Code Flow&#xa;  OIDC pour attributs utilisateur&#xa;  JWT signes RS256, expiration 1h&#xa;&#xa;INTEGRATION&#xa;&#xa;  SSO Corporate &#x2192; BC-06 (tokens)&#xa;  BC-06 &#x2192; tous BC (validation JWT)" style="text;html=1;strokeColor=#999999;fillColor=#fafafa;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="2110" y="125" width="380" height="170" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- FLUX DOMAIN EVENTS INTER-BC                                   -->
+        <!-- ============================================================ -->
+
+        <!-- TMS Externe → BC-07 : Import planification -->
+        <mxCell id="edge_tms_bc07" value="Import planification&#xa;(cron 6h00)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ext_tms" target="bc07_container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- BC-07 → BC-01 : TourneeLancee -->
+        <mxCell id="edge_bc07_bc01" value="TourneeLancee" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc07_container" target="bc01_container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- BC-01 → BC-02 : LivraisonConfirmee -->
+        <mxCell id="edge_bc01_bc02" value="LivraisonConfirmee" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc01_container" target="bc02_container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- BC-01 → BC-03 : TourneeDemarree + LivraisonConfirmee + EchecLivraisonDeclare -->
+        <mxCell id="edge_bc01_bc03" value="TourneeDemarree&#xa;LivraisonConfirmee&#xa;EchecLivraisonDeclare&#xa;TourneeCloturee" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc01_container" target="bc03_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1180" y="740" />
+              <mxPoint x="965" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- BC-01 → BC-05 : Tous events via Outbox -->
+        <mxCell id="edge_bc01_bc05" value="Tous events (Outbox)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc01_container" target="bc05_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1920" y="510" />
+              <mxPoint x="1920" y="515" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- BC-03 → BC-04 : InstructionEnvoyee + AlerteDeclenche -->
+        <mxCell id="edge_bc03_bc04" value="InstructionEnvoyee&#xa;AlerteDeclenche" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc03_container" target="bc04_container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- BC-04 → FCM : Push Notifications -->
+        <mxCell id="edge_bc04_fcm" value="Push FCM" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc04_container" target="ext_fcm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- BC-04 → BC-01 : TourneeModifiee (instruction acquittee) -->
+        <mxCell id="edge_bc04_bc01" value="TourneeModifiee&#xa;(acquittement)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc04_container" target="bc01_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1200" y="870" />
+              <mxPoint x="1180" y="870" />
+              <mxPoint x="1180" y="660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- BC-05 → OMS : Sync REST API (ACL) -->
+        <mxCell id="edge_bc05_oms" value="Sync statuts (ACL REST)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc05_container" target="ext_oms">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- SSO Corporate → BC-06 : JWT tokens -->
+        <mxCell id="edge_sso_bc06" value="JWT / OIDC tokens" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ext_sso" target="bc06_container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- BC-06 → tous BC : Validation JWT (fleche representative vers BC-01) -->
+        <mxCell id="edge_bc06_bc01" value="Validation JWT&#xa;(tous BC)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#666666;fontColor=#666666;fontSize=10;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc06_container" target="bc01_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1840" y="238" />
+              <mxPoint x="1840" y="197" />
+              <mxPoint x="1460" y="197" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Acteur Livreur → BC-01 -->
+        <mxCell id="edge_livreur_bc01" value="Demarrer / Livrer&#xa;Declarer echec" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#b85450;fontColor=#b85450;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_livreur" target="bc01_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="680" y="265" />
+              <mxPoint x="680" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Acteur Livreur → BC-02 : Capture preuve -->
+        <mxCell id="edge_livreur_bc02" value="Capture preuve" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#b85450;fontColor=#b85450;fontSize=10;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_livreur" target="bc02_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="251" />
+              <mxPoint x="500" y="560" />
+              <mxPoint x="1784" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Acteur Superviseur → BC-03 -->
+        <mxCell id="edge_superviseur_bc03" value="Consulter tableau de bord&#xa;Envoyer instruction" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#b85450;fontColor=#b85450;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_superviseur" target="bc03_container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Acteur Superviseur → BC-07 : Planification -->
+        <mxCell id="edge_superviseur_bc07" value="Planifier / Affecter" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#b85450;fontColor=#b85450;fontSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_superviseur" target="bc07_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="530" />
+              <mxPoint x="150" y="570" />
+              <mxPoint x="270" y="570" />
+              <mxPoint x="270" y="556" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Acteur DSI → BC-06 -->
+        <mxCell id="edge_dsi_bc06" value="Gestion roles&#xa;et acces" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#b85450;fontColor=#b85450;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_dsi" target="bc06_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1960" y="965" />
+              <mxPoint x="1960" y="310" />
+              <mxPoint x="2100" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- BC-07 → BC-05 : AffectationEnregistree -->
+        <mxCell id="edge_bc07_bc05" value="AffectationEnregistree" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=0;strokeColor=#0066cc;fontColor=#0066cc;fontSize=10;exitX=1;exitY=0.2;exitDx=0;exitDy=0;entryX=0;entryY=0.1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bc07_container" target="bc05_container">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1840" y="260" />
+              <mxPoint x="1840" y="425" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ZONE FLUX LEGENDE COMPLEMENTAIRE                              -->
+        <!-- ============================================================ -->
+        <mxCell id="zone_flux" value="FLUX PRINCIPAUX" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1290" width="200" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="flux_list" value="1. TMS &#x2192; BC-07 : Import tournees (6h00 cron)&#xa;2. BC-07 &#x2192; BC-01 : TourneeLancee (creation tournee)&#xa;3. Livreur &#x2192; BC-01 : Demarrer, Livrer, Declarer echec&#xa;4. BC-01 &#x2192; BC-02 : LivraisonConfirmee (capture preuve)&#xa;5. BC-01 &#x2192; BC-03 : Sync statuts temps reel (WebSocket)&#xa;6. BC-01 &#x2192; BC-05 : Outbox &#x2192; OMS Docaposte (ACL)&#xa;7. BC-03 &#x2192; BC-04 : Instruction + Alerte &#x2192; notifications&#xa;8. BC-04 &#x2192; FCM : Push mobile livreur&#xa;9. BC-04 &#x2192; BC-01 : Acquittement instruction&#xa;10. SSO &#x2192; BC-06 : OAuth2/OIDC tokens (validation JWT tous BC)" style="text;html=1;strokeColor=#cccccc;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1320" width="600" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ZONE REGLES METIER CLES                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="zone_regles" value="REGLES METIER CLES" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="1290" width="250" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="regles_list" value="[BC-01] Offline-first : idempotence commandId obligatoire&#xa;[BC-01] Preuve immuable apres capture&#xa;[BC-01] MotifEchec obligatoire sur echec livraison&#xa;[BC-02] PreuveLivraison immuable (audit legal)&#xa;[BC-03] Detection risque tournee &lt; 15 minutes&#xa;[BC-07] 1 livreur + 1 vehicule / tournee / jour&#xa;[BC-07] Compatibilite poids vehicule verifiee avant lancement&#xa;[BC-06] JWT RS256, expiration 1h, refresh obligatoire" style="text;html=1;strokeColor=#cccccc;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="1320" width="680" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ZONE CONTEXT MAP RELATIONS                                     -->
+        <!-- ============================================================ -->
+        <mxCell id="zone_ctxmap" value="CONTEXT MAP — TYPES DE RELATIONS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="2030" y="900" width="350" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ctxmap_list" value="BC-07 &#x2192; BC-01 : Customer / Supplier&#xa;BC-01 &#x2192; BC-02 : Customer / Supplier&#xa;BC-01 &#x2192; BC-03 : Open Host Service&#xa;BC-01 &#x2192; BC-05 : Conformist (Outbox)&#xa;BC-03 &#x2192; BC-04 : Customer / Supplier&#xa;BC-05 &#x2192; OMS : Anti-Corruption Layer&#xa;BC-06 &#x2192; tous BC : Shared Kernel (JWT)&#xa;TMS &#x2192; BC-07 : Conformist (import format TMS)&#xa;SSO &#x2192; BC-06 : Conformist (OAuth2/OIDC)" style="text;html=1;strokeColor=#cccccc;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="2030" y="930" width="440" height="190" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

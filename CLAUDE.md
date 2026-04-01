@@ -95,6 +95,7 @@ Boucle itérative : 6 (Dev) → 7 (QA) → 9 (End User) pour chaque User Story d
 - obra/finishing-a-development-branch
 - obra/requesting-code-review
 - agile-v-product-owner
+- ppt-visual
 
 ### MCP attendus (configurés via `claude mcp add` ou `.mcp.json`)
 

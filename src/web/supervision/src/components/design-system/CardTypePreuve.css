@@ -1,0 +1,53 @@
+/**
+ * CardTypePreuve.css — Styles du composant CardTypePreuve
+ *
+ * RÈGLE : toutes les valeurs référencent les tokens de tokens.css.
+ * US-025 : Design System DocuPost.
+ */
+
+.card-type-preuve {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  width: 100%;
+  background-color: var(--color-surface-primary);
+  border: 1px solid var(--color-bordure-neutre);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.card-type-preuve:hover:not(.card-type-preuve--selected) {
+  background-color: var(--color-surface-secondary);
+}
+
+.card-type-preuve:focus-visible {
+  outline: 2px solid var(--color-bordure-focus);
+  outline-offset: 2px;
+}
+
+.card-type-preuve--selected {
+  background-color: var(--color-primaire-leger);
+  border: 2px solid var(--color-primaire);
+}
+
+.card-type-preuve__icone {
+  font-size: 20px;
+  margin-bottom: var(--space-1);
+}
+
+.card-type-preuve__label {
+  font-family: var(--font-family-corps);
+  font-size: var(--text-body-sm-size);
+  font-weight: 600;
+  color: var(--color-texte-primaire);
+}
+
+.card-type-preuve__description {
+  font-family: var(--font-family-corps);
+  font-size: var(--text-caption-size);
+  color: var(--color-texte-secondaire);
+}

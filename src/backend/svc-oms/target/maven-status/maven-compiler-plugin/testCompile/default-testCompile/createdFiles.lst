@@ -1,0 +1,5 @@
+com\docapost\oms\OmsTestApplication.class
+com\docapost\oms\interfaces\EvenementControllerTest.class
+com\docapost\oms\application\SynchroniserPendingEvenementsHandlerTest.class
+com\docapost\oms\application\EnregistrerEvenementHandlerTest.class
+com\docapost\oms\domain\EvenementLivraisonTest.class

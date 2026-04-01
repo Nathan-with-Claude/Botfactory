@@ -1,0 +1,37 @@
+/**
+ * ChipContrainte.css — Styles du composant ChipContrainte
+ *
+ * RÈGLE : toutes les valeurs référencent les tokens de tokens.css.
+ * US-025 : Design System DocuPost.
+ */
+
+.chip-contrainte {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-family-corps);
+  font-size: var(--text-badge-size);
+  font-weight: var(--text-badge-weight);
+  white-space: nowrap;
+}
+
+/* ─── Tous les types utilisent les couleurs avertissement ─────────────────── */
+
+.chip-contrainte--horaire,
+.chip-contrainte--fragile,
+.chip-contrainte--document_sensible {
+  background-color: var(--color-avertissement-leger);
+  color: var(--color-avertissement-fonce);
+  border: 1px solid var(--color-avertissement);
+}
+
+.chip-contrainte__icone {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.chip-contrainte__label {
+  line-height: 1;
+}

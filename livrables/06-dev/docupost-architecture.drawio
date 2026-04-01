@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="3300" pageHeight="2340" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- TITRE -->
+    <mxCell id="10" value="DocuPost — Architecture complète du code (MVP)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="600" y="5" width="1100" height="35" as="geometry" />
+    </mxCell>
+
+    <!-- LEGENDE -->
+    <mxCell id="11" value="Légende" style="swimlane;fontStyle=1;fontSize=11;startSize=25;fillColor=#f5f5f5;strokeColor=#666;fontColor=#333;" vertex="1" parent="1">
+      <mxGeometry x="2260" y="50" width="210" height="175" as="geometry" />
+    </mxCell>
+    <mxCell id="11a" value="&#x25BA; HTTP REST" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#0066cc;" vertex="1" parent="11">
+      <mxGeometry x="8" y="30" width="194" height="18" as="geometry" />
+    </mxCell>
+    <mxCell id="11b" value="&#x21E2; WebSocket / STOMP" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#ff8000;" vertex="1" parent="11">
+      <mxGeometry x="8" y="50" width="194" height="18" as="geometry" />
+    </mxCell>
+    <mxCell id="11c" value="&#x25A3; Interface REST (Controller)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#b8860b;" vertex="1" parent="11">
+      <mxGeometry x="8" y="70" width="194" height="18" as="geometry" />
+    </mxCell>
+    <mxCell id="11d" value="&#x25A3; Application (Handlers/Commands)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#b85450;" vertex="1" parent="11">
+      <mxGeometry x="8" y="90" width="194" height="18" as="geometry" />
+    </mxCell>
+    <mxCell id="11e" value="&#x25A3; Domaine (Aggregates, Events)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#82b366;" vertex="1" parent="11">
+      <mxGeometry x="8" y="110" width="194" height="18" as="geometry" />
+    </mxCell>
+    <mxCell id="11f" value="&#x25A3; Infrastructure (JPA, Persistence)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#9673a6;" vertex="1" parent="11">
+      <mxGeometry x="8" y="130" width="194" height="18" as="geometry" />
+    </mxCell>
+    <mxCell id="11g" value="&#x2299; Base H2 in-memory (dev)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#555;" vertex="1" parent="11">
+      <mxGeometry x="8" y="150" width="194" height="18" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- MOBILE APP                                                    -->
+    <!-- ============================================================ -->
+    <mxCell id="100" value="&#x1F4F1; App Mobile Livreur&#xa;React Native 0.76 + Expo 51&#xa;Port: :8084 (web)" style="swimlane;fontStyle=1;fontSize=12;startSize=58;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a3d1a;" vertex="1" parent="1">
+      <mxGeometry x="20" y="50" width="260" height="900" as="geometry" />
+    </mxCell>
+
+    <mxCell id="101" value="Écrans (src/screens)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e8f5e9;strokeColor=#82b366;" vertex="1" parent="100">
+      <mxGeometry x="10" y="65" width="240" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="101a" value="ConnexionScreen (M-01)&#xa;ListeColisScreen (M-02)&#xa;  → filtres zones, badge statut&#xa;DetailColisScreen (M-03)&#xa;  → adresse, destinataire, contraintes&#xa;CapturePreuveScreen (M-04)&#xa;  → signature / photo / tiers / dépôt&#xa;DeclarerEchecScreen (M-05)&#xa;  → motif, disposition, note libre&#xa;RecapitulatifTourneeScreen (M-07)&#xa;  → stats livraisons + clôture" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="101">
+      <mxGeometry x="5" y="25" width="230" height="192" as="geometry" />
+    </mxCell>
+
+    <mxCell id="102" value="Design System (src/components)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e8f5e9;strokeColor=#82b366;" vertex="1" parent="100">
+      <mxGeometry x="10" y="295" width="240" height="240" as="geometry" />
+    </mxCell>
+    <mxCell id="102a" value="BadgeStatut · BoutonCTA&#xa;CarteColis · ChipContrainte&#xa;BandeauProgression&#xa;BandeauInstruction&#xa;BandeauInstructionOverlay&#xa;CardTypePreuve&#xa;SignatureGrid&#xa;ColisItem · FiltreZones&#xa;IndicateurSync · MiniProgressBar&#xa;GlassEffectFooter&#xa;TacticalGradient&#xa;ContextBannerColis" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="102">
+      <mxGeometry x="5" y="25" width="230" height="212" as="geometry" />
+    </mxCell>
+
+    <mxCell id="103" value="Services API (src/services)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e8f5e9;strokeColor=#82b366;" vertex="1" parent="100">
+      <mxGeometry x="10" y="545" width="240" height="155" as="geometry" />
+    </mxCell>
+    <mxCell id="103a" value="tourneeApi.ts&#xa;  getTourneeAujourdhui()&#xa;  getDetailColis()&#xa;  confirmerLivraison()&#xa;  declarerEchecLivraison()&#xa;  cloturerTournee()&#xa;supervisionApi.ts&#xa;  getInstructionsEnAttente()&#xa;  marquerInstructionExecutee()" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="103">
+      <mxGeometry x="5" y="25" width="230" height="128" as="geometry" />
+    </mxCell>
+
+    <mxCell id="104" value="Theme (src/theme)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e8f5e9;strokeColor=#82b366;" vertex="1" parent="100">
+      <mxGeometry x="10" y="710" width="240" height="72" as="geometry" />
+    </mxCell>
+    <mxCell id="104a" value="colors.ts · typography.ts&#xa;spacing.ts · shadows.ts" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="104">
+      <mxGeometry x="5" y="25" width="230" height="44" as="geometry" />
+    </mxCell>
+
+    <mxCell id="105" value="E2E Tests (e2e/)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e8f5e9;strokeColor=#82b366;" vertex="1" parent="100">
+      <mxGeometry x="10" y="792" width="240" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="105a" value="Playwright · US-008 signature · US-003 filtres" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="105">
+      <mxGeometry x="5" y="25" width="230" height="33" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- SVC-TOURNEE (BC-01 + BC-02)                                  -->
+    <!-- ============================================================ -->
+    <mxCell id="200" value="&#x2699;&#xFE0F; svc-tournee — BC-01 Orchestration Tournée + BC-02 Preuves&#xa;Spring Boot 3.4 · Java 20 · JPA/H2 · Port :8081" style="swimlane;fontStyle=1;fontSize=11;startSize=55;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1a1a4d;" vertex="1" parent="1">
+      <mxGeometry x="320" y="50" width="510" height="1120" as="geometry" />
+    </mxCell>
+
+    <!-- REST svc-tournee -->
+    <mxCell id="201" value="&#x1F310; Interface REST" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff8dc;strokeColor=#d6b656;" vertex="1" parent="200">
+      <mxGeometry x="10" y="62" width="490" height="185" as="geometry" />
+    </mxCell>
+    <mxCell id="201a" value="TourneeController  /api/tournees" style="swimlane;fontStyle=1;fontSize=9;startSize=20;fillColor=#fff;strokeColor=#6c8ebf;" vertex="1" parent="201">
+      <mxGeometry x="8" y="25" width="235" height="152" as="geometry" />
+    </mxCell>
+    <mxCell id="201b" value="GET  /today&#xa;  → TourneeDTO&#xa;GET  /{id}/colis/{cId}&#xa;  → ColisDTO&#xa;POST /{id}/colis/{cId}/livraison&#xa;  body: ConfirmerLivraisonRequest&#xa;  → PreuveLivraisonDTO&#xa;POST /{id}/colis/{cId}/echec&#xa;  body: DeclarerEchecRequest&#xa;  → ColisDTO&#xa;POST /{id}/cloture&#xa;  → RecapitulatifTourneeDTO" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="201a">
+      <mxGeometry x="5" y="22" width="225" height="128" as="geometry" />
+    </mxCell>
+    <mxCell id="202a" value="PreuveController  /api/preuves" style="swimlane;fontStyle=1;fontSize=9;startSize=20;fillColor=#fff;strokeColor=#6c8ebf;" vertex="1" parent="201">
+      <mxGeometry x="252" y="25" width="230" height="152" as="geometry" />
+    </mxCell>
+    <mxCell id="202b" value="GET /livraison/{colisId}&#xa;  → PreuveDetailDTO&#xa;&#xa;Filtres:&#xa;  CommandIdempotencyFilter&#xa;  MockJwtAuthFilter (dev)&#xa;    → livreur-001 injecté&#xa;  Keycloak JWT (prod)&#xa;    → SSO Docaposte" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="202a">
+      <mxGeometry x="5" y="22" width="220" height="128" as="geometry" />
+    </mxCell>
+
+    <!-- Application svc-tournee -->
+    <mxCell id="210" value="&#x1F527; Application — Commandes &amp; Handlers" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="200">
+      <mxGeometry x="10" y="255" width="490" height="195" as="geometry" />
+    </mxCell>
+    <mxCell id="210a" value="BC-01 — Orchestration Tournée" style="swimlane;fontStyle=1;fontSize=9;startSize=18;fillColor=#fff;strokeColor=#b85450;" vertex="1" parent="210">
+      <mxGeometry x="8" y="25" width="235" height="162" as="geometry" />
+    </mxCell>
+    <mxCell id="210b" value="ConsulterListeColisCommand&#xa;  → ConsulterListeColisHandler&#xa;ConsulterDetailColisCommand&#xa;  → ConsulterDetailColisHandler&#xa;DeclarerEchecLivraisonCommand&#xa;  → DeclarerEchecLivraisonHandler&#xa;CloturerTourneeCommand&#xa;  → CloturerTourneeHandler&#xa;    output: RecapitulatifTourneeResult&#xa;AvancementCalculator (service)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="210a">
+      <mxGeometry x="5" y="20" width="225" height="140" as="geometry" />
+    </mxCell>
+    <mxCell id="210c" value="BC-02 — Preuves de Livraison" style="swimlane;fontStyle=1;fontSize=9;startSize=18;fillColor=#fff;strokeColor=#b85450;" vertex="1" parent="210">
+      <mxGeometry x="252" y="25" width="230" height="162" as="geometry" />
+    </mxCell>
+    <mxCell id="210d" value="ConfirmerLivraisonCommand&#xa;  → ConfirmerLivraisonHandler&#xa;    typePreuve switch:&#xa;      SIGNATURE | PHOTO&#xa;      TIERS_IDENTIFIE | DEPOT_SECURISE&#xa;ConsulterPreuveLivraisonQuery&#xa;  → ConsulterPreuveLivraisonHandler&#xa;&#xa;Exceptions:&#xa;  TourneeNotFoundException&#xa;  ColisNotFoundException&#xa;  TourneeInvariantException (409)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="210c">
+      <mxGeometry x="5" y="20" width="220" height="140" as="geometry" />
+    </mxCell>
+
+    <!-- Domain svc-tournee -->
+    <mxCell id="220" value="&#x1F3DB;&#xFE0F; Domaine — Aggregates, Entities &amp; Domain Events" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="200">
+      <mxGeometry x="10" y="458" width="490" height="315" as="geometry" />
+    </mxCell>
+    <mxCell id="221" value="Tournee (Aggregate Root)" style="swimlane;fontStyle=1;fontSize=9;startSize=18;fillColor=#fff;strokeColor=#82b366;" vertex="1" parent="220">
+      <mxGeometry x="8" y="25" width="232" height="282" as="geometry" />
+    </mxCell>
+    <mxCell id="221a" value="id: TourneeId&#xa;livreurId: LivreurId&#xa;date: LocalDate&#xa;statut: StatutTournee&#xa;  CHARGEE | DEMARREE | CLOTUREE&#xa;colis: List&lt;Colis&gt;&#xa;domainEvents: List&lt;DomainEvent&gt;&#xa;——————————————&#xa;demarrer()&#xa;confirmerLivraison(colisId, preuve)&#xa;declarerEchecLivraison(colisId,&#xa;  motif, disposition, note)&#xa;cloturerTournee()&#xa;pullDomainEvents()&#xa;——————————————&#xa;Events emis:&#xa;  TourneeDemarree&#xa;  TourneeChargee&#xa;  LivraisonConfirmee&#xa;  EchecLivraisonDeclare&#xa;  TourneeCloturee" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="221">
+      <mxGeometry x="5" y="20" width="222" height="260" as="geometry" />
+    </mxCell>
+    <mxCell id="222" value="Colis (Entity) + Value Objects" style="swimlane;fontStyle=1;fontSize=9;startSize=18;fillColor=#fff;strokeColor=#82b366;" vertex="1" parent="220">
+      <mxGeometry x="249" y="25" width="233" height="145" as="geometry" />
+    </mxCell>
+    <mxCell id="222a" value="Colis: id, statut, adresse, destinataire&#xa;  contraintes[], motifNonLivraison&#xa;StatutColis:&#xa;  A_LIVRER | LIVRE | ECHEC | A_REPRESENTER&#xa;Adresse: rue, cp, ville, complementGPS&#xa;Destinataire: nom, tel, email&#xa;Contrainte: type, valeur&#xa;TypeContrainte: HORAIRE|FRAGILE|DOC_SENSIBLE&#xa;MotifNonLivraison (enum)&#xa;Disposition (enum)&#xa;Avancement: traites, total, estimationFin" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="222">
+      <mxGeometry x="5" y="20" width="223" height="123" as="geometry" />
+    </mxCell>
+    <mxCell id="223" value="PreuveLivraison (Aggregate)" style="swimlane;fontStyle=1;fontSize=9;startSize=18;fillColor=#fff;strokeColor=#82b366;" vertex="1" parent="220">
+      <mxGeometry x="249" y="178" width="233" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="223a" value="id: PreuveLivraisonId&#xa;colisId: ColisId&#xa;typePreuve: TypePreuve&#xa;  SIGNATURE | PHOTO&#xa;  TIERS_IDENTIFIE | DEPOT_SECURISE&#xa;coordonnees: Coordonnees (lat/lng)&#xa;horodatage: Instant&#xa;SignatureNumerique (byte[])&#xa;PhotoPreuve (url, hashIntegrite)&#xa;TiersIdentifie (nomTiers)&#xa;DepotSecurise (description)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="223">
+      <mxGeometry x="5" y="20" width="223" height="108" as="geometry" />
+    </mxCell>
+
+    <!-- Infrastructure svc-tournee -->
+    <mxCell id="230" value="&#x1F5C4;&#xFE0F; Infrastructure — JPA Persistence" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="200">
+      <mxGeometry x="10" y="781" width="490" height="215" as="geometry" />
+    </mxCell>
+    <mxCell id="231" value="Tournée JPA" style="swimlane;fontStyle=1;fontSize=9;startSize=18;fillColor=#fff;strokeColor=#9673a6;" vertex="1" parent="230">
+      <mxGeometry x="8" y="25" width="232" height="182" as="geometry" />
+    </mxCell>
+    <mxCell id="231a" value="TourneeEntity @Entity(name=&quot;tournees&quot;)&#xa;  id, livreur_id, date, statut&#xa;ColisEntity (OneToMany embedded)&#xa;ColisContrainteEmbeddable&#xa;TourneeJpaRepository&#xa;  (findByLivreurIdAndDate)&#xa;TourneeRepositoryImpl&#xa;  (TourneeRepository port impl)&#xa;TourneeMapper (JPA ↔ Domain)&#xa;——————————————&#xa;DevDataSeeder (profil dev):&#xa;  1 tournée livreur-001&#xa;  5 colis (A_LIVRER/LIVRE/ECHEC)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="231">
+      <mxGeometry x="5" y="20" width="222" height="160" as="geometry" />
+    </mxCell>
+    <mxCell id="232" value="Preuve JPA + Security" style="swimlane;fontStyle=1;fontSize=9;startSize=18;fillColor=#fff;strokeColor=#9673a6;" vertex="1" parent="230">
+      <mxGeometry x="249" y="25" width="233" height="182" as="geometry" />
+    </mxCell>
+    <mxCell id="232a" value="PreuveLivraisonEntity @Entity(preuves)&#xa;PreuveLivraisonJpaRepository&#xa;PreuveLivraisonRepositoryImpl&#xa;PreuveLivraisonMapper&#xa;——————————————&#xa;SecurityConfig&#xa;  - dev: permitAll + MockJwtFilter&#xa;  - prod: oauth2ResourceServer JWT&#xa;MockJwtAuthFilter (dev)&#xa;  → injecte livreur-001&#xa;CommandIdempotencyFilter&#xa;  → idempotence des POST" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="232">
+      <mxGeometry x="5" y="20" width="223" height="160" as="geometry" />
+    </mxCell>
+
+    <!-- H2 svc-tournee -->
+    <mxCell id="600" value="H2 In-Memory&#xa;jdbc:h2:mem:docupost-tournee&#xa;:8081/h2-console  sa/&lt;vide&gt;" style="shape=mxgraph.flowchart.database;html=1;fontSize=9;fillColor=#f5f5f5;strokeColor=#666;fontColor=#333;whiteSpace=wrap;" vertex="1" parent="1">
+      <mxGeometry x="445" y="1200" width="175" height="75" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- SVC-SUPERVISION (BC-03 + BC-07)                              -->
+    <!-- ============================================================ -->
+    <mxCell id="300" value="&#x2699;&#xFE0F; svc-supervision — BC-03 Supervision + BC-07 Planification&#xa;Spring Boot 3.4 · Java 20 · JPA · WebSocket/STOMP · H2(dev) · Port :8082" style="swimlane;fontStyle=1;fontSize=11;startSize=55;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1a1a4d;" vertex="1" parent="1">
+      <mxGeometry x="880" y="50" width="590" height="1360" as="geometry" />
+    </mxCell>
+
+    <!-- REST svc-supervision -->
+    <mxCell id="301" value="&#x1F310; Interface REST" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff8dc;strokeColor=#d6b656;" vertex="1" parent="300">
+      <mxGeometry x="10" y="62" width="570" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="301a" value="SupervisionController&#xa;/api/supervision" style="swimlane;fontStyle=1;fontSize=9;startSize=20;fillColor=#fff;strokeColor=#6c8ebf;" vertex="1" parent="301">
+      <mxGeometry x="8" y="25" width="178" height="167" as="geometry" />
+    </mxCell>
+    <mxCell id="301b" value="GET /tableau-de-bord&#xa;  [?statut=EN_COURS|A_RISQUE&#xa;          |CLOTUREE]&#xa;  → TableauDeBordDTO&#xa;GET /tournees/{tourneeId}&#xa;  → VueTourneeDetailDTO" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="301a">
+      <mxGeometry x="5" y="22" width="168" height="143" as="geometry" />
+    </mxCell>
+    <mxCell id="302a" value="InstructionController&#xa;/api/supervision/instructions" style="swimlane;fontStyle=1;fontSize=9;startSize=20;fillColor=#fff;strokeColor=#6c8ebf;" vertex="1" parent="301">
+      <mxGeometry x="196" y="25" width="178" height="167" as="geometry" />
+    </mxCell>
+    <mxCell id="302b" value="POST /&#xa;  → InstructionCreeDTO&#xa;GET /tournee/{id}&#xa;  → List&lt;InstructionDTO&gt;&#xa;PATCH /{id}/executer&#xa;  → InstructionDTO&#xa;GET /en-attente&#xa;  [?tourneeId=...]&#xa;  → List&lt;InstructionDTO&gt;" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="302a">
+      <mxGeometry x="5" y="22" width="168" height="143" as="geometry" />
+    </mxCell>
+    <mxCell id="303a" value="PlanificationController&#xa;/api/planification" style="swimlane;fontStyle=1;fontSize=9;startSize=20;fillColor=#fff;strokeColor=#6c8ebf;" vertex="1" parent="301">
+      <mxGeometry x="384" y="25" width="178" height="167" as="geometry" />
+    </mxCell>
+    <mxCell id="303b" value="GET /plans/{date}&#xa;  → PlanDuJourDTO&#xa;GET /tournees/{id}&#xa;  → TourneePlanifieeDetailDTO&#xa;POST /tournees/{id}/affecter&#xa;POST /tournees/{id}/valider-composition&#xa;POST /tournees/{id}/lancer&#xa;POST /plans/{date}/lancer-toutes&#xa;  → LancerToutesResponse" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="303a">
+      <mxGeometry x="5" y="22" width="168" height="143" as="geometry" />
+    </mxCell>
+
+    <!-- Application BC-03 Supervision -->
+    <mxCell id="310" value="&#x1F527; Application BC-03 — Supervision" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="300">
+      <mxGeometry x="10" y="270" width="278" height="175" as="geometry" />
+    </mxCell>
+    <mxCell id="310a" value="ConsulterTableauDeBordQuery&#xa;  → ConsulterTableauDeBordHandler&#xa;     output: TableauDeBord&#xa;ConsulterDetailTourneeQuery&#xa;  → ConsulterDetailTourneeHandler&#xa;     output: VueTourneeDetail&#xa;DetecterTourneesARisqueHandler&#xa;  ← RisqueDetectorScheduler (@Scheduled)&#xa;  → RisqueDetector (domain service)&#xa;  → emit TourneeARisqueDetectee" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="310">
+      <mxGeometry x="5" y="25" width="268" height="148" as="geometry" />
+    </mxCell>
+
+    <!-- Application Instructions -->
+    <mxCell id="311" value="&#x1F527; Application BC-03 — Instructions" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="300">
+      <mxGeometry x="298" y="270" width="282" height="175" as="geometry" />
+    </mxCell>
+    <mxCell id="311a" value="EnvoyerInstructionCommand&#xa;  → EnvoyerInstructionHandler&#xa;MarquerInstructionExecuteeCommand&#xa;  → MarquerInstructionExecuteeHandler&#xa;ConsulterInstructionsParTourneeQuery&#xa;  → ConsulterInstructionsParTourneeHandler&#xa;ConsulterInstructionsEnAttenteQuery&#xa;  → ConsulterInstructionsEnAttenteHandler&#xa;Exceptions:&#xa;  InstructionDejaEnAttenteException" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="311">
+      <mxGeometry x="5" y="25" width="272" height="148" as="geometry" />
+    </mxCell>
+
+    <!-- Application Planification -->
+    <mxCell id="312" value="&#x1F527; Application BC-07 — Planification" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="300">
+      <mxGeometry x="10" y="453" width="570" height="145" as="geometry" />
+    </mxCell>
+    <mxCell id="312a" value="ConsulterPlanDuJourQuery → ConsulterPlanDuJourHandler (output: PlanDuJour)&#xa;ConsulterDetailTourneePlanifieeQuery → ConsulterDetailTourneePlanifieeHandler&#xa;ValiderCompositionCommand → ValiderCompositionHandler&#xa;  guard: anomalies[] vide, nb colis coherent&#xa;AffecterLivreurVehiculeCommand → AffecterLivreurVehiculeHandler&#xa;  guard: LivreurDejaAffecteException · VehiculeDejaAffecteException&#xa;LancerTourneeCommand → LancerTourneeHandler&#xa;  emit: TourneeLancee" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="312">
+      <mxGeometry x="5" y="25" width="560" height="118" as="geometry" />
+    </mxCell>
+
+    <!-- Domain BC-03 Supervision -->
+    <mxCell id="320" value="&#x1F3DB;&#xFE0F; Domaine BC-03 — Supervision (Read Models)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="300">
+      <mxGeometry x="10" y="606" width="278" height="215" as="geometry" />
+    </mxCell>
+    <mxCell id="320a" value="TableauDeBord (value object)&#xa;  tournees: List&lt;VueTournee&gt;&#xa;  actives, aRisque, cloturees: int&#xa;  of(List&lt;VueTournee&gt;) factory&#xa;VueTournee (read model)&#xa;  tourneeId, livreurNom&#xa;  colisTraites, colisTotal, pourcentage&#xa;  statut: EN_COURS|A_RISQUE|CLOTUREE&#xa;  derniereActivite: LocalDateTime&#xa;VueTourneeDetail&#xa;VueColis · IncidentVue&#xa;——————————————&#xa;RisqueDetector (domain service)&#xa;  detecter(List&lt;VueTournee&gt;)&#xa;Events: TourneeARisqueDetectee" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="320">
+      <mxGeometry x="5" y="25" width="268" height="188" as="geometry" />
+    </mxCell>
+
+    <!-- Domain Instructions -->
+    <mxCell id="321" value="&#x1F3DB;&#xFE0F; Domaine BC-03 — Instructions" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="300">
+      <mxGeometry x="298" y="606" width="282" height="215" as="geometry" />
+    </mxCell>
+    <mxCell id="321a" value="Instruction (Aggregate Root)&#xa;  instructionId: UUID&#xa;  tourneeId, colisId, superviseurId&#xa;  type: TypeInstruction&#xa;    TEXTE_LIBRE | PRIORISER | ANNULER&#xa;    REPROGRAMMER | DEVIATION | PAUSE&#xa;    RETOUR_DEPOT&#xa;  statut: ENVOYEE | EXECUTEE&#xa;  contenu: String&#xa;  horodatage: Instant&#xa;  envoyer()&#xa;  marquerExecutee()&#xa;——————————————&#xa;Events:&#xa;  InstructionEnvoyee&#xa;  InstructionExecutee" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="321">
+      <mxGeometry x="5" y="25" width="272" height="188" as="geometry" />
+    </mxCell>
+
+    <!-- Domain Planification -->
+    <mxCell id="322" value="&#x1F3DB;&#xFE0F; Domaine BC-07 — Planification" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="300">
+      <mxGeometry x="10" y="829" width="570" height="200" as="geometry" />
+    </mxCell>
+    <mxCell id="322a" value="TourneePlanifiee (Aggregate Root)&#xa;  id, codeTms, date, nbColis&#xa;  zones: List&lt;ZoneTournee&gt;&#xa;  contraintes: List&lt;ContrainteHoraire&gt;&#xa;  anomalies: List&lt;Anomalie&gt;&#xa;  statut: NON_AFFECTEE | AFFECTEE | LANCEE&#xa;  livreurId, vehiculeId&#xa;  affecteeLe: LocalDateTime&#xa;  compositionVerifiee: boolean&#xa;  lancee: boolean&#xa;ZoneTournee · ContrainteHoraire · Anomalie (value objects)&#xa;PlanificationInvariantException&#xa;Events: TourneeImportee · CompositionVerifiee&#xa;         AffectationEnregistree · TourneeLancee" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="322">
+      <mxGeometry x="5" y="25" width="560" height="173" as="geometry" />
+    </mxCell>
+
+    <!-- WebSocket -->
+    <mxCell id="330" value="&#x1F4E1; WebSocket / STOMP (temps réel)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#ffe6cc;strokeColor=#d6b656;" vertex="1" parent="300">
+      <mxGeometry x="10" y="1037" width="570" height="95" as="geometry" />
+    </mxCell>
+    <mxCell id="330a" value="SupervisionWebSocketConfig&#xa;  endpoint: /ws  SockJS fallback  broker: /topic&#xa;TableauDeBordBroadcaster&#xa;  → /topic/supervision (push tableau de bord)&#xa;  → /topic/livreur/{livreurId} (push instructions)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="330">
+      <mxGeometry x="5" y="25" width="560" height="68" as="geometry" />
+    </mxCell>
+
+    <!-- Infrastructure Supervision -->
+    <mxCell id="340" value="&#x1F5C4;&#xFE0F; Infrastructure — JPA Persistence + Security" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="300">
+      <mxGeometry x="10" y="1140" width="570" height="175" as="geometry" />
+    </mxCell>
+    <mxCell id="340a" value="BC-03 Supervision:&#xa;  VueTourneeEntity · VueTourneeJpaRepository · VueTourneeRepositoryImpl&#xa;  VueColisEntity · VueColisJpaRepository&#xa;  IncidentVueEntity · IncidentVueJpaRepository&#xa;BC-03 Instructions:&#xa;  InstructionEntity · InstructionJpaRepository · InstructionRepositoryImpl&#xa;BC-07 Planification:&#xa;  TourneePlanifieeEntity · TourneePlanifieeJpaRepository&#xa;  TourneePlanifieeRepositoryImpl · TourneePlanifieeMapper&#xa;Security: SecurityConfig · MockJwtAuthFilter (dev)&#xa;DevDataSeeder (profil dev): tournees planifiees + instructions seedees" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="340">
+      <mxGeometry x="5" y="25" width="560" height="148" as="geometry" />
+    </mxCell>
+
+    <!-- H2 svc-supervision -->
+    <mxCell id="601" value="H2 In-Memory&#xa;jdbc:h2:mem:supervision_dev&#xa;:8082/h2-console  sa/&lt;vide&gt;" style="shape=mxgraph.flowchart.database;html=1;fontSize=9;fillColor=#f5f5f5;strokeColor=#666;fontColor=#333;whiteSpace=wrap;" vertex="1" parent="1">
+      <mxGeometry x="1025" y="1440" width="190" height="75" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- SVC-OMS (BC-05)                                              -->
+    <!-- ============================================================ -->
+    <mxCell id="400" value="&#x2699;&#xFE0F; svc-oms — BC-05 Event Store + OMS Sync&#xa;Spring Boot 3.4 · Java 20 · JPA · H2(dev) · Port :8083" style="swimlane;fontStyle=1;fontSize=11;startSize=55;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1a1a4d;" vertex="1" parent="1">
+      <mxGeometry x="1530" y="50" width="440" height="775" as="geometry" />
+    </mxCell>
+
+    <!-- REST svc-oms -->
+    <mxCell id="401" value="&#x1F310; Interface REST /api/oms" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff8dc;strokeColor=#d6b656;" vertex="1" parent="400">
+      <mxGeometry x="10" y="62" width="420" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="401a" value="EvenementController  /api/oms/evenements&#xa;POST /   body: EnregistrerEvenementRequest → EvenementDTO&#xa;GET  /colis/{colisId}   → List&lt;EvenementDTO&gt;&#xa;GET  /tournee/{tourneeId}   → List&lt;EvenementDTO&gt;&#xa;Filtre: MockJwtAuthFilter (dev)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="401">
+      <mxGeometry x="5" y="25" width="410" height="93" as="geometry" />
+    </mxCell>
+
+    <!-- Application OMS -->
+    <mxCell id="410" value="&#x1F527; Application — Handlers" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="400">
+      <mxGeometry x="10" y="190" width="420" height="145" as="geometry" />
+    </mxCell>
+    <mxCell id="410a" value="EnregistrerEvenementCommand&#xa;  → EnregistrerEvenementHandler&#xa;     idempotent (EvenementDejaExistantException)&#xa;ConsulterHistoriqueColisQuery&#xa;  → ConsulterHistoriqueColisHandler&#xa;ConsulterHistoriqueTourneeQuery&#xa;  → ConsulterHistoriqueTourneeHandler&#xa;SynchroniserPendingEvenementsHandler&#xa;  → appelee par OutboxPoller toutes les 10s" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="410">
+      <mxGeometry x="5" y="25" width="410" height="118" as="geometry" />
+    </mxCell>
+
+    <!-- Domain OMS -->
+    <mxCell id="420" value="&#x1F3DB;&#xFE0F; Domaine — Event Store Immuable" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="400">
+      <mxGeometry x="10" y="343" width="420" height="185" as="geometry" />
+    </mxCell>
+    <mxCell id="420a" value="EvenementLivraison (record Java — IMMUABLE)&#xa;  eventId: UUID (clé idempotence)&#xa;  tourneeId, colisId, livreurId&#xa;  type: TypeEvenement&#xa;    LIVRAISON_CONFIRMEE | ECHEC_LIVRAISON | ...&#xa;  horodatage: Instant&#xa;  coordonnees: Coordonnees (lat, lng)&#xa;  modeDegradGPS: boolean&#xa;  preuveLivraisonId: UUID&#xa;  motifEchec: String&#xa;  statutSynchronisation:&#xa;    PENDING | SYNCHRONIZED | FAILED&#xa;  tentativesSynchronisation: int&#xa;EvenementStore (port interface)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=8.5;" vertex="1" parent="420">
+      <mxGeometry x="5" y="25" width="410" height="158" as="geometry" />
+    </mxCell>
+
+    <!-- OutboxPoller -->
+    <mxCell id="430" value="&#x23F1;&#xFE0F; OutboxPoller — Sync asynchrone" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#ffe6cc;strokeColor=#d6b656;" vertex="1" parent="400">
+      <mxGeometry x="10" y="536" width="420" height="88" as="geometry" />
+    </mxCell>
+    <mxCell id="430a" value="OutboxPoller @Scheduled(fixedDelay=10000)&#xa;  → SynchroniserPendingEvenementsHandler&#xa;  → OmsApiClient (HTTP POST vers :9090/api/oms)&#xa;  oms.api.enabled=false en dev (désactivé)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="430">
+      <mxGeometry x="5" y="25" width="410" height="61" as="geometry" />
+    </mxCell>
+
+    <!-- Infrastructure OMS -->
+    <mxCell id="440" value="&#x1F5C4;&#xFE0F; Infrastructure — JPA Persistence" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="400">
+      <mxGeometry x="10" y="632" width="420" height="118" as="geometry" />
+    </mxCell>
+    <mxCell id="440a" value="EvenementEntity @Entity(evenements) — colonne immutable&#xa;EvenementJpaRepository (Spring Data)&#xa;EvenementStoreImpl implements EvenementStore (port)&#xa;OmsApiPort (interface) → OmsApiClient (RestTemplate)&#xa;  base-url: http://localhost:9090/api/oms&#xa;SecurityConfig · MockJwtAuthFilter (dev)&#xa;DevDataSeeder (profil dev)" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="440">
+      <mxGeometry x="5" y="25" width="410" height="91" as="geometry" />
+    </mxCell>
+
+    <!-- H2 svc-oms -->
+    <mxCell id="602" value="H2 In-Memory&#xa;jdbc:h2:mem:omsdb&#xa;:8083/h2-console  sa/&lt;vide&gt;" style="shape=mxgraph.flowchart.database;html=1;fontSize=9;fillColor=#f5f5f5;strokeColor=#666;fontColor=#333;whiteSpace=wrap;" vertex="1" parent="1">
+      <mxGeometry x="1630" y="853" width="175" height="70" as="geometry" />
+    </mxCell>
+
+    <!-- OMS Externe simulée -->
+    <mxCell id="610" value="&#x1F30D; OMS Externe (simulée)&#xa;http://localhost:9090/api/oms&#xa;[désactivée en dev]" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#f5f5f5;strokeColor=#999;dashed=1;fontColor=#666;" vertex="1" parent="1">
+      <mxGeometry x="1630" y="950" width="220" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- WEB SUPERVISION                                              -->
+    <!-- ============================================================ -->
+    <mxCell id="500" value="&#x1F5A5;&#xFE0F; Interface Web Supervision&#xa;React 19 + TypeScript + WebSocket STOMP&#xa;Port :3000" style="swimlane;fontStyle=1;fontSize=12;startSize=55;fillColor=#ffe6cc;strokeColor=#d6b656;fontColor=#4d2800;" vertex="1" parent="1">
+      <mxGeometry x="2040" y="50" width="280" height="1000" as="geometry" />
+    </mxCell>
+
+    <mxCell id="501" value="Pages (src/pages)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff5e6;strokeColor=#d6b656;" vertex="1" parent="500">
+      <mxGeometry x="10" y="62" width="260" height="265" as="geometry" />
+    </mxCell>
+    <mxCell id="501a" value="ConnexionPage + AuthCallbackPage&#xa;  → SSO OAuth2 Keycloak (prod)&#xa;TableauDeBordPage (W-01)&#xa;  → useTableauDeBord() hook&#xa;  → WS /topic/supervision&#xa;  → compteurs actives/risque/clôturées&#xa;DetailTourneePage (W-02)&#xa;  → bandeau progression + colis + incidents&#xa;PanneauInstructionPage (W-03)&#xa;  → envoi + suivi instructions&#xa;PreparationPage (W-04)&#xa;  → plan du jour + filtres statut&#xa;  → affecter livreur + véhicule&#xa;DetailTourneePlanifieePage (W-05)&#xa;  → valider composition + lancer&#xa;ConsulterPreuvePage (W-06)&#xa;  → photo/signature/GPS" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="501">
+      <mxGeometry x="5" y="25" width="250" height="238" as="geometry" />
+    </mxCell>
+
+    <mxCell id="502" value="Composants Design System" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff5e6;strokeColor=#d6b656;" vertex="1" parent="500">
+      <mxGeometry x="10" y="335" width="260" height="215" as="geometry" />
+    </mxCell>
+    <mxCell id="502a" value="BadgeStatut · BoutonCTA&#xa;BandeauProgression&#xa;ChipContrainte&#xa;IndicateurSync&#xa;DrawerDetail&#xa;CarteColis&#xa;CardTypePreuve&#xa;CardTypeInstruction&#xa;BandeauInstruction" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="502">
+      <mxGeometry x="5" y="25" width="250" height="188" as="geometry" />
+    </mxCell>
+
+    <mxCell id="503" value="Hooks / Services API" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff5e6;strokeColor=#d6b656;" vertex="1" parent="500">
+      <mxGeometry x="10" y="558" width="260" height="260" as="geometry" />
+    </mxCell>
+    <mxCell id="503a" value="useTableauDeBord()&#xa;  WS STOMP ws://localhost:8082/ws&#xa;  subscribe: /topic/supervision&#xa;  fallback: HTTP polling&#xa;&#xa;Appels REST vers svc-supervision:&#xa;GET /tableau-de-bord&#xa;GET /supervision/tournees/{id}&#xa;POST /supervision/instructions&#xa;PATCH /instructions/{id}/executer&#xa;GET /planification/plans/{date}&#xa;POST /planification/{id}/affecter&#xa;POST /planification/{id}/valider-composition&#xa;POST /planification/{id}/lancer&#xa;POST /planification/plans/{date}/lancer-toutes" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="503">
+      <mxGeometry x="5" y="25" width="250" height="233" as="geometry" />
+    </mxCell>
+
+    <mxCell id="504" value="Types TypeScript partagés" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff5e6;strokeColor=#d6b656;" vertex="1" parent="500">
+      <mxGeometry x="10" y="826" width="260" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="504a" value="StatutTourneeVue: EN_COURS|A_RISQUE|CLOTUREE&#xa;VueTourneeDTO · TableauDeBordDTO&#xa;VueTourneeDetailDTO · VueColisDTO&#xa;StatutAffectation: NON_AFFECTEE|AFFECTEE|LANCEE&#xa;TourneePlanifieeDTO · PlanDuJourDTO&#xa;ZoneTourneeDTO · ContrainteHoraireDTO&#xa;InstructionDTO · InstructionCreeDTO" style="text;html=0;strokeColor=#bbb;fillColor=#fff;align=left;verticalAlign=top;spacingLeft=5;overflow=hidden;fontSize=9;" vertex="1" parent="504">
+      <mxGeometry x="5" y="25" width="250" height="103" as="geometry" />
+    </mxCell>
+
+    <!-- E2E Tests Web -->
+    <mxCell id="505" value="E2E Tests (e2e/)" style="swimlane;fontStyle=1;fontSize=10;startSize=22;fillColor=#fff5e6;strokeColor=#d6b656;" vertex="1" parent="500">
+      <mxGeometry x="10" y="965" width="260" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- CONNEXIONS / EDGES                                           -->
+    <!-- ============================================================ -->
+
+    <!-- Mobile → svc-tournee (HTTP REST) -->
+    <mxCell id="700" value="HTTP REST&#xa;GET /today&#xa;POST /livraison&#xa;POST /echec&#xa;POST /cloture" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0066cc;fontColor=#0066cc;fontSize=9;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="100" target="200">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Mobile → svc-supervision (HTTP REST instructions) -->
+    <mxCell id="701" value="HTTP REST&#xa;GET /instructions&#xa;PATCH /executer" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0066cc;fontColor=#0066cc;fontSize=9;endArrow=block;endFill=1;strokeWidth=1;dashed=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.88;entryDx=0;entryDy=0;" edge="1" parent="1" source="100" target="300">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="290" y="760" />
+          <mxPoint x="840" y="760" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Web → svc-supervision (HTTP REST) -->
+    <mxCell id="710" value="HTTP REST" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0066cc;fontColor=#0066cc;fontSize=9;endArrow=block;endFill=1;strokeWidth=2;exitX=0;exitY=0.28;exitDx=0;exitDy=0;entryX=1;entryY=0.28;entryDx=0;entryDy=0;" edge="1" parent="1" source="500" target="300">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Web → svc-supervision (WebSocket STOMP) -->
+    <mxCell id="711" value="WebSocket STOMP&#xa;ws://:8082/ws&#xa;/topic/supervision" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#ff8000;fontColor=#ff8000;fontSize=9;endArrow=block;endFill=1;strokeWidth=2;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.82;entryDx=0;entryDy=0;" edge="1" parent="1" source="500" target="300">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="2010" y="570" />
+          <mxPoint x="1510" y="570" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- svc-tournee → H2 tournee -->
+    <mxCell id="720" value="JDBC H2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=9;endArrow=ERmany;endFill=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="200" target="600">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- svc-supervision → H2 supervision -->
+    <mxCell id="721" value="JDBC H2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=9;endArrow=ERmany;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="300" target="601">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- svc-oms → H2 oms -->
+    <mxCell id="722" value="JDBC H2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=9;endArrow=ERmany;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="400" target="602">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- svc-oms → OMS externe -->
+    <mxCell id="723" value="HTTP POST&#xa;(désactivé dev)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#aaa;fontColor=#999;fontSize=9;endArrow=block;endFill=0;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="602" target="610">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- svc-tournee → svc-oms (domain events) -->
+    <mxCell id="730" value="Domain Events&#xa;LivraisonConfirmee&#xa;EchecLivraisonDeclare&#xa;TourneeCloturee" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#cc0000;fontColor=#cc0000;fontSize=9;endArrow=block;endFill=1;dashed=1;strokeWidth=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="200" target="400">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="860" y="615" />
+          <mxPoint x="860" y="460" />
+          <mxPoint x="1510" y="460" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- svc-supervision WebSocket → Mobile (push instructions) -->
+    <mxCell id="731" value="WS push&#xa;/topic/livreur/{id}&#xa;instructions" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#ff8000;fontColor=#ff8000;fontSize=9;endArrow=block;endFill=1;dashed=1;exitX=0;exitY=0.82;exitDx=0;exitDy=0;entryX=1;entryY=0.82;entryDx=0;entryDy=0;" edge="1" parent="1" source="300" target="100">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="840" y="1130" />
+          <mxPoint x="290" y="1130" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

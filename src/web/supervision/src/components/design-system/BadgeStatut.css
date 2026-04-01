@@ -1,0 +1,88 @@
+/**
+ * BadgeStatut.css — Styles du composant BadgeStatut
+ *
+ * RÈGLE : toutes les valeurs référencent les tokens de tokens.css.
+ * Aucune valeur hexadécimale hardcodée.
+ * US-025 : Design System DocuPost — US-027 : mise à jour tokens MD3.
+ */
+
+.badge-statut {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-corps);
+  font-size: var(--text-badge-size);
+  font-weight: var(--text-badge-weight);
+  line-height: var(--text-badge-line-height);
+  white-space: nowrap;
+}
+
+/* ─── Tailles ─────────────────────────────────────────────────────────────── */
+
+.badge-statut--sm {
+  height: 20px;
+  padding: var(--space-1) var(--space-2);
+}
+
+.badge-statut--md {
+  height: 24px;
+  padding: var(--space-1) 10px;
+}
+
+/* ─── Variants ────────────────────────────────────────────────────────────── */
+
+.badge-statut--succes {
+  background-color: var(--color-succes-leger);
+  color: var(--color-succes-fonce);
+}
+
+.badge-statut--succes .badge-statut__point {
+  background-color: var(--color-succes);
+}
+
+.badge-statut--alerte {
+  background-color: var(--color-alerte-leger);
+  color: var(--color-alerte-fonce);
+}
+
+.badge-statut--alerte .badge-statut__point {
+  background-color: var(--color-alerte);
+}
+
+.badge-statut--avertissement {
+  background-color: var(--color-avertissement-leger);
+  color: var(--color-avertissement-fonce);
+}
+
+.badge-statut--avertissement .badge-statut__point {
+  background-color: var(--color-avertissement);
+}
+
+.badge-statut--info {
+  background-color: var(--color-info-leger);
+  color: var(--color-info-fonce);
+}
+
+.badge-statut--info .badge-statut__point {
+  background-color: var(--color-info);
+}
+
+.badge-statut--neutre {
+  background-color: var(--color-fond-neutre);
+  color: var(--color-texte-secondaire);
+}
+
+.badge-statut--neutre .badge-statut__point {
+  background-color: var(--color-texte-tertiaire);
+}
+
+/* ─── Point coloré ────────────────────────────────────────────────────────── */
+
+.badge-statut__point {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
