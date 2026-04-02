@@ -3,6 +3,120 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-04-01T15:00Z @developpeur CREATE → /livrables/06-dev/processus-metiers-bout-en-bout.drawio
+  Diagramme draw.io 4 pages (swimlane) : Parcours 0 Préparation Tournées, Parcours 1 Exécution Livreur, Parcours 2 Supervision Temps Réel, Parcours 3 Gestion Incidents. Tous les events domaine, décisions et acteurs représentés.
+
+- 2026-04-01T15:05Z @architecte-metier CREATE → /livrables/06-dev/architecture-metier-bout-en-bout.drawio
+  Diagramme draw.io XML complet de l'architecture metier bout en bout : 7 Bounded Contexts (BC-01 a BC-07), acteurs, systemes externes, domain events inter-BC, context map et regles metier cles.
+
+- 2026-04-01T15:00Z @architecte-technique CREATE → /livrables/06-dev/architecture-technique-macro.drawio
+  Diagramme C4 Container draw.io complet : 6 microservices, 6 BDs PostgreSQL, MinIO, API Gateway, SSO Keycloak, Mobile/Web, systèmes externes (TMS/OMS/SSO/FCM), infra K8s, légende protocoles.
+
+- 2026-04-01T14:30Z @developpeur UPDATE → src/backend/svc-tournee/interfaces/rest/TourneeController.java
+  Bloquant 1 : injection SupervisionNotifier + Authentication.getName() sur /echec /livraison /cloture — livreurId reel transmis a svc-supervision.
+
+- 2026-04-01T14:31Z @developpeur UPDATE → 6x *ControllerTest.java (svc-tournee)
+  Bloquant 1 : @MockBean SupervisionNotifier ajoute dans TourneeControllerTest + 5 autres suites @WebMvcTest. 32/32 tests verts.
+
+- 2026-04-01T14:32Z @developpeur UPDATE → src/mobile/src/screens/ListeColisScreen.tsx
+  Bloquant 2 : useNetworkStatus() branche + bandeau hors-ligne conditionnel (IndicateurSync). Bloquant 6 : AsyncStorage compteur sessions + afficherHintSwipe. 18/18 tests mobiles verts.
+
+- 2026-04-01T14:33Z @developpeur UPDATE → src/mobile/src/components/ColisItem.tsx
+  Bloquant 6 : PanResponder swipe (seuil 80px) + hint "← Glisser" conditionnel + zone rouge echec integres.
+
+- 2026-04-01T14:34Z @developpeur UPDATE → src/mobile/src/components/design-system/CarteColis.tsx
+  Bloquant 6 : prop afficherHintSwipe ajoutee (remplace valeur true en dur).
+
+- 2026-04-01T14:35Z @developpeur UPDATE → src/web/supervision/src/pages/PanneauInstructionPage.tsx
+  Bloquant 4 : peutEnvoyer inclut envoi !== 'succes' + toast enrichi "Le livreur a ete notifie" + aria.
+
+- 2026-04-01T14:36Z @developpeur UPDATE → src/web/supervision/src/pages/TableauDeBordPage.tsx
+  Bloquant 5 : reconnecterManuellement() + deconnecteDepuisMs + bouton Reconnecter + compteur-deconnexion.
+
+- 2026-04-01T14:37Z @developpeur UPDATE → src/web/supervision/src/__tests__/PanneauInstructionPage.test.tsx, TableauDeBordPage.test.tsx
+  Bloquant 4+5 : 4 nouveaux tests (2 par bloquant) documentes.
+
+- 2026-04-01T14:38Z @developpeur CREATE → /livrables/06-dev/vertical-slices/FEEDBACK-2026-04-01-corrections-bloquants.md
+  Documentation des 6 corrections bloquants feedback terrain 2026-04-01.
+
+- 2026-04-01T14:39Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Fin de session : ajout section "Interventions feedback terrain 2026-04-01" avec bilan des 6 bloquants.
+
+- 2026-04-01T11:00Z @po CREATE → /livrables/05-backlog/user-stories/US-038-harmonisation-libelles-ux.md
+  US-038 : harmonisation libelles UX (Should Have, S) — "A repr."→"Repassage", "Exécutée"→"Traitée", "Dépassement détecté"→"Chargement trop lourd", "Exporter CSV"→"Télécharger la liste", "code TMS"→"numéro de tournée". Rattachée à EPIC-008 / F-022.
+
+- 2026-04-01T11:01Z @po CREATE → /livrables/05-backlog/user-stories/US-039-export-csv-tableau-de-bord.md
+  US-039 : télécharger le bilan des tournées du jour depuis W-01 (Should Have, M). Nouveau bouton "Télécharger le bilan du jour" dans TableauDeBordPage. Distinct de US-028 (W-05). Rattachée à EPIC-003 / F-023.
+
+- 2026-04-01T11:02Z @po CREATE → /livrables/05-backlog/user-stories/US-040-enrichir-colonnes-csv-export.md
+  US-040 : enrichir le CSV exporté (W-05) avec colonnes Destinataire et Statut final (Should Have, S). Delta sur US-028 — colonnes "#Colis, Destinataire, Adresse, Zone, Contrainte, Statut". Rattachée à EPIC-007 / F-024.
+
+- 2026-04-01T11:03Z @po CREATE → /livrables/05-backlog/user-stories/US-041-poids-estime-tableau-preparation.md
+  US-041 : afficher le poids estimé et alerte surcharge dans le tableau de préparation W-04 (Should Have, M). Icône alerte orange (95%) et rouge (>100% capacité). Rattachée à EPIC-007 / F-025.
+
+- 2026-04-01T11:04Z @po CREATE → /livrables/05-backlog/user-stories/US-042-horodatage-consignes-ecran-m07.md
+  US-042 : afficher la date et l'heure d'émission de chaque consigne dans M-07 (Should Have, XS). Delta sur US-037 — champ horodatageReception déjà présent dans le Read Model, uniquement affichage. Rattachée à EPIC-004 / F-027.
+
+- 2026-04-01T11:05Z @po CREATE → /livrables/05-backlog/user-stories/US-043-card-sso-retractable-avant-connexion.md
+  US-043 : replier la card SSO dès la première ouverture avant toute connexion (Should Have, S). Comportement session uniquement (non AsyncStorage), distinct de US-036 (memorisé après connexion). Rattachée à EPIC-006 / F-028.
+
+- 2026-04-01T11:06Z @po CREATE → /livrables/05-backlog/user-stories/US-044-indicateur-duree-deconnexion-websocket.md
+  US-044 : compteur de durée de déconnexion WebSocket dans le bandeau superviseur (Should Have, S). Format adaptatif "X s / X min Y s / X h Y min". Rattachée à EPIC-003 / F-026.
+
+- 2026-04-01T11:07Z @po CREATE → /livrables/05-backlog/user-stories/US-045-hint-visuel-swipe-onboarding.md
+  US-045 : hint visuel de découverte du swipe pour les 3 premières utilisations (Could Have, S). Compteur AsyncStorage swipeHintCount. Fail-safe si AsyncStorage indisponible. Rattachée à EPIC-001 / F-029.
+
+- 2026-04-01T11:08Z @po UPDATE → /livrables/05-backlog/features.md
+  Ajout EPIC-008 "Qualite UX et Accessibilite" + features F-022 à F-029. Mise à jour du récapitulatif Features (28 features au total). Nouvelles features rattachées aux US-038 à US-045.
+
+- 2026-04-01T11:09Z @po UPDATE → /livrables/00-contexte/journaux/journal-po.md
+  Mise à jour journal : session 2026-04-01, US-038 à US-045, décisions structurantes, liste bugs à traiter par @developpeur, prochaine US libre = US-046.
+
+- 2026-04-01T09:00Z @end-user CREATE → /livrables/09-feedback/feedback-livreur-2026-04-01.md
+  Feedback terrain Pierre Morel : US-025/026/029/036/037. 3 bloquants persistants (signature simulée, offline silencieux, swipe invisible). Card SSO et historique consignes bien reçus. 7 améliorations identifiées dont onglet "A repr." et badge Consignes.
+
+- 2026-04-01T09:05Z @end-user CREATE → /livrables/09-feedback/feedback-superviseur-2026-04-01.md
+  Feedback terrain Laurent Renaud : US-027/028/030/031/032/034/035. 3 bloquants persistants (titre onglet, WebSocket sans bouton, confirmation instruction). Suggestion réaffectation véhicule et recherche multi-critères positivement accueillis. Signalement livreurId littéral US-032.
+
+- 2026-04-01T09:10Z @end-user UPDATE → /livrables/00-contexte/journaux/journal-end-user.md
+  Mise à jour journal : suivi feedbacks 2026-04-01, interventions réalisées, points d'attention bloquants persistants identifiés.
+
+- 2026-03-30T23:30Z @developpeur IMPL (delta) → src/mobile/src/api/supervisionApi.ts, src/mobile/src/hooks/useConsignesLocales.ts, src/mobile/src/screens/MesConsignesScreen.tsx, src/mobile/src/screens/ListeColisScreen.tsx, src/mobile/src/__tests__/useConsignesLocales.test.ts, src/mobile/src/__tests__/MesConsignesScreen.test.tsx, livrables/06-dev/vertical-slices/US-037-impl.md
+  US-037 delta Sprint 5 : (1) prendreEnCompteInstruction() + prendreEnCompteNouvelles() (Promise.allSettled, offline silencieux) + useEffect ListeColisScreen ; (2) onVoirColis + bouton "Voir le colis" M-07→M-03. TDD : +7 tests. 310/310 suite verts.
+
+- 2026-03-30T23:00Z @developpeur IMPL → src/mobile/src/hooks/useConsignesLocales.ts, src/mobile/src/screens/MesConsignesScreen.tsx, src/mobile/src/components/BandeauInstructionOverlay.tsx, src/mobile/src/screens/ListeColisScreen.tsx, src/mobile/src/__tests__/useConsignesLocales.test.ts, src/mobile/src/__tests__/MesConsignesScreen.test.tsx, livrables/06-dev/vertical-slices/US-037-impl.md, livrables/00-contexte/journaux/journal-developpeur.md
+  US-037 : historique consignes livreur. useConsignesLocales (AsyncStorage, idempotence, badge), MesConsignesScreen M-07 (bouton Exécutée, syncEnCours), BandeauInstructionOverlay prop onConsignePersistee, bouton "Consignes" + badge ListeColisScreen. TDD : 11+12=23 tests verts. 303/303 suite mobile totale verts.
+
+- 2026-03-31T10:00Z @developpeur IMPL → src/mobile/src/screens/ConnexionScreen.tsx, src/mobile/src/__tests__/ConnexionScreen.US036.test.tsx, src/mobile/package.json, livrables/05-backlog/user-stories/US-036-card-sso-retractable-premiere-connexion.md, livrables/06-dev/vertical-slices/US-036-impl.md, livrables/00-contexte/journaux/journal-developpeur.md
+  US-036 : card SSO rétractable après 1ère connexion. TDD : 16 tests verts (SC1-SC6 + non-régression US-019). moduleNameMapper AsyncStorage branché. 280/280 suite mobile totale verts.
+
+- 2026-03-30T20:00Z @developpeur IMPL → src/backend/svc-supervision/.../events/VehiculeReaffecte.java, application/planification/ReaffecterVehiculeCommand.java, ReaffecterVehiculeHandler.java, interfaces/planification/dto/VehiculeCompatibleDTO.java, ReaffecterVehiculeRequest.java, rest/PlanificationController.java, src/web/supervision/src/pages/DetailTourneePlanifieePage.tsx, src/__tests__/DetailTourneePlanifieePage.test.tsx, tests/ReaffecterVehiculeHandlerTest.java, tests/PlanificationControllerTest.java, livrables/06-dev/vertical-slices/US-034-impl.md
+  US-034 : suggeston réaffectation après échec compatibilité véhicule. TDD : 7 tests handler + 7 tests controller + 8 tests Jest (US-030/034). Panneau pré-filtré, bouton "Réaffecter" distinct de "Affecter quand même".
+
+- 2026-03-30T18:00Z @developpeur IMPL → src/web/supervision/src/pages/TableauDeBordPage.tsx, src/__tests__/TableauDeBordPage.test.tsx, src/backend/svc-supervision/.../VueTournee.java, VueTourneeEntity.java, VueTourneeDTO.java, VueTourneeRepositoryImpl.java, DevDataSeeder.java, SupervisionControllerTest.java, livrables/06-dev/vertical-slices/US-035-impl.md
+  US-035 : recherche multi-critères tableau de bord (codeTMS + zone + livreurNom). TDD : 9 tests Jest + 2 tests @WebMvcTest. 200/200 suite Jest totale verts. Backend rétrocompatible (constructeur 6-args conservé).
+
+- 2026-03-30T12:00Z @po CREATE → livrables/05-backlog/user-stories/US-034-suggestion-reaffectation-apres-echec-compatibilite.md, US-035-recherche-multi-criteres-tableau-de-bord.md, US-036-card-sso-retractable-premiere-connexion.md, US-037-historique-consignes-livreur.md, features.md, journal-po.md
+  4 nouvelles US (Should/Could Have) issues des feedbacks terrain du 2026-03-30 — amélioration réaffectation véhicule, recherche multi-critères, card SSO rétractable, historique consignes livreur.
+
+- 2026-03-30T10:00Z @developpeur UPDATE → src/web/supervision/src/pages/TableauDeBordPage.tsx, src/__tests__/TableauDeBordPage.test.tsx
+  Feedback terrain S1/S2/S4/S5 : livreurNom en donnée primaire, détail retard inline A_RISQUE, bandeau déconnexion orange (#b45309), bouton "Exporter le bilan". 6 nouveaux tests.
+
+- 2026-03-30T10:01Z @developpeur UPDATE → src/web/supervision/src/pages/PreparationPage.tsx, src/__tests__/PreparationPage.test.tsx
+  Feedback terrain S3 : redirection automatique vers tableau de bord après lancement tournée (onTourneeeLancee, 800ms). 1 nouveau test.
+
+- 2026-03-30T10:02Z @developpeur UPDATE → src/mobile/src/screens/ConnexionScreen.tsx, src/__tests__/ConnexionScreen.test.tsx
+  Feedback terrain L2 : libellé bouton SSO raccourci "Connexion Docaposte". Test mis à jour.
+
+- 2026-03-30T10:03Z @developpeur UPDATE → src/mobile/src/screens/DeclarerEchecScreen.tsx, src/__tests__/DeclarerEchecScreen.test.tsx
+  Feedback terrain L4/L8 : toast "Echec enregistre — superviseur notifié" (2.5s, injectable toastDureeMs), texte d'aide disposition grisée avant motif. 4 nouveaux tests.
+
+- 2026-03-30T10:04Z @developpeur UPDATE → src/mobile/src/screens/CapturePreuveScreen.tsx, src/__tests__/CapturePreuveScreen.test.tsx
+  Feedback terrain L6 : SIGNATURE pré-sélectionné par défaut. Test de rendu initial mis à jour.
+
+- 2026-03-30T10:05Z @developpeur UPDATE → livrables/00-contexte/journaux/journal-developpeur.md, livrables/CHANGELOG-actions-agents.md
+  Mise à jour journal + CHANGELOG. Bilan : 191 tests web verts, 264 tests mobiles verts.
+
 - 2026-03-25T10:00Z @developpeur FIX → src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/seeder/DevDataSeeder.java
   OBS-021-01 — deleteAll() BC-07 avant les saves : garantit LocalDate.now() même après redémarrage.
 
@@ -50,7 +164,6 @@
 
 - 2026-03-25T10:05Z @developpeur UPDATE → livrables/06-dev/vertical-slices/US-021-impl.md, US-011-impl.md, US-024-impl.md, US-017-impl.md
   Ajout section "Corrections post-QA" dans les 4 vertical slices impactés.
-
 
 ---
 
@@ -930,4 +1043,3 @@
 
 - 2026-03-25T11:25Z @qa UPDATE → livrables/00-contexte/journaux/journal-qa.md
   Mise a jour journal QA : suivi US-006 a US-024 avec resultats reels, decisions structurantes, anomalies detectees.
-

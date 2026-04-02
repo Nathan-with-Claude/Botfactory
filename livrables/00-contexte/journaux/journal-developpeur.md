@@ -61,6 +61,12 @@ US-019/020 (SSO auth)
 | US-016 | Notification push | BC-04 | Implémenté | Sprint 2 | feature/US-001 | Polling 10s + BandeauInstructionOverlay M-06 (FCM déféré Sprint 3). 5 tests Jest mobile verts. |
 | US-017 | Sync OMS | BC-05 | Implémenté | Sprint 3 | feature/US-001 | svc-oms créé (port 8083). OutboxPoller @Scheduled 10s + OmsApiClient (simulé). 5 tests handler verts. |
 | US-018 | Historisation immuable | BC-05 | Implémenté | Sprint 3 | feature/US-001 | EvenementLivraison record immuable + Event Store append-only JPA. 9+3+6=23 tests verts. |
+| US-035 | Recherche multi-critères tableau de bord | BC-03 | Implémenté | Sprint 4 | feature/US-001 | Champ recherche unique (codeTMS + zone + livreurNom), union OU, intersection filtre statut, lien effacer. VueTournee+Entity+DTO backend étendus (rétrocompat). 9 tests Jest + 2 tests backend. 26/26 Jest + 200/200 suite totale verts. |
+| US-036 | Card SSO rétractable | BC-06 | Implémenté | Sprint 4 | feature/US-001 | Card "Comment ça fonctionne ?" repliée après 1ère connexion. AsyncStorage : hasConnectedOnce + cardSsoOuverte. moduleNameMapper Jest. TDD : 16 tests US-036 + 280/280 suite totale verts. |
+| US-037 | Historique consignes livreur | BC-04 | Implémenté | Sprint 4/5 | feature/US-001 | useConsignesLocales hook (AsyncStorage, idempotence, tri, badge) + MesConsignesScreen M-07 réécriture (bouton Exécutée, stateless) + BandeauInstructionOverlay prop onConsignePersistee + bouton badge dans ListeColisScreen. Delta Sprint 5 : prendreEnCompteNouvelles (PATCH backend auto à l'ouverture M-07) + navigation M-07→M-03 (bouton "Voir le colis"). TDD : 18 tests hook + 16 tests écran. 310/310 suite totale verts. |
+
+| US-030 | Vérifier compatibilité véhicule | BC-07 | Implémenté | Sprint 4 | feature/US-001 | Aggregate TourneePlanifiee + Vehicule entity + VehiculeRepositoryImpl in-memory + VerifierCompatibiliteVehiculeHandler + endpoint POST /verifier-compatibilite-vehicule (maintenant dans Controller). 23 tests backend + 7 tests Jest. |
+| US-034 | Suggestion réaffectation véhicule | BC-07 | Implémenté | Sprint 4 | feature/US-001 | VehiculeReaffecte event + ReaffecterVehiculeHandler (handle + rechercherVehiculesCompatibles) + GET /vehicules/compatibles + POST /reaffecter-vehicule + panneau réaffectation W-05. 7 tests handler + 7 tests controller + 8 tests Jest. |
 
 Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré`
 
@@ -94,6 +100,9 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | US-019 | Auth SSO mobile : authStore factory (login/refresh/logout/getAuthHeader) + ConnexionScreen M-01 + SecurityConfig OAuth2 Resource Server conditionnel (profil prod uniquement) + isProdProfile() évite le JwtDecoder en test. 16 tests store + 8 tests screen + 4 tests SecurityConfig + SecurityConfig svc-tournee mis à jour. 109/109 backend + 153/153 mobile verts. | /livrables/06-dev/vertical-slices/US-019-impl.md |
 | 2026-03-24 | US-020 | Auth SSO web : webAuthService (OAuth2 Auth Code, state anti-CSRF, refresh, logout) + ConnexionPage (unauthenticated/forbidden/session-expired) + AuthCallbackPage + SecurityConfig svc-supervision mis à jour. 15 tests web + 83/83 tests backend svc-supervision verts. | /livrables/06-dev/vertical-slices/US-020-impl.md |
 | 2026-03-24 | US-006 | Mode offline (MVP partiel) : offlineQueue domain (FIFO, idempotence commandId) + syncExecutor (X-Command-Id) + useOfflineSyncState + SyncIndicator. CommandIdempotencyFilter backend (ConcurrentHashMap MVP, Redis déféré). WatermelonDB déféré Sprint 4. 32 tests mobiles. | /livrables/06-dev/vertical-slices/US-006-impl.md |
+| 2026-03-31 | US-036 | Card SSO rétractable : ConnexionScreen M-01 étendu (card "Comment ça fonctionne ?", toggle chevron, état cardOuverte). AsyncStorage : hasConnectedOnce + cardSsoOuverte. moduleNameMapper Jest branché sur asyncStorageMock.ts. TDD : 16 tests verts (SC1→SC6 + non-régression US-019). 280/280 suite mobile totale verts. | /livrables/06-dev/vertical-slices/US-036-impl.md |
+| 2026-03-30 | US-037 | Historique consignes livreur : useConsignesLocales hook (AsyncStorage, idempotence, tri décroissant, marquerExecutee PATCH backend) + MesConsignesScreen M-07 réécriture stateless (bouton Exécutée, badge statut, syncEnCours) + BandeauInstructionOverlay prop onConsignePersistee optionnelle + bouton badge "Consignes" dans ListeColisScreen. TDD : 11 tests hook + 12 tests écran. 303/303 suite totale. | /livrables/06-dev/vertical-slices/US-037-impl.md |
+| 2026-03-30 | US-037 delta | Points déférés Sprint 5 résolus : (1) PATCH prendre-en-compte — prendreEnCompteInstruction() dans supervisionApi.ts + prendreEnCompteNouvelles() dans useConsignesLocales (Promise.allSettled, offline silencieux, statut PRISE_EN_COMPTE si succès) + useEffect dans ListeColisScreen ; (2) Navigation M-07→M-03 — prop onVoirColis optionnelle + bouton "Voir le colis" dans MesConsignesScreen. TDD : +7 tests (SC9-SC11 hook + SC11-SC14 écran). 310/310 suite totale verts. | /livrables/06-dev/vertical-slices/US-037-impl.md |
 
 ---
 
@@ -157,6 +166,8 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | US-021 | Implémentation BC-07 Planification dans svc-supervision : TourneePlanifiee Aggregate Root + ZoneTournee + ContrainteHoraire + Anomalie VOs + StatutAffectation enum + TourneePlanifieeRepository interface + TourneePlanifieeEntity JPA + mapper JSON (zones/contraintes/anomalies sérialisées) + ConsulterPlanDuJourHandler + GET /api/planification/plans/{date} + PlanDuJourDTO + PreparationPage W-04 React. DevDataSeeder enrichi (4 tournées T-201/202/203/204). 83/83 backend verts + 11 Jest verts. | /livrables/06-dev/vertical-slices/US-021-impl.md |
 | 2026-03-24 | US-022 | Implémentation vérification composition : TourneePlanifiee.verifierComposition() + CompositionVerifiee event + ConsulterDetailTourneePlanifieeHandler + ValiderCompositionHandler + GET /tournees/{id} + POST /tournees/{id}/composition/valider + TourneePlanifieeDetailDTO (zones+contraintes+anomalies) + DetailTourneePlanifieePage W-05 onglet Composition. 6 tests Jest. | /livrables/06-dev/vertical-slices/US-022-impl.md |
 | 2026-03-24 | US-023 | Implémentation affectation livreur+véhicule : TourneePlanifiee.affecter() + AffectationEnregistree event + AffecterLivreurVehiculeHandler (invariants unicité livreur/véhicule/jour) + LivreurDejaAffecteException + VehiculeDejaAffecteException + POST /tournees/{id}/affecter (200/404/409) + AffecterRequest DTO + W-05 onglet Affectation (sélecteurs, boutons désactivés). 4 tests handler + 5 tests Jest. | /livrables/06-dev/vertical-slices/US-023-impl.md |
+| 2026-03-30 | US-034 | Suggestion réaffectation après échec compatibilité véhicule : VehiculeReaffecte event + ReaffecterVehiculeCommand + ReaffecterVehiculeHandler (handle + rechercherVehiculesCompatibles) + GET /vehicules/compatibles + POST /reaffecter-vehicule + VehiculeCompatibleDTO + ReaffecterVehiculeRequest + PlanificationController enrichi (US-030+034 endpoints) + DetailTourneePlanifieePage W-05 enrichi (states compatibilite + panneau réaffectation + bouton "Réaffecter" vs "Affecter quand même"). TDD : 7 tests handler + 7 tests controller + 8 tests Jest. | /livrables/06-dev/vertical-slices/US-034-impl.md |
+| 2026-03-30 | US-035 | Recherche multi-critères tableau de bord : VueTournee+VueTourneeEntity+VueTourneeDTO+DevDataSeeder enrichis (codeTMS+zone, rétrocompat). Frontend : champ-recherche unique (union OU : livreurNom/codeTMS/zone), intersection filtre statut, message aucun résultat, lien effacer, mise à jour temps réel. TDD : 9 tests Jest + 2 tests @WebMvcTest. 200/200 suite Jest totale verts. | /livrables/06-dev/vertical-slices/US-035-impl.md |
 | 2026-03-24 | US-024 | Implémentation lancement tournée : TourneePlanifiee.lancer() + TourneeLancee event (inter-BC) + LancerTourneeHandler (individuel + groupé) + POST /tournees/{id}/lancer + POST /plans/{date}/lancer-toutes + LancerToutesResponse + bouton Lancer W-04 + bouton VALIDER ET LANCER W-05. TourneeLancee loggué MVP (bus Kafka Sprint 3). 4 tests handler + 3 tests controller + 2 tests Jest. | /livrables/06-dev/vertical-slices/US-024-impl.md |
 | 2026-03-24 | BUG-InstructionController | Correction 3 tests InstructionControllerTest rouge : routes /en-attente et /{id}/executer accessibles LIVREUR bloquées par SecurityConfig globale (hasRole SUPERVISEUR prime sur @PreAuthorize). Ajout de règles précises pour ces 2 routes LIVREUR|SUPERVISEUR dans SecurityConfig. | /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/security/SecurityConfig.java |
 | 2026-03-24 | BUG-EnvoyerInstruction | Correction NPE dans EnvoyerInstructionHandler : instructionRepository.save() retournait null (Mockito), sauvegardee.clearEvenements() causait NPE. Pattern collect-and-publish corrigé : save(instruction) sans retour + instruction.clearEvenements(). | /src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/EnvoyerInstructionHandler.java |
@@ -173,6 +184,57 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 | 2026-03-24 | US-006 | CommandIdempotencyFilter avec ConcurrentHashMap — Redis déféré Sprint 4 | Redis n'est pas dans les dépendances du projet. ConcurrentHashMap assure la thread-safety pour un déploiement mono-instance. TODO : migrer vers RedisTemplate pour multi-instance prod. |
 | 2026-03-24 | US-006 | @react-native-community/netinfo non installé — useOfflineSync utilise useOfflineSyncState testable | NetInfo n'est pas dans les dépendances. Le hook est architecturé pour accepter une factory NetInfo injectable. Les tests utilisent createOfflineSyncState (logique pure sans NetInfo). |
 
+| 2026-03-30 | US-037 | AsyncStorage clé `consignes_jour_YYYY-MM-DD` — TTL implicite par rotation de clé | Pas de logique d'expiration explicite. Le changement de date produit automatiquement une nouvelle clé vide. Les entrées anciennes restent dans AsyncStorage mais sont ignorées. Acceptable pour le MVP. |
+| 2026-03-30 | US-037 | MesConsignesScreen stateless — logique dans useConsignesLocales | Séparation claire Infrastructure (hook/AsyncStorage) vs Interface (composant React Native). Facilite les tests unitaires des deux couches indépendamment. |
+| 2026-03-30 | US-037 | onConsignePersistee optionnelle dans BandeauInstructionOverlay | Rétrocompatibilité maximale avec les 5 tests US-016 existants — aucune modification requise côté test. Pattern DI props déjà utilisé dans le projet (autoFermetureMs, getInstructionsFn, etc.). |
+| 2026-03-30 | US-037 | InstructionPriseEnCompte backend déféré Sprint 5 | Le SC3 de la spec US-037 demande PATCH vers BC-03 quand le livreur ouvre l'écran. marquerToutesLues() marque lue=true localement mais ne patch pas le backend. Raison : endpoint non encore spécifié côté backend (pas de route PATCH /instructions/{id}/prise-en-compte dans BC-03). |
+| 2026-03-30 | US-037 | Navigation M-07→M-03 déféré Sprint 5 | Augmente la complexité de navigation (depuis MesConsignesScreen vers DetailColisScreen, il faut remonter la tourneeId). Hors périmètre de session, noté dans le vertical slice. |
+| 2026-03-30 | US-034 | Aucune modification de l'Aggregate TourneePlanifiee pour la réaffectation | L'Aggregate existant verifierCompatibiliteVehicule() (US-030) couvre déjà la logique. ReaffecterVehiculeHandler orchestre sans dupliquer la logique. |
+| 2026-03-30 | US-034 | rechercherVehiculesCompatibles triés par capacité croissante | UX : montrer d'abord le véhicule le plus proche de la capacité requise, pour encourager le choix optimal (moins de gaspillage de capacité). |
+| 2026-03-30 | US-034 | Endpoint US-030 (verifier-compatibilite-vehicule) ajouté lors de cette session | Il manquait dans le Controller malgré le Handler existant. Ajouté sans nouvelle US (correction d'implémentation incomplète US-030). |
+
+## Interventions feedback terrain 2026-04-01
+
+| Date | Bloquant | Action | Fichiers |
+| --- | --- | --- | --- |
+| 2026-04-01 | B1 — livreurId hardcode | Injection SupervisionNotifier dans TourneeController + Authentication.getName() sur /echec, /livraison, /cloture | TourneeController.java + 6 suites @WebMvcTest (@MockBean SupervisionNotifier) |
+| 2026-04-01 | B2 — useNetworkStatus non raccorde | useNetworkStatus() branché dans ListeColisScreen + bandeau hors-ligne conditionnel (IndicateurSync) | ListeColisScreen.tsx |
+| 2026-04-01 | B3 — titre onglets absent | Deja corrige (App.tsx TITRES_PAR_PAGE + useEffect document.title) — aucune modification | - |
+| 2026-04-01 | B4 — bouton ENVOYER rechargeable apres succes | peutEnvoyer inclut envoi !== 'succes' + toast enrichi "Le livreur a ete notifie" + role="status" aria-live | PanneauInstructionPage.tsx + 2 tests |
+| 2026-04-01 | B5 — WebSocket sans Reconnecter | reconnecterManuellement() + deconnecteDepuisMs state + bouton btn-reconnecter + compteur-deconnexion | TableauDeBordPage.tsx + 2 tests |
+| 2026-04-01 | B6 — hint swipe toujours affiche | AsyncStorage compteur sessions (SWIPE_HINT_MAX_SESSIONS=5) + afficherHintSwipe state + PanResponder dans ColisItem + prop afficherHintSwipe dans CarteColis | ListeColisScreen.tsx + ColisItem.tsx + CarteColis.tsx |
+
+**Bilan tests session 2026-04-01 :** 32/32 backend svc-tournee verts, 18/18 tests mobiles concernes verts (ListeColisScreen + useNetworkStatus). Tests web supervision : 30/30 suites pre-existantes en echec Babel/TS (non regressions).
+
+---
+
+## Interventions feedback terrain 2026-03-30
+
+| Date | Amélioration | Action | Fichiers |
+| --- | --- | --- | --- |
+| 2026-03-30 | S1 | livreurNom en donnée primaire, tourneeId en secondaire (grisé) dans TableauDeBordPage | TableauDeBordPage.tsx + test |
+| 2026-03-30 | S2 | Détail retard (minutes + nb colis) directement dans la ligne A_RISQUE — champs optionnels retardEstimeMinutes/colisEnRetard dans VueTourneeDTO | TableauDeBordPage.tsx + test |
+| 2026-03-30 | S3 | Redirection automatique PreparationPage → TableauDeBord après lancement tournée (prop onTourneeeLancee, délai 800ms) | PreparationPage.tsx + test |
+| 2026-03-30 | S4 | Bandeau déconnexion WebSocket passe de rouge #c62828 à orange #b45309 (distinction alerte système vs alerte métier) | TableauDeBordPage.tsx + test |
+| 2026-03-30 | S5 | Bouton "Exporter le bilan" dans TableauDeBordPage (prop onExporterBilan injectable, visible uniquement si prop fournie et données chargées) | TableauDeBordPage.tsx + test |
+| 2026-03-30 | L2 | Libellé bouton SSO raccourci : "Connexion Docaposte" (était "Se connecter via compte Docaposte") | ConnexionScreen.tsx + test |
+| 2026-03-30 | L4 | Toast de confirmation après déclaration échec : "Echec enregistre — Votre superviseur a ete notifie" (2.5s, toastDureeMs injectable pour les tests) | DeclarerEchecScreen.tsx + test |
+| 2026-03-30 | L6 | SIGNATURE pré-sélectionnée par défaut dans CapturePreuveScreen (état initial `typeSelectionne='SIGNATURE'`) | CapturePreuveScreen.tsx + test |
+| 2026-03-30 | L7 | Vérification contraste WCAG AA : #C62828 blanc/rouge = 5.9:1 (conforme, aucune modification requise) | - |
+| 2026-03-30 | L8 | Texte d'aide "Choisissez d'abord un motif pour débloquer cette section" dans section disposition (visible si motif non sélectionné) | DeclarerEchecScreen.tsx + test |
+
+**Améliorations hors périmètre (complexité/dépendances) :**
+- S6 (suggestion réaffectation véhicule) : nécessite intégration UI avec le flux BC-07
+- S7 (recherche multi-critères) : hors US en cours, à créer comme US-034
+- L1 (card SSO rétractable AsyncStorage) : AsyncStorage non encore configuré dans l'app
+- L3 (onglet "Repassage") : les onglets viennent des noms de zones métier (pas d'onglets fixes)
+- L5 (hint swipe) : US-029 non encore implémentée
+- L9 (historique consignes) : nécessite un écran dédié, nouvelle US à créer
+
+**Bilan tests session 2026-03-30 :** 191 tests web verts (était 185), 264 tests mobiles verts (était 257)
+
+---
+
 ## Points d'attention
 
 - Les **noms de classes et méthodes** DOIVENT correspondre à l'Ubiquitous Language (domain-model.md) — jamais d'abstraction technique (`DeliveryManager`, `ProcessingService` interdit)
@@ -182,3 +244,6 @@ Légende statuts : `À faire` | `En cours` | `Implémenté` | `Testé` | `Livré
 - Mettre à jour ce journal après chaque US : statut → `Implémenté`, branche git, décisions prises
 - **JAVA_HOME** : sur cette machine, `JAVA_HOME=JDK20` mais `PATH` contient JDK25. Lancer Maven avec `JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-25.0.2.10-hotspot"` pour que les tests s'exécutent avec le bon JDK.
 - **BUG-002 résolu** : `TourneeControllerTest` passe avec mock-maker-subclass + JDK25. 23/23 tests verts.
+- **Tests web** : utiliser `CI=true npm test` (react-scripts) et non `npx jest` directement (Babel non configuré pour TS standalone).
+- **CapturePreuveScreen** : SIGNATURE pré-sélectionnée par défaut — les tests qui supposaient `typeSelectionne=null` ont été mis à jour (L6).
+- **DeclarerEchecScreen** : `onEchecEnregistre` est appelé APRES le toast (délai toastDureeMs). Les tests de soumission nominale doivent avancer les fake timers (L4).

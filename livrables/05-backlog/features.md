@@ -1,12 +1,14 @@
 # Features DocuPost (par Epic)
 
-> Document de référence — Version 1.1 — 2026-03-20
+> Document de référence — Version 1.0 — 2026-03-19
 > Produit par le Product Owner à partir des livrables vision, UX et architecture métier.
 > Chaque Feature correspond à une capacité fonctionnelle d'un Bounded Context.
 > Les termes sont issus de l'Ubiquitous Language (/livrables/03-architecture-metier/domain-model.md).
 
 ---
 
+<<<<<<< Updated upstream
+=======
 ## EPIC-007 : Planification et Préparation des Tournées (interface web logisticien)
 
 ### F-018 : Import et visualisation du plan du jour
@@ -56,6 +58,7 @@ le SI et d'assurer que chaque tournée a les ressources nécessaires.
 
 User Stories rattachées :
 - US-023 : Affecter un livreur et un véhicule à une tournée
+- US-034 : Afficher une suggestion de réaffectation après un échec de compatibilité véhicule
 
 ---
 
@@ -76,6 +79,7 @@ User Stories rattachées :
 
 ---
 
+>>>>>>> Stashed changes
 ## EPIC-001 : Exécution de la Tournée (application mobile livreur)
 
 ### F-001 : Chargement et prise en main de la tournée
@@ -227,6 +231,7 @@ de journée
 
 User Stories rattachées :
 - US-011 : Visualiser l'avancement de toutes les tournées du jour en temps réel
+- US-035 : Rechercher une tournée par nom de livreur, code TMS ou zone géographique
 
 ---
 
@@ -295,6 +300,7 @@ courant de l'application mobile et mise à jour automatique de la liste de colis
 
 User Stories rattachées :
 - US-016 : Recevoir une notification push quand le superviseur modifie ma tournée
+- US-037 : Accéder à l'historique des consignes superviseur reçues dans la journée
 
 ---
 
@@ -364,6 +370,166 @@ User Stories rattachées :
 - US-019 : M'authentifier via mon compte Docaposte (SSO) depuis l'application mobile
 - US-020 : M'authentifier via mon compte Docaposte (SSO) depuis l'interface web de
   supervision
+- US-036 : Masquer automatiquement la card explicative SSO après la première connexion réussie
+
+---
+
+---
+
+## EPIC-008 : Qualite UX et Accessibilite
+
+> Epic creee le 2026-04-01 suite aux feedbacks terrain Pierre Morel et Laurent Renaud.
+> Couvre les ajustements de langage et les affordances visuelles qui ameliorent
+> l'adoption sans modifier de comportement fonctionnel.
+
+### F-022 : Harmonisation du langage de l'interface avec l'Ubiquitous Language terrain
+
+**Description** : En tant qu'utilisateur (livreur ou superviseur), je veux que les libelles
+affiches correspondent aux termes que j'utilise naturellement sur le terrain, afin de reduire
+la charge cognitive et les erreurs d'interpretation en conditions reelles.
+
+**Capability** : Transverse (UX — tous BC)
+**Screens couverts** : M-02, M-07, W-05, W-01
+**Domain Events** : aucun (corrections de libelles uniquement)
+**Priorite MoSCoW** : Should Have
+**Dependances** : US-003 (filtre zone), US-028 (export), US-030 (compatibilite), US-035 (recherche), US-037 (consignes)
+
+User Stories rattachees :
+- US-038 : Harmoniser les libelles de l'interface avec le langage naturel terrain
+
+---
+
+## EPIC-003 : Supervision et Pilotage Temps Reel (complement post-feedback)
+
+> Features supplementaires identifiees lors des feedbacks terrain du 2026-04-01.
+
+### F-023 : Bilan de fin de journee exportable depuis le tableau de bord
+
+**Description** : En tant que superviseur logistique, je veux telecharger un fichier CSV
+de toutes les tournees du jour depuis W-01, afin de produire mon rapport de fin de journee
+en une action depuis le tableau de bord.
+
+**Capability** : 3.1.3 Recapitulatif de fin de journee
+**Screens couverts** : W-01 (Tableau de bord)
+**Domain Events** : (lecture seule — aucun evenement emis)
+**Priorite MoSCoW** : Should Have
+**Dependances** : US-032 (synchronisation read model VueTournee)
+
+User Stories rattachees :
+- US-039 : Telecharger le bilan des tournees du jour depuis le tableau de bord
+
+---
+
+### F-024 : Enrichissement du CSV de composition avec statuts de livraison
+
+**Description** : En tant que superviseur logistique, je veux que le fichier CSV exporte
+depuis le detail d'une tournee inclue le nom du destinataire et le statut final de chaque
+colis, afin de l'utiliser directement pour mes rapports sans saisie complementaire.
+
+**Capability** : 7.2 Verification de composition (enrichissement colonnes)
+**Screens couverts** : W-05 (onglet Composition)
+**Domain Events** : CompositionExportee (enrichi)
+**Priorite MoSCoW** : Should Have
+**Dependances** : US-028 (export CSV composition)
+
+User Stories rattachees :
+- US-040 : Enrichir le CSV exporte avec le nom du destinataire et le statut final
+
+---
+
+### F-025 : Indicateur de poids et alerte de surcharge dans le tableau de preparation
+
+**Description** : En tant que superviseur logistique, je veux voir le poids estime de
+chaque tournee directement dans le tableau de preparation W-04 avec une alerte visuelle
+si ce poids depasse la capacite vehicule, afin de detecter les surcharges sans ouvrir
+chaque detail.
+
+**Capability** : 7.2 Verification de composition + 7.3 Affectation vehicule
+**Screens couverts** : W-04 (tableau de preparation)
+**Domain Events** : reference a CompatibiliteVehiculeEchouee (lecture)
+**Priorite MoSCoW** : Should Have
+**Dependances** : US-023 (affectation vehicule), US-030 (compatibilite vehicule)
+
+User Stories rattachees :
+
+- US-041 : Afficher le poids estime et une alerte de surcharge dans le tableau de preparation
+
+---
+
+### F-026 : Compteur de duree de deconnexion WebSocket dans le bandeau superviseur
+
+**Description** : En tant que superviseur logistique, je veux voir depuis combien de temps
+la connexion temps reel est indisponible dans le bandeau d'alerte, afin d'evaluer l'impact
+sur la fraicheur de mes donnees.
+
+**Capability** : 3.1.1 Vue agregee des tournees du jour (resilience WebSocket)
+**Screens couverts** : W-01 (bandeau OFFLINE / POLLING)
+**Domain Events** : aucun (etat local navigateur)
+**Priorite MoSCoW** : Should Have
+**Dependances** : US-032 (synchronisation read model)
+
+User Stories rattachees :
+
+- US-044 : Afficher un compteur de duree de deconnexion WebSocket dans le bandeau superviseur
+
+---
+
+## EPIC-004 : Notification et Messaging (complement post-feedback)
+
+### F-027 : Horodatage des consignes dans l'historique livreur
+
+**Description** : En tant que livreur terrain, je veux voir la date et l'heure d'emission
+de chaque consigne dans M-07, afin de savoir laquelle est la plus recente et de prioriser
+mon attention.
+
+**Capability** : 4.1.2 Notification et historique (enrichissement affichage)
+**Screens couverts** : M-07 (Mes consignes)
+**Domain Events** : aucun (enrichissement lecture seule du Read Model)
+**Priorite MoSCoW** : Should Have
+**Dependances** : US-037 (historique consignes livreur)
+
+User Stories rattachees :
+- US-042 : Afficher la date et l'heure d'emission de chaque consigne dans M-07
+
+---
+
+## EPIC-006 : Authentification et Acces (complement post-feedback)
+
+### F-028 : Repliage manuel de la card SSO avant toute connexion
+
+**Description** : En tant que livreur terrain, je veux pouvoir replier la card SSO des
+la premiere ouverture, avant de me connecter, afin d'acceder directement au bouton de
+connexion quand j'ai deja mes identifiants en main.
+
+**Capability** : 6.1.1 Connexion SSO (UX onboarding)
+**Screens couverts** : M-01 (Connexion mobile)
+**Domain Events** : aucun
+**Priorite MoSCoW** : Should Have
+**Dependances** : US-036 (card SSO retractable apres connexion)
+
+User Stories rattachees :
+
+- US-043 : Permettre de replier la card SSO des la premiere ouverture avant toute connexion
+
+---
+
+## EPIC-001 : Execution de la Tournee (complement post-feedback)
+
+### F-029 : Hint visuel de decouverte du swipe pour les nouveaux utilisateurs
+
+**Description** : En tant que livreur qui utilise l'application pour la premiere fois, je
+veux voir une indication visuelle sur les cartes colis pour decouvrir le geste swipe gauche,
+afin d'adopter la fonctionnalite de declaration rapide d'echec sans formation prealable.
+
+**Capability** : 1.3.1 Saisie du motif normalise (onboarding gestuel)
+**Screens couverts** : M-02 (liste des colis)
+**Domain Events** : aucun (affordance visuelle uniquement)
+**Priorite MoSCoW** : Could Have
+**Dependances** : US-029 (swipe rapide echec livraison)
+
+User Stories rattachees :
+
+- US-045 : Afficher un hint visuel de decouverte du swipe pour les nouveaux utilisateurs
 
 ---
 
@@ -371,10 +537,6 @@ User Stories rattachées :
 
 | Feature | Epic | Priorité | Périmètre |
 |---------|------|----------|-----------|
-| F-018 : Import et visualisation du plan du jour | EPIC-007 | Must Have | MVP |
-| F-019 : Vérification de la composition des tournées | EPIC-007 | Should Have | MVP |
-| F-020 : Affectation livreur et véhicule | EPIC-007 | Must Have | MVP |
-| F-021 : Lancement des tournées | EPIC-007 | Must Have | MVP |
 | F-001 : Chargement et prise en main de la tournée | EPIC-001 | Must Have | MVP |
 | F-002 : Organisation des arrêts par zone | EPIC-001 | Must Have | MVP |
 | F-003 : Mise à jour du statut d'un colis | EPIC-001 | Must Have | MVP |
@@ -392,3 +554,11 @@ User Stories rattachées :
 | F-015 : Synchronisation des événements vers l'OMS | EPIC-005 | Must Have | MVP |
 | F-016 : Historisation immuable des événements | EPIC-005 | Must Have | MVP |
 | F-017 : Connexion SSO et contrôle d'accès par rôle | EPIC-006 | Must Have | MVP |
+| F-022 : Harmonisation du langage de l'interface | EPIC-008 | Should Have | Post-MVP Sprint 6 |
+| F-023 : Bilan de fin de journee exportable (W-01) | EPIC-003 | Should Have | Post-MVP Sprint 6 |
+| F-024 : Enrichissement CSV colonnes statut/destinataire | EPIC-007 | Should Have | Post-MVP Sprint 6 |
+| F-025 : Poids estimé et alerte surcharge dans W-04 | EPIC-007 | Should Have | Post-MVP Sprint 6 |
+| F-026 : Compteur duree deconnexion WebSocket | EPIC-003 | Should Have | Post-MVP Sprint 6 |
+| F-027 : Horodatage consignes dans M-07 | EPIC-004 | Should Have | Post-MVP Sprint 6 |
+| F-028 : Repliage card SSO avant connexion | EPIC-006 | Should Have | Post-MVP Sprint 6 |
+| F-029 : Hint visuel swipe onboarding | EPIC-001 | Could Have | Post-MVP Sprint 7 |

@@ -35,6 +35,7 @@ Boucle itérative : 6 (Dev) → 7 (QA) → 9 (End User) pour chaque User Story d
 ```text
 /livrables/
 ├── 00-contexte/              # documents d’entreprise + journaux agents
+│   ├── infrastructure-locale.md  # ← SOURCE DE VÉRITÉ : ports, URLs, protocoles de démarrage
 │   └── journaux/
 │       ├── journal-sponsor.md
 │       ├── journal-ux.md
@@ -89,10 +90,12 @@ Boucle itérative : 6 (Dev) → 7 (QA) → 9 (End User) pour chaque User Story d
 
 - Chaque agent vérifie que ses inputs attendus sont présents avant de produire.
 - Chaque livrable est autonome (compréhensible sans historique de chat).
-- Le développeur et le QA ne traitent qu’une seule User Story par session.
-- Les agents ne modifient pas les livrables des étapes précédentes.
+- Les agents ne modifient pas les livrables des étapes précédentes, si besoin, il peut appeler l'agent concerné pour apporter son avis et une modification
 - Format des User Stories : `livrables/05-backlog/user-stories/US-[NNN]-[slug].md`.
 - Chaque US du MVP doit être liée à une issue GitHub (si MCP GitHub disponible).
+- **Ports et protocoles de démarrage** : toujours lire `/livrables/00-contexte/infrastructure-locale.md`.
+  Ne jamais dupliquer ces informations dans un fichier d’agent ou de livrable.
+  Quand un port change, mettre à jour ce fichier uniquement.
 
 ## Prérequis Skills et MCP (recommandés)
 

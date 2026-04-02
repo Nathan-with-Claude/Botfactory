@@ -1,6 +1,6 @@
 # Domain Model DocuPost
 
-> Document de référence — Version 1.1 — 2026-03-20
+> Document de référence — Version 1.0 — 2026-03-19
 > Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
 > Architecte Technique, M. Renaud Responsable Exploitation Logistique), des livrables
 > de vision (/livrables/01-vision/) et des livrables UX (/livrables/02-ux/).
@@ -9,9 +9,6 @@
 > Tout code, test et User Story DOIT utiliser les termes définis ici.
 > Les verbatims d'entretiens sont cités entre guillemets pour justifier les choix
 > de modélisation.
->
-> Mise à jour 1.1 (2026-03-20) : ajout du BC-07 Planification de Tournée suite à
-> l'entretien complémentaire avec M. Renaud (besoin de préparation matinale TMS).
 
 ---
 
@@ -45,12 +42,6 @@
 | Brique SI | Intégration SI | Composant applicatif intégré dans le SI de l'entreprise via API officielle. "L'application livreur doit devenir une brique SI à part entière." (M. Garnier) | Concept architectural | M. Garnier |
 | Notification push | Notification | Message envoyé à l'application du livreur depuis le superviseur ou le système pour signaler une instruction ou un ajout. | Domain Event | M. Renaud, Pierre |
 | Document sensible | Orchestration de Tournée | Colis contenant des documents nécessitant une preuve d'opposabilité renforcée (engagements contractuels Docaposte). | Value Object (tag) | Mme Dubois |
-| Plan du jour | Planification de Tournée | Ensemble des tournées importées depuis le TMS pour une journée donnée. Contient toutes les TournéesTMS en attente d'affectation. | Aggregate Root | M. Renaud |
-| TournéeTMS | Planification de Tournée | Tournée brute importée depuis le TMS, contenant colis, zones et contraintes, en attente d'affectation livreur/véhicule. | Entity | M. Renaud |
-| Affectation | Planification de Tournée | Association d'un livreur et d'un véhicule à une TournéeTMS pour une journée donnée. | Entity | M. Renaud |
-| Véhicule | Planification de Tournée | Ressource transport assignable à une tournée (immatriculation, type, capacité). | Entity | M. Renaud |
-| Composition de tournée | Planification de Tournée | Ensemble des colis, zones géographiques et contraintes horaires d'une TournéeTMS, vérifié par le logisticien. | Value Object | M. Renaud |
-| Lancement de tournée | Planification de Tournée | Action de valider une Affectation et de rendre la TournéeTMS visible au livreur dans l'application mobile. | Domain Event | M. Renaud |
 
 ---
 
@@ -73,8 +64,7 @@ en temps réel avec une logique de statut, d'alerte et d'instruction.
 
 **Frontières** :
 - Entre : référentiel de colis du jour (depuis l'OMS via ACL), identité du livreur
-  (depuis BC Identité via Shared Kernel), instructions (depuis BC Supervision),
-  événement TournéeLancée (depuis BC Planification de Tournée)
+  (depuis BC Identité via Shared Kernel), instructions (depuis BC Supervision)
 - Sort : événements de livraison (vers BC Intégration SI), incidents (vers BC Supervision)
 
 ---
@@ -175,30 +165,6 @@ le SSO corporate OAuth2. Aucune logique métier DocuPost.
 
 ---
 
-### BC-07 : Planification de Tournée (Core Domain)
-
-**Responsabilité** : Gérer l'import des tournées depuis le TMS, leur vérification par le
-responsable logistique, l'affectation livreur/véhicule et leur lancement. Prérequis
-bloquant pour le Parcours 1 : sans affectation validée, aucune tournée n'est disponible
-dans l'application mobile du livreur.
-
-**Classification DDD** : Core Domain. Second sous-domaine différenciateur de DocuPost :
-sans planification, l'exécution terrain est impossible.
-
-**Aggregate Roots** : PlanDuJour, Affectation
-
-**Domain Events émis** :
-- TournéeImportéeTMS, CompositionVérifiée, AffectationEnregistrée, TournéeLancée
-
-**Domain Events consommés** : aucun (initiateur de la chaîne)
-
-**Frontières** :
-- Entre : données tournées du TMS externe (via ACL adaptateur TMS), référentiel livreurs
-  (depuis BC-06 Identité), référentiel véhicules
-- Sort : TournéeLancée (consommé par BC-01 Orchestration de Tournée pour créer la Tournée)
-
----
-
 ## Context Map
 
 ```
@@ -210,8 +176,6 @@ BC_Notification            --[Customer/Supplier]-->  BC_Orchestration_Tournee
 BC_Integration_SI          --[ACL]-->  OMS_Externe
 BC_Identite_Acces          --[Shared Kernel]-->  BC_Orchestration_Tournee
 BC_Identite_Acces          --[Shared Kernel]-->  BC_Supervision
-TMS_Externe                --[ACL]-->  BC_Planification_Tournee
-BC_Planification_Tournee   --[Customer/Supplier]-->  BC_Orchestration_Tournee
 ```
 
 | Contexte upstream | Contexte downstream | Type de relation | Mécanisme |
@@ -223,8 +187,6 @@ BC_Planification_Tournee   --[Customer/Supplier]-->  BC_Orchestration_Tournee
 | BC_Notification | BC_Orchestration_Tournee | Customer/Supplier | Push notification |
 | BC_Integration_SI | OMS Externe | ACL | API REST (sans modification OMS) |
 | BC_Identite_Acces | Tous BC | Shared Kernel | Token OAuth2 / SSO |
-| TMS Externe | BC_Planification_Tournee | ACL | API REST import (adaptateur TMS) |
-| BC_Planification_Tournee | BC_Orchestration_Tournee | Customer/Supplier | Domain Event TournéeLancée |
 
 ---
 
@@ -500,88 +462,6 @@ reprogrammer). Statuts et incidents strictement normalisés." (M. Renaud)
 
 ---
 
-### Bounded Context : Planification de Tournée
-
-```mermaid
-classDiagram
-    class PlanDuJour {
-        <<Aggregate Root>>
-        PlanId id
-        LocalDate date
-        List~TourneeTMS~ tournees
-        StatutPlan statut
-        +verifierComposition() CompositionVerifiee
-        +validerAffectation(Affectation) AffectationEnregistree
-        +lancerTournee(TourneeTMSId) TourneeLancee
-        +estPret() Boolean
-    }
-
-    class TourneeTMS {
-        <<Entity>>
-        TourneeTMSId id
-        String codeTMS
-        List~ColisImporte~ colis
-        List~String~ zonesPrincipales
-        List~ContrainteHoraire~ contraintes
-        StatutTourneeTMS statut
-    }
-
-    class ColisImporte {
-        <<Value Object>>
-        String referenceTMS
-        Adresse adresseLivraison
-        List~ContrainteHoraire~ contraintes
-    }
-
-    class ContrainteHoraire {
-        <<Value Object>>
-        LocalTime heureDebut
-        LocalTime heureFin
-        String description
-    }
-
-    class Affectation {
-        <<Entity>>
-        AffectationId id
-        TourneeTMSId tourneeTMSId
-        LivreurId livreurId
-        VehiculeId vehiculeId
-        SuperviseurId valideePar
-        Instant horodatage
-        +valider() AffectationEnregistree
-    }
-
-    class Vehicule {
-        <<Entity>>
-        VehiculeId id
-        String immatriculation
-        TypeVehicule type
-        Integer capaciteMaxColis
-    }
-
-    class StatutTourneeTMS {
-        <<Value Object>>
-        NonAffectee
-        Affectee
-        Lancee
-    }
-
-    PlanDuJour "1" *-- "1..*" TourneeTMS : contient
-    TourneeTMS "1" *-- "1..*" ColisImporte : compose
-    TourneeTMS --> "0..*" ContrainteHoraire : soumis a
-    TourneeTMS --> StatutTourneeTMS : a pour statut
-    Affectation --> Vehicule : utilise
-```
-
-**Invariants BC-07** :
-1. Une Affectation ne peut être créée que pour une TournéeTMS au statut "NonAffectée".
-2. Une TournéeTMS ne peut être lancée que si elle possède une Affectation avec livreurId et véhiculeId renseignés.
-3. Le lancement génère un événement TournéeLancée consommé par BC-01 pour créer la Tournée terrain.
-4. Un livreur ne peut être affecté qu'à une seule tournée par jour.
-5. Un véhicule ne peut être affecté qu'à une seule tournée par jour.
-
----
-
 ## Domain Events — Inventaire complet
 
 > Les Domain Events sont des faits passés immuables. Ils représentent ce qui s'est
@@ -623,15 +503,6 @@ classDiagram
 |---|---|---|---|
 | InstructionReçue | Notification push livrée à l'app mobile | instructionId, livreurId, horodatage | BC Orchestration de Tournée |
 
-### BC Planification de Tournée
-
-| Événement | Déclencheur | Attributs clés | Consommateurs |
-|---|---|---|---|
-| TournéeImportéeTMS | Import depuis TMS | planId, date, nombreTournees, horodatage | Tableau de bord logisticien |
-| CompositionVérifiée | Logisticien valide la composition | tourneeTMSId, nombreColis, zones, contraintes | — |
-| AffectationEnregistrée | Logisticien affecte livreur + véhicule | tourneeTMSId, livreurId, vehiculeId, superviseurId, horodatage | BC Planification (état interne) |
-| TournéeLancée | Logisticien lance la tournée | tourneeTMSId, livreurId, vehiculeId, planId, horodatage | BC Orchestration de Tournée |
-
 ---
 
 ## Règles métier transversales
@@ -663,26 +534,19 @@ classDiagram
    Toutes les actions terrain doivent être réalisables sans connexion et synchronisées
    au retour du réseau.
 
-7. **Affectation obligatoire avant lancement** : Une TournéeTMS ne peut être mise à
-   disposition du livreur que si elle possède une Affectation complète (livreur + véhicule)
-   validée par le responsable logistique. (M. Renaud)
-
-8. **Unicité d'affectation journalière** : Un livreur et un véhicule ne peuvent être
-   affectés qu'à une seule tournée par jour. (M. Renaud)
-
 ### Règles importantes (MVP)
 
-9. **Détection tournée à risque < 15 minutes** : "Je voudrais être prévenu avant, pas
+7. **Détection tournée à risque < 15 minutes** : "Je voudrais être prévenu avant, pas
    après." (M. Renaud). La détection automatique doit se déclencher en moins de 15 minutes
    après l'apparition d'un écart de délai significatif.
 
-10. **Preuve disponible < 5 minutes** : "Quand un client nous dit qu'il n'a pas reçu son
-    colis, on met parfois des heures à retrouver la preuve." (Mme Dubois). Toute preuve
-    doit être accessible par le support client en moins de 5 minutes.
+8. **Preuve disponible < 5 minutes** : "Quand un client nous dit qu'il n'a pas reçu son
+   colis, on met parfois des heures à retrouver la preuve." (Mme Dubois). Toute preuve
+   doit être accessible par le support client en moins de 5 minutes.
 
-11. **Instruction unique par colis** : Un colis ne peut avoir qu'une seule Instruction
-    en attente à la fois pour éviter les conflits d'exécution. (M. Renaud)
+9. **Instruction unique par colis** : Un colis ne peut avoir qu'une seule Instruction
+   en attente à la fois pour éviter les conflits d'exécution. (M. Renaud)
 
-12. **Saisie de statut < 45 secondes** : "Mettre à jour le statut d'un colis le plus
+10. **Saisie de statut < 45 secondes** : "Mettre à jour le statut d'un colis le plus
     vite possible, sans friction." (Pierre). La séquence complète de mise à jour doit
     être réalisable en moins de 45 secondes.

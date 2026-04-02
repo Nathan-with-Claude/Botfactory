@@ -1,39 +1,12 @@
 # Epics DocuPost
 
-> Document de référence — Version 1.1 — 2026-03-20
+> Document de référence — Version 1.0 — 2026-03-19
 > Produit par le Product Owner à partir des livrables vision (/livrables/01-vision/),
 > UX (/livrables/02-ux/) et architecture métier (/livrables/03-architecture-metier/).
 >
 > Chaque Epic est alignée sur un unique Bounded Context (DDD Evans).
 > Les termes utilisés sont issus du glossaire de l'Ubiquitous Language défini dans
 > /livrables/03-architecture-metier/domain-model.md.
-
----
-
-## EPIC-007 : Planification et Préparation des Tournées (interface web logisticien)
-
-**Bounded Context** : BC-07 Planification de Tournée (Core Domain)
-**Objectif business** : Permettre au responsable logistique de réceptionner les tournées
-générées par le TMS chaque matin, de vérifier leur composition, d'affecter un livreur
-et un véhicule à chaque tournée, et de les lancer avant le départ des livreurs. Sans ce
-parcours, aucune tournée n'est disponible dans l'application mobile du livreur.
-
-**Problème résolu** : L'affectation des tournées se fait manuellement sur papier ou tableur
-sans traçabilité, sans détection des anomalies et sans connexion au SI. Ce parcours est
-le maillon manquant du cadrage initial.
-
-**Capabilities couvertes** :
-- 7.1 Import et réception des tournées TMS (import automatique 6h00, visualisation du plan du jour)
-- 7.2 Vérification de composition (anomalies colis/zones/contraintes)
-- 7.3 Affectation livreur / véhicule par tournée
-- 7.4 Lancement des tournées (rend la tournée visible dans l'app mobile livreur)
-
-**KPIs associés** :
-- Temps moyen de préparation des tournées du matin < 30 minutes
-- Taux d'affectation complète avant le départ des livreurs = 100 %
-- Réduction des erreurs d'affectation vs baseline papier de 90 %
-
-**Périmètre** : MVP
 
 ---
 
@@ -191,7 +164,6 @@ Exigence DSI non négociable : "OAuth2 / SSO corporate obligatoire dès le MVP."
 
 | Epic | Bounded Context | Classification DDD | Périmètre |
 |------|-----------------|-------------------|-----------|
-| EPIC-007 | Planification de Tournée | Core Domain | MVP |
 | EPIC-001 | Orchestration de Tournée | Core Domain | MVP |
 | EPIC-002 | Gestion des Preuves | Supporting Subdomain | MVP |
 | EPIC-003 | Supervision | Core Domain | MVP |

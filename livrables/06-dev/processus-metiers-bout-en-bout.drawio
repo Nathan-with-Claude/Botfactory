@@ -1,0 +1,763 @@
+<mxfile host="app.diagrams.net" modified="2026-04-01T00:00:00.000Z" agent="DocuPost-DevAgent" version="21.0.0" type="device">
+
+  <!-- ============================================================
+       PAGE 0 — Parcours 0 : Préparation des Tournées
+       ============================================================ -->
+  <diagram id="page0" name="Parcours 0 — Préparation Tournées">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- POOL principal -->
+        <mxCell id="p0_pool" value="Parcours 0 — Préparation des Tournées (Logisticien, 6h00)" style="shape=pool;html=1;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="30" width="3200" height="1480" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 0 : TMS Externe -->
+        <mxCell id="p0_lane_tms" value="TMS Externe" style="swimlane;startSize=40;horizontal=0;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="p0_pool">
+          <mxGeometry x="0" y="0" width="3200" height="340" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 1 : svc-planification -->
+        <mxCell id="p0_lane_svc" value="svc-planification (DocuPost)" style="swimlane;startSize=40;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="p0_pool">
+          <mxGeometry x="0" y="340" width="3200" height="340" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 2 : Logisticien Web -->
+        <mxCell id="p0_lane_logist" value="Logisticien (Web)" style="swimlane;startSize=40;horizontal=0;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="p0_pool">
+          <mxGeometry x="0" y="680" width="3200" height="400" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 3 : Livreur réception -->
+        <mxCell id="p0_lane_livreur" value="Livreur (Réception)" style="swimlane;startSize=40;horizontal=0;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="p0_pool">
+          <mxGeometry x="0" y="1080" width="3200" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ELEMENTS LANE TMS ===== -->
+        <!-- Début -->
+        <mxCell id="p0_start" value="Début&#xa;6h00" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p0_lane_tms">
+          <mxGeometry x="80" y="120" width="80" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité 1 -->
+        <mxCell id="p0_a1" value="Générer plan du jour&#xa;(automatique 6h00)&#xa;Fichier TMS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p0_lane_tms">
+          <mxGeometry x="240" y="110" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Event TournéeImportéeTMS -->
+        <mxCell id="p0_evt1" value="TournéeImportéeTMS&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p0_lane_tms">
+          <mxGeometry x="700" y="120" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ELEMENTS LANE svc-planification ===== -->
+        <!-- Activité 2 : Import cron -->
+        <mxCell id="p0_a2" value="Import TMS via&#xa;@Scheduled cron&#xa;(toutes les 5 min)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p0_lane_svc">
+          <mxGeometry x="480" y="120" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité : Créer TourneePlanifiee -->
+        <mxCell id="p0_a3" value="Créer TourneePlanifiee&#xa;en base&#xa;(statut: IMPORTEE)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p0_lane_svc">
+          <mxGeometry x="900" y="120" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité : Event AffectationEnregistrée -->
+        <mxCell id="p0_evt2" value="AffectationEnregistrée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p0_lane_svc">
+          <mxGeometry x="1620" y="120" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Event CompatibiliteVerifiee -->
+        <mxCell id="p0_evt3" value="CompatibiliteVehiculeVerifiee&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p0_lane_svc">
+          <mxGeometry x="2100" y="80" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Event TourneeLancee -->
+        <mxCell id="p0_evt4" value="TourneeLancée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p0_lane_svc">
+          <mxGeometry x="2760" y="120" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Activité : Créer tournée opérationnelle -->
+        <mxCell id="p0_a_tournee_op" value="Créer Tournée&#xa;Opérationnelle&#xa;dans svc-tournee" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="p0_lane_svc">
+          <mxGeometry x="2960" y="110" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ELEMENTS LANE LOGISTICIEN ===== -->
+        <!-- Activité 3 : Consulter -->
+        <mxCell id="p0_a4" value="Consulter composition&#xa;des tournées&#xa;(interface Web)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p0_lane_logist">
+          <mxGeometry x="1100" y="140" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité 4 : Affecter livreur + véhicule -->
+        <mxCell id="p0_a5" value="Affecter livreur&#xa;+ véhicule à&#xa;la tournée" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p0_lane_logist">
+          <mxGeometry x="1450" y="140" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité 5 : Vérifier compatibilité -->
+        <mxCell id="p0_a6" value="Vérifier compatibilité&#xa;véhicule&#xa;(poids / volume)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p0_lane_logist">
+          <mxGeometry x="1820" y="140" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Décision : Compatible ? -->
+        <mxCell id="p0_d1" value="Compatible ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p0_lane_logist">
+          <mxGeometry x="2080" y="120" width="140" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Activité 6 : Réaffecter véhicule (si incompatible) -->
+        <mxCell id="p0_a7" value="Réaffecter&#xa;véhicule&#xa;(choisir autre)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p0_lane_logist">
+          <mxGeometry x="2080" y="290" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité 7 : Lancer tournée -->
+        <mxCell id="p0_a8" value="Lancer la tournée&#xa;(confirmer plan)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p0_lane_logist">
+          <mxGeometry x="2600" y="140" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ELEMENTS LANE LIVREUR ===== -->
+        <!-- Activité 9 : Reçoit notification -->
+        <mxCell id="p0_a9" value="Reçoit notification&#xa;(tournée disponible)&#xa;via FCM / Push" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="p0_lane_livreur">
+          <mxGeometry x="2960" y="120" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Fin -->
+        <mxCell id="p0_end" value="Tournée&#xa;prête" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p0_lane_livreur">
+          <mxGeometry x="3050" y="240" width="80" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== FLÈCHES ===== -->
+        <mxCell id="p0_e1" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_start" target="p0_a1" parent="p0_lane_tms">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e2" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a1" target="p0_a2" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e3" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a2" target="p0_evt1" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e4" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a2" target="p0_a3" parent="p0_lane_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e5" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a3" target="p0_a4" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e6" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a4" target="p0_a5" parent="p0_lane_logist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e7" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a5" target="p0_evt2" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e8" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a5" target="p0_a6" parent="p0_lane_logist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e9" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a6" target="p0_d1" parent="p0_lane_logist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e10" value="OUI" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_d1" target="p0_a8" parent="p0_lane_logist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e11" value="NON" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_d1" target="p0_a7" parent="p0_lane_logist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e12" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" source="p0_a7" target="p0_a6" parent="p0_lane_logist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e13" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_d1" target="p0_evt3" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e14" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a8" target="p0_evt4" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e15" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_evt4" target="p0_a_tournee_op" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e16" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a_tournee_op" target="p0_a9" parent="p0_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_e17" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p0_a9" target="p0_end" parent="p0_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================
+       PAGE 1 — Parcours 1 : Exécution de Tournée (Livreur)
+       ============================================================ -->
+  <diagram id="page1" name="Parcours 1 — Exécution Tournée">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- POOL principal -->
+        <mxCell id="p1_pool" value="Parcours 1 — Exécution de Tournée (Livreur, terrain)" style="shape=pool;html=1;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="30" width="3200" height="1480" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 0 : Livreur Mobile -->
+        <mxCell id="p1_lane_livreur" value="Livreur (Mobile)" style="swimlane;startSize=40;horizontal=0;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="p1_pool">
+          <mxGeometry x="0" y="0" width="3200" height="400" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 1 : svc-tournee -->
+        <mxCell id="p1_lane_svc_tournee" value="svc-tournee" style="swimlane;startSize=40;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="p1_pool">
+          <mxGeometry x="0" y="400" width="3200" height="320" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 2 : svc-preuves -->
+        <mxCell id="p1_lane_svc_preuves" value="svc-preuves" style="swimlane;startSize=40;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="p1_pool">
+          <mxGeometry x="0" y="720" width="3200" height="300" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 3 : OMS / svc-oms -->
+        <mxCell id="p1_lane_oms" value="OMS / svc-oms" style="swimlane;startSize=40;horizontal=0;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="p1_pool">
+          <mxGeometry x="0" y="1020" width="3200" height="420" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE LIVREUR ===== -->
+        <mxCell id="p1_start" value="Début" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="60" y="150" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 1 : Auth SSO -->
+        <mxCell id="p1_a1" value="S'authentifier&#xa;SSO OAuth2&#xa;→ JWT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="210" y="130" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 2 : Charger tournée -->
+        <mxCell id="p1_a2" value="Charger tournée du jour&#xa;(80-120 colis)&#xa;→ WatermelonDB offline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="440" y="130" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 3 : Sélectionner colis -->
+        <mxCell id="p1_a3" value="Sélectionner prochain&#xa;colis (filtré par zone&#xa;géographique)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="700" y="130" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 4 : Se rendre adresse -->
+        <mxCell id="p1_a4" value="Se rendre&#xa;à l'adresse" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="960" y="130" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Décision : Livraison possible ? -->
+        <mxCell id="p1_d1" value="Livraison&#xa;possible ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="1190" y="110" width="150" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 5a : Capturer preuve -->
+        <mxCell id="p1_a5a" value="Capturer preuve&#xa;(signature / photo&#xa;/ tiers / dépôt)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="1440" y="60" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 5b : Déclarer échec -->
+        <mxCell id="p1_a5b" value="Déclarer échec&#xa;(motif + disposition)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="1440" y="240" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Event PreuveCapturée -->
+        <mxCell id="p1_evt1" value="PreuveCapturée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="1700" y="70" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Event LivraisonConfirmée -->
+        <mxCell id="p1_evt2" value="LivraisonConfirmée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="1920" y="70" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Event EchecLivraisonDéclaré -->
+        <mxCell id="p1_evt3" value="EchecLivraisonDéclaré&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="1700" y="250" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Décision : Tous colis traités ? -->
+        <mxCell id="p1_d2" value="Tous colis&#xa;traités ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="2200" y="110" width="150" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Event TournéeClôturée -->
+        <mxCell id="p1_evt4" value="TournéeClôturée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="2470" y="120" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Fin -->
+        <mxCell id="p1_end" value="Fin&#xa;tournée" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p1_lane_livreur">
+          <mxGeometry x="2700" y="130" width="80" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE svc-tournee ===== -->
+        <!-- Activité : Persister event (idempotent) -->
+        <mxCell id="p1_svc_t1" value="Persister event&#xa;(idempotent via commandId)&#xa;Event Store" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_svc_tournee">
+          <mxGeometry x="1900" y="110" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité : Outbox sync OMS -->
+        <mxCell id="p1_svc_t2" value="Outbox Pattern&#xa;→ sync svc-oms&#xa;(&lt; 30 sec online)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_svc_tournee">
+          <mxGeometry x="2180" y="110" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE svc-preuves ===== -->
+        <!-- Activité : Stocker preuve MinIO -->
+        <mxCell id="p1_svc_p1" value="Stocker preuve&#xa;→ MinIO&#xa;(objet S3)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_svc_preuves">
+          <mxGeometry x="1700" y="100" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité : Référencer URL preuve -->
+        <mxCell id="p1_svc_p2" value="Référencer URL preuve&#xa;dans Event&#xa;LivraisonConfirmée" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_svc_preuves">
+          <mxGeometry x="1960" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE OMS ===== -->
+        <!-- Activité : Récevoir sync OMS -->
+        <mxCell id="p1_oms1" value="Recevoir sync&#xa;via Outbox&#xa;(&lt; 30 sec ou &lt; 10 min offline)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p1_lane_oms">
+          <mxGeometry x="2400" y="150" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Activité : Mettre à jour OMS -->
+        <mxCell id="p1_oms2" value="Mettre à jour statut&#xa;colis dans OMS&#xa;(acquittement)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="p1_lane_oms">
+          <mxGeometry x="2680" y="150" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== FLÈCHES ===== -->
+        <mxCell id="p1_e1" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_start" target="p1_a1" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e2" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_a1" target="p1_a2" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e3" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_a2" target="p1_a3" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e4" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_a3" target="p1_a4" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e5" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_a4" target="p1_d1" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e6" value="OUI" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_d1" target="p1_a5a" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e7" value="NON" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_d1" target="p1_a5b" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e8" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_a5a" target="p1_evt1" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e9" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_evt1" target="p1_evt2" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e10" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_a5b" target="p1_evt3" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e11" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_evt2" target="p1_d2" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e12" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_evt3" target="p1_d2" parent="p1_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e13" value="NON" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" source="p1_d2" target="p1_a3" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2275" y="320" />
+              <mxPoint x="790" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e14" value="OUI" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_d2" target="p1_evt4" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e15" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_evt4" target="p1_end" parent="p1_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Flèches cross-lane svc-tournee -->
+        <mxCell id="p1_e16" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_evt2" target="p1_svc_t1" parent="p1_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e17" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_evt3" target="p1_svc_t1" parent="p1_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e18" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_svc_t1" target="p1_svc_t2" parent="p1_lane_svc_tournee">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Flèches cross-lane svc-preuves -->
+        <mxCell id="p1_e19" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_evt1" target="p1_svc_p1" parent="p1_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e20" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_svc_p1" target="p1_svc_p2" parent="p1_lane_svc_preuves">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Flèches cross-lane OMS -->
+        <mxCell id="p1_e21" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_svc_t2" target="p1_oms1" parent="p1_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e22" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p1_oms1" target="p1_oms2" parent="p1_lane_oms">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================
+       PAGE 2 — Parcours 2 : Supervision Temps Réel
+       ============================================================ -->
+  <diagram id="page2" name="Parcours 2 — Supervision Temps Réel">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- POOL principal -->
+        <mxCell id="p2_pool" value="Parcours 2 — Supervision Temps Réel (Superviseur)" style="shape=pool;html=1;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="30" width="3200" height="1480" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 0 : Superviseur Web -->
+        <mxCell id="p2_lane_sup" value="Superviseur (Web)" style="swimlane;startSize=40;horizontal=0;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="p2_pool">
+          <mxGeometry x="0" y="0" width="3200" height="400" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 1 : svc-supervision -->
+        <mxCell id="p2_lane_svc_sup" value="svc-supervision" style="swimlane;startSize=40;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="p2_pool">
+          <mxGeometry x="0" y="400" width="3200" height="380" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 2 : svc-notification -->
+        <mxCell id="p2_lane_svc_notif" value="svc-notification" style="swimlane;startSize=40;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="p2_pool">
+          <mxGeometry x="0" y="780" width="3200" height="300" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 3 : Livreur Mobile -->
+        <mxCell id="p2_lane_livreur" value="Livreur (Mobile)" style="swimlane;startSize=40;horizontal=0;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="p2_pool">
+          <mxGeometry x="0" y="1080" width="3200" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE SUPERVISEUR ===== -->
+        <mxCell id="p2_start" value="Début" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p2_lane_sup">
+          <mxGeometry x="60" y="150" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 1 : Consulter tableau de bord -->
+        <mxCell id="p2_a1" value="Consulter tableau&#xa;de bord&#xa;(WebSocket STOMP live)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p2_lane_sup">
+          <mxGeometry x="220" y="130" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 5 : Visualiser alerte -->
+        <mxCell id="p2_a5" value="Visualiser alerte&#xa;retard détectée&#xa;+ consulter détail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p2_lane_sup">
+          <mxGeometry x="1480" y="130" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 6 : Envoyer instruction -->
+        <mxCell id="p2_a6" value="Envoyer instruction&#xa;(prioriser / annuler&#xa;/ reprogrammer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p2_lane_sup">
+          <mxGeometry x="1780" y="130" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Event InstructionEnvoyée -->
+        <mxCell id="p2_evt_instr" value="InstructionEnvoyée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p2_lane_sup">
+          <mxGeometry x="2040" y="140" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 10 : Visualiser mise à jour -->
+        <mxCell id="p2_a10" value="Visualiser mise à jour&#xa;statut instruction&#xa;(WebSocket)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p2_lane_sup">
+          <mxGeometry x="2800" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Fin -->
+        <mxCell id="p2_end" value="Fin" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p2_lane_sup">
+          <mxGeometry x="3060" y="150" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE svc-supervision ===== -->
+        <!-- Étape 2 : Consommer events BC-01 -->
+        <mxCell id="p2_svc2" value="Consommer events&#xa;BC-01 (LivraisonConfirmée,&#xa;EchecLivraison...)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p2_lane_svc_sup">
+          <mxGeometry x="480" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 3 : Mettre à jour VueTournee -->
+        <mxCell id="p2_svc3" value="Mettre à jour VueTournee&#xa;(avancement, retard)&#xa;Read Model" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p2_lane_svc_sup">
+          <mxGeometry x="760" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Décision : Tournée à risque ? -->
+        <mxCell id="p2_d1" value="Tournée à risque&#xa;(retard &gt; seuil) ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p2_lane_svc_sup">
+          <mxGeometry x="1030" y="110" width="160" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Event TournéeÀRisqueDétectée -->
+        <mxCell id="p2_evt_risque" value="TournéeÀRisqueDétectée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p2_lane_svc_sup">
+          <mxGeometry x="1270" y="120" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Event AlerteDéclenchée -->
+        <mxCell id="p2_evt_alerte" value="AlerteDéclenchée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p2_lane_svc_sup">
+          <mxGeometry x="1270" y="230" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Retour si pas à risque (continuer surveillance) -->
+        <mxCell id="p2_svc_cont" value="Continuer surveillance&#xa;(polling / WebSocket)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;dashed=1;" vertex="1" parent="p2_lane_svc_sup">
+          <mxGeometry x="760" y="250" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE svc-notification ===== -->
+        <!-- Étape 7 : Push FCM -->
+        <mxCell id="p2_notif1" value="Envoyer push FCM&#xa;vers mobile livreur&#xa;(notification instruction)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p2_lane_svc_notif">
+          <mxGeometry x="2040" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE LIVREUR MOBILE ===== -->
+        <!-- Étape 8 : Reçoit instruction -->
+        <mxCell id="p2_liv8" value="Reçoit instruction&#xa;sur mobile&#xa;(bandeau notification)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="p2_lane_livreur">
+          <mxGeometry x="2280" y="120" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 9 : Exécuter instruction -->
+        <mxCell id="p2_liv9" value="Exécuter instruction&#xa;(adapter parcours)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="p2_lane_livreur">
+          <mxGeometry x="2540" y="120" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Event InstructionExécutée -->
+        <mxCell id="p2_evt_exec" value="InstructionExécutée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p2_lane_livreur">
+          <mxGeometry x="2790" y="130" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== FLÈCHES ===== -->
+        <mxCell id="p2_e1" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_start" target="p2_a1" parent="p2_lane_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e2" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_a1" target="p2_svc2" parent="p2_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e3" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_svc2" target="p2_svc3" parent="p2_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e4" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_svc3" target="p2_d1" parent="p2_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e5" value="OUI" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_d1" target="p2_evt_risque" parent="p2_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e6" value="NON" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" source="p2_d1" target="p2_svc_cont" parent="p2_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e7" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_evt_risque" target="p2_evt_alerte" parent="p2_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e8" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_evt_alerte" target="p2_a5" parent="p2_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e9" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_a5" target="p2_a6" parent="p2_lane_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e10" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_a6" target="p2_evt_instr" parent="p2_lane_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e11" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_evt_instr" target="p2_notif1" parent="p2_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e12" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_notif1" target="p2_liv8" parent="p2_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e13" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_liv8" target="p2_liv9" parent="p2_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e14" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_liv9" target="p2_evt_exec" parent="p2_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e15" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_evt_exec" target="p2_a10" parent="p2_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e16" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p2_a10" target="p2_end" parent="p2_lane_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================
+       PAGE 3 — Parcours 3 : Gestion d'Incidents (Escalade)
+       ============================================================ -->
+  <diagram id="page3" name="Parcours 3 — Gestion Incidents">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- POOL principal -->
+        <mxCell id="p3_pool" value="Parcours 3 — Gestion d'Incidents (Escalade)" style="shape=pool;html=1;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="30" width="3200" height="1480" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 0 : Livreur Mobile -->
+        <mxCell id="p3_lane_livreur" value="Livreur (Mobile)" style="swimlane;startSize=40;horizontal=0;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="p3_pool">
+          <mxGeometry x="0" y="0" width="3200" height="380" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 1 : svc-tournee -->
+        <mxCell id="p3_lane_svc_tournee" value="svc-tournee" style="swimlane;startSize=40;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="p3_pool">
+          <mxGeometry x="0" y="380" width="3200" height="340" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 2 : svc-supervision -->
+        <mxCell id="p3_lane_svc_sup" value="svc-supervision" style="swimlane;startSize=40;horizontal=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="p3_pool">
+          <mxGeometry x="0" y="720" width="3200" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- Lane 3 : Superviseur -->
+        <mxCell id="p3_lane_sup" value="Superviseur (Web)" style="swimlane;startSize=40;horizontal=0;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="p3_pool">
+          <mxGeometry x="0" y="1080" width="3200" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE LIVREUR ===== -->
+        <mxCell id="p3_start" value="Début" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p3_lane_livreur">
+          <mxGeometry x="60" y="140" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 1 : Tenter livraison -->
+        <mxCell id="p3_a1" value="Tenter livraison&#xa;→ impossibilité&#xa;détectée" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p3_lane_livreur">
+          <mxGeometry x="210" y="130" width="170" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 2 : Déclarer échec + motif -->
+        <mxCell id="p3_a2" value="Déclarer échec&#xa;Choisir motif&#xa;(absent/accès/refus/horaires)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p3_lane_livreur">
+          <mxGeometry x="460" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 3 : Choisir disposition -->
+        <mxCell id="p3_a3" value="Choisir disposition&#xa;(à_representer / tiers&#xa;/ retour_depot)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p3_lane_livreur">
+          <mxGeometry x="740" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 9 : Reçoit instruction corrective -->
+        <mxCell id="p3_a9" value="Reçoit instruction&#xa;corrective (push FCM)&#xa;Adapte parcours" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="p3_lane_livreur">
+          <mxGeometry x="2700" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Fin -->
+        <mxCell id="p3_end" value="Fin" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000;fontSize=10;" vertex="1" parent="p3_lane_livreur">
+          <mxGeometry x="2960" y="150" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE svc-tournee ===== -->
+        <!-- Étape 4a : EchecLivraisonDéclaré -->
+        <mxCell id="p3_evt1" value="EchecLivraisonDéclaré&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p3_lane_svc_tournee">
+          <mxGeometry x="1000" y="120" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 4b : MotifEnregistré -->
+        <mxCell id="p3_evt2" value="MotifEnregistré&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p3_lane_svc_tournee">
+          <mxGeometry x="1230" y="120" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 4c : DispositionEnregistrée -->
+        <mxCell id="p3_evt3" value="DispositionEnregistrée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p3_lane_svc_tournee">
+          <mxGeometry x="1440" y="120" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Compteur incidents sur tournée -->
+        <mxCell id="p3_svc_count" value="Incrémenter compteur&#xa;incidents sur tournée&#xa;(agrégation Read Model)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p3_lane_svc_tournee">
+          <mxGeometry x="1680" y="120" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE svc-supervision ===== -->
+        <!-- Étape 5 : Détecter accumulation échecs -->
+        <mxCell id="p3_sup1" value="Détecter accumulation&#xa;d'échecs sur tournée&#xa;(Read Model VueTournee)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p3_lane_svc_sup">
+          <mxGeometry x="1920" y="120" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Décision : Seuil incidents atteint ? -->
+        <mxCell id="p3_d1" value="Seuil incidents&#xa;atteint ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="p3_lane_svc_sup">
+          <mxGeometry x="2190" y="100" width="150" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- Event AlerteDéclenchée -->
+        <mxCell id="p3_evt_alerte" value="AlerteDéclenchée&#xa;vers Superviseur&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p3_lane_svc_sup">
+          <mxGeometry x="2420" y="110" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Retour surveillance si seuil non atteint -->
+        <mxCell id="p3_sup_cont" value="Continuer&#xa;surveillance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;dashed=1;" vertex="1" parent="p3_lane_svc_sup">
+          <mxGeometry x="2190" y="260" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LANE SUPERVISEUR ===== -->
+        <!-- Étape 7 : Consulte incidents -->
+        <mxCell id="p3_sup_a7" value="Consulter incidents&#xa;et détails tournée&#xa;(tableau de bord)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p3_lane_sup">
+          <mxGeometry x="2420" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Étape 8 : Envoie instruction corrective -->
+        <mxCell id="p3_sup_a8" value="Envoyer instruction&#xa;corrective&#xa;(modifier parcours)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="p3_lane_sup">
+          <mxGeometry x="2680" y="130" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Event InstructionEnvoyée -->
+        <mxCell id="p3_evt_instr" value="InstructionEnvoyée&#xa;(Event)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;fontStyle=2;" vertex="1" parent="p3_lane_sup">
+          <mxGeometry x="2940" y="140" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== FLÈCHES ===== -->
+        <mxCell id="p3_e1" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_start" target="p3_a1" parent="p3_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e2" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_a1" target="p3_a2" parent="p3_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e3" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_a2" target="p3_a3" parent="p3_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Cross-lane : livreur -> svc-tournee events -->
+        <mxCell id="p3_e4" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_a3" target="p3_evt1" parent="p3_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e5" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_evt1" target="p3_evt2" parent="p3_lane_svc_tournee">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e6" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_evt2" target="p3_evt3" parent="p3_lane_svc_tournee">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e7" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_evt3" target="p3_svc_count" parent="p3_lane_svc_tournee">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Cross-lane : svc-tournee -> svc-supervision -->
+        <mxCell id="p3_e8" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_svc_count" target="p3_sup1" parent="p3_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e9" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_sup1" target="p3_d1" parent="p3_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e10" value="OUI" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_d1" target="p3_evt_alerte" parent="p3_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e11" value="NON" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" source="p3_d1" target="p3_sup_cont" parent="p3_lane_svc_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Cross-lane : svc-supervision -> Superviseur -->
+        <mxCell id="p3_e12" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_evt_alerte" target="p3_sup_a7" parent="p3_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e13" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_sup_a7" target="p3_sup_a8" parent="p3_lane_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e14" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_sup_a8" target="p3_evt_instr" parent="p3_lane_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Cross-lane : Superviseur -> Livreur (instruction) -->
+        <mxCell id="p3_e15" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_evt_instr" target="p3_a9" parent="p3_pool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e16" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="p3_a9" target="p3_end" parent="p3_lane_livreur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+</mxfile>

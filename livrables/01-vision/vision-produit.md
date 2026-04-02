@@ -1,13 +1,8 @@
 # Vision Produit DocuPost
 
-> Document de référence — Version 1.1 — 2026-03-20
-> Mis à jour suite à l'entretien complémentaire du 2026-03-20 avec M. Renaud
-> (Responsable Exploitation Logistique) : ajout du besoin de gestion en amont des
-> tournées (Parcours 0 — Préparation TMS).
->
-> Version 1.0 produite le 2026-03-19 à partir des entretiens métier avec Pierre (livreur
-> Docaposte), Mme Dubois (DSI Docaposte), M. Garnier (Architecte Technique DSI),
-> M. Renaud (Responsable Exploitation Logistique).
+> Document de référence — Version 1.0 — 2026-03-19
+> Produit à partir des entretiens métier : Pierre (livreur Docaposte), Mme Dubois (DSI Docaposte),
+> M. Garnier (Architecte Technique DSI), M. Renaud (Responsable Exploitation Logistique).
 
 ---
 
@@ -17,20 +12,6 @@ DocuPost opère aujourd'hui avec une rupture structurelle dans sa chaîne SI : d
 quitte le dépôt, il sort du système d'information de l'entreprise.
 
 Les conséquences concrètes identifiées lors des entretiens sont les suivantes.
-
-**Côté Responsable logistique — gestion TMS (besoin découvert en entretien complémentaire)**
-- Les tournées générées chaque matin par le TMS arrivent dans DocuPost sans affectation
-  livreur ni véhicule : le responsable logistique doit réaliser cette affectation hors SI.
-- La vérification de la composition de chaque tournée (nombre de colis, zones géographiques,
-  contraintes horaires) est entièrement manuelle, réalisée sur papier ou via des exports Excel
-  non intégrés.
-- L'affectation des tournées aux livreurs et aux véhicules se fait sur un tableau papier ou un
-  tableur, sans traçabilité, sans détection de conflit (livreur absent, véhicule indisponible)
-  et sans mécanisme de validation formelle avant le départ des équipes.
-- En cas d'erreur d'affectation découverte après le départ, la correction est coûteuse :
-  rappel téléphonique, retour au dépôt, échange de feuilles de route.
-- Ce processus manuel représente un point de blocage matinal critique : si l'affectation
-  tarde ou contient des erreurs, l'ensemble de la journée de livraison est impacté.
 
 **Côté livreur (Pierre)**
 - Tournée gérée sur support papier : perte de temps, erreurs, illisibilité en conditions météo.
@@ -89,18 +70,9 @@ Les bénéfices attendus sont :
 
 ## Vision cible (6-12 mois)
 
-DocuPost est une plateforme numérique de gestion de tournées de livraison qui couvre
-l'intégralité du cycle de vie d'une tournée : de la préparation matinale au dépôt jusqu'à
-la clôture terrain, en connectant en temps réel le responsable logistique, le livreur terrain,
-le superviseur et le SI de l'entreprise (OMS, CRM, ERP).
-
-Le responsable logistique dispose d'un écran de préparation des tournées qui lui permet,
-chaque matin avant le départ des livreurs, de :
-- recevoir et visualiser les tournées importées depuis le TMS ;
-- vérifier la composition de chaque tournée (colis, zones, contraintes horaires) ;
-- affecter chaque tournée à un livreur et à un véhicule disponibles ;
-- valider et lancer les tournées, déclenchant leur transmission aux applications mobiles
-  des livreurs concernés.
+DocuPost est une plateforme numérique de gestion de tournées de livraison qui connecte en
+temps réel le livreur terrain, le superviseur logistique et le SI de l'entreprise (OMS,
+CRM, ERP).
 
 Le livreur dispose d'une application mobile Android qui :
 - lui présente sa tournée de façon dynamique, organisée par zone et par priorité ;
@@ -132,22 +104,12 @@ Besoins prioritaires : liste de tournée claire, mise à jour de statut rapide, 
 de livraison sans friction, indicateur de progression.
 
 ### M. Renaud — Responsable exploitation logistique
-Profil : responsable de l'exploitation logistique, intervient sur deux temps clés de la
-journée de livraison.
+Profil : supervisor de flotte, suit simultanément plusieurs livreurs et tournées.
+Intervient en cas d'aléa (retard, incident, livreur absent). Utilisateur de l'interface
+web de supervision. A besoin d'information structurée pour décider vite.
 
-**Rôle de préparation matinale (Parcours 0 — nouveau besoin)** : chaque matin avant le
-départ des livreurs, M. Renaud réceptionne les tournées générées par le TMS, vérifie leur
-composition (nombre de colis, zones géographiques, contraintes horaires), affecte chaque
-tournée à un livreur et un véhicule disponibles, puis valide le lancement. Cette phase
-conditionne la bonne exécution de l'ensemble de la journée.
-
-**Rôle de pilotage temps réel (Parcours 2)** : en cours de journée, M. Renaud suit
-simultanément plusieurs livreurs et tournées, intervient en cas d'aléa (retard, incident,
-livreur absent) et envoie des instructions structurées. Utilise l'interface web de supervision.
-A besoin d'information structurée pour décider vite.
-
-Besoins prioritaires : préparation des tournées rapide et sans erreur, vue globale temps
-réel, alertes proactives, capacité d'instruction vers les livreurs.
+Besoins prioritaires : vue globale temps réel, alertes proactives, capacité d'instruction
+vers les livreurs.
 
 ### Mme Dubois — DSI / Donneur d'ordre
 Profil : responsable de la qualité globale du service, des audits et des engagements
@@ -168,16 +130,8 @@ corporate, aucune modification du cœur OMS.
 
 ## Perimetre MVP (fonctionnel)
 
-Le MVP couvre quatre parcours, directement issus des pain points exprimés lors des entretiens.
-Le Parcours 0 est un prérequis bloquant : sans affectation des tournées, les livreurs n'ont
-aucune tournée dans DocuPost.
-
-**Parcours 0 — Responsable logistique : Préparation des tournées (interface web)**
-- Réception et visualisation des tournées importées depuis le TMS.
-- Vérification de la composition de chaque tournée : nombre de colis, zones géographiques,
-  contraintes horaires.
-- Affectation d'un livreur et d'un véhicule à chaque tournée.
-- Validation et lancement des tournées : transmission aux applications mobiles des livreurs.
+Le MVP couvre trois parcours prioritaires, directement issus des pain points exprimés
+lors des entretiens.
 
 **Parcours 1 — Livreur : Exécution de tournée (application mobile Android)**
 - Consultation de la liste des colis assignés pour la journée.
@@ -213,12 +167,9 @@ exclus du MVP pour maîtriser la complexité et tenir les délais de premier dé
 - Notification proactive du client final avant passage (SMS, email) — Release 2.
 - Reprogrammation en ligne par le client final — Release 3.
 - Analyse de performance avancée et benchmarking inter-tournées — Release 2.
-- Affectation automatique optimisée (algorithme de dispatch) — Release 3.
+- Redistribution automatique de colis entre livreurs — Release 3.
 - Intégration CRM et ERP (MVP limité à l'OMS) — Release 2.
 - Application iOS (Android prioritaire sur le parc matériel actuel) — Release 2.
 - Gestion des véhicules et capacités de chargement — Release 3.
 - Facturation automatisée (dépend de l'intégration ERP) — Release 3.
 - Portail client de suivi en autonomie — Release 3.
-
-
----

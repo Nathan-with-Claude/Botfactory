@@ -28,19 +28,25 @@
 
 ## Suivi des feedbacks
 
-| Date | US testée | Persona | Feedback | Priorité | Statut |
-|------|-----------|---------|----------|----------|--------|
-| 2026-03-19 | (général) | Pierre | Feedback initial général documenté | — | Archivé |
-| 2026-03-20 | US-001 | Pierre Morel | 3 bloquants (ordre de passage, colis urgents invisibles, infos accès absentes), 5 améliorations, note 3/5 | Critique | Livré |
+| Date       | US testée        | Persona        | Résumé                                                                                                                                 | Priorité | Statut                |
+| ---------- | ---------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------- |
+| 2026-03-19 | (général)        | Pierre         | Feedback initial général documenté                                                                                                     | —        | Archivé               |
+| 2026-03-20 | US-001           | Pierre Morel   | 3 bloquants (ordre de passage, colis urgents invisibles, infos accès absentes), 5 améliorations, note 3/5                              | Critique | Livré                 |
+| 2026-03-30 | US-001 à US-021  | Pierre Morel   | 3 bloquants (signature simulée, offline invisible, bouton scanner inactif) + 8 améliorations                                           | Critique | Partiellement adressé |
+| 2026-03-30 | US-011 à US-032  | Laurent Renaud | 3 bloquants (titre onglet, WebSocket sans bouton, pas de confirmation instruction) + 8 améliorations                                   | Critique | Partiellement adressé |
+| 2026-04-01 | US-025 à US-037  | Pierre Morel   | 3 bloquants (signature toujours simulée, offline silencieux, swipe invisible) + 7 améliorations                                        | Critique | En attente            |
+| 2026-04-01 | US-027 à US-035  | Laurent Renaud | 3 bloquants persistants (titre onglet, WebSocket, confirmation instruction) + 6 améliorations dont livreurId US-032                    | Critique | En attente            |
 
 ---
 
 ## Interventions réalisées
 
-| Date | Sujet | Fichier |
-|------|-------|---------|
-| 2026-03-19 | Feedback initial (général) | /livrables/09-feedback/feedback-enduser.md |
-| 2026-03-20 | Feedback US-001 — Liste des colis (Pierre Morel) | /livrables/09-feedback/feedback-US001-liste-colis-2026-03-20.md |
+| Date       | Sujet                                                       | Fichier                                                                    |
+| ---------- | ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 2026-03-19 | Feedback initial (général)                                  | /livrables/09-feedback/feedback-enduser.md                                 |
+| 2026-03-20 | Feedback US-001 — Liste des colis (Pierre Morel)            | /livrables/09-feedback/feedback-US001-liste-colis-2026-03-20.md            |
+| 2026-04-01 | Feedback livreur US-025/026/029/036/037 (Pierre Morel)      | /livrables/09-feedback/feedback-livreur-2026-04-01.md                      |
+| 2026-04-01 | Feedback superviseur US-027/028/030/032/034/035 (L. Renaud) | /livrables/09-feedback/feedback-superviseur-2026-04-01.md                  |
 
 ---
 
@@ -59,3 +65,13 @@
 - Confirmer que le terme **"Zone A / Zone B"** sera remplacé par des libellés géographiques réels (arrondissement, secteur)
 - Vérifier que **"Clôturer la tournée"** est compris intuitivement — envisager "Terminer ma journée" ou "Boucler la tournée"
 - Vérifier que **"Document sensible"** sera décliné en "Recommandé" / "Lettre recommandée" dans les étiquettes affichées
+
+### Points issus des feedbacks du 2026-04-01 (bloquants persistants à surveiller)
+
+- **Signature numérique** : intégration `react-native-signature-canvas` toujours absente — bloquant légal avant mise en production
+- **Indicateur offline** : `useNetworkStatus` créé mais raccordement à `ListeColisScreen` à confirmer — vérifier lors du prochain test manuel
+- **Swipe découvrabilité** : aucun hint visuel pour le swipe gauche US-029 — risque d'adoption nulle sans onboarding
+- **Titre onglet navigateur** : `<title>` HTML toujours absent dans les pages web — correction triviale, bloquant quotidien superviseur
+- **Bouton "Reconnecter" WebSocket** : absent après 3 feedbacks successifs — risque opérationnel supervision
+- **livreurId littéral US-032** : `"livreur"` affiché à la place du nom réel si VueTournee créée automatiquement — à corriger avant prod
+- **Export CSV depuis tableau de bord W-01** : cas d'usage fin de journée non couvert (US-028 couvre uniquement W-05)

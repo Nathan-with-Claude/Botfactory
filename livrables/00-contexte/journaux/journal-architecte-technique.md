@@ -80,9 +80,10 @@
 ## Interventions réalisées
 
 | Date | Version | Sujet | Fichiers |
-|------|---------|-------|----------|
+| --- | --- | --- | --- |
 | 2026-03-19 | 1.0/1.1 | Création — architecture C4, ADR-001→009, NFR, schémas OMS/SSO/FCM | architecture-applicative.md, schemas-integration.md, design-decisions.md, exigences-non-fonctionnelles.md |
 | 2026-03-20 | 1.1→1.2 | Ajout TMS : conteneur svc-planification, ImporteurTMS cron, ACL TMS, ADR-010/011, NFR DISP-004/PERF-010/RESIL-005/SEC-008 | architecture-applicative.md, schemas-integration.md, design-decisions.md, exigences-non-fonctionnelles.md |
+| 2026-04-01 | 1.2 | Création diagramme draw.io C4 Container macro : 6 microservices, 6 BDs, MinIO, API Gateway, SSO Keycloak, Mobile/Web clients, 4 systèmes externes, infra K8s, légende protocoles | /livrables/06-dev/architecture-technique-macro.drawio |
 
 ---
 

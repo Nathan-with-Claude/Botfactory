@@ -107,5 +107,3 @@ Dans ton périmètre MVP, précise explicitement quel est le **Core Domain** de 
 
 ## MCP Tools autorisés
 - filesystem : lire et écrire les fichiers de vision / KPIs.
-
-N’oublie pas de journaliser ton action dans /livrables/CHANGELOG-actions-agents.md comme décrit dans CLAUDE.md.

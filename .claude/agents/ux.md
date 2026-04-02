@@ -45,6 +45,10 @@ Tu dois :
 - /livrables/02-ux/user-journeys.md
 - /livrables/02-ux/wireframes.md
 
+## MCP Tools autorisés
+- filesystem : lire la vision et écrire les livrables UX.
+- MCP Stitch : pour faire le design produit
+
 ## Format des livrables
 
 ### personas.md

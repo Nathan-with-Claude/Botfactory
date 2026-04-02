@@ -1,6 +1,6 @@
 # Capability Map DocuPost
 
-> Document de référence — Version 1.1 — 2026-03-20
+> Document de référence — Version 1.0 — 2026-03-19
 > Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
 > Architecte Technique, M. Renaud Responsable Exploitation Logistique), des livrables
 > de vision (/livrables/01-vision/) et du domain model (/livrables/03-architecture-metier/domain-model.md).
@@ -13,10 +13,6 @@
 > - Core Domain : différenciateur stratégique de DocuPost — investissement maximal.
 > - Supporting Subdomain : nécessaire mais sans différenciation — modèle interne solide.
 > - Generic Subdomain : solution off-the-shelf possible — minimiser l'investissement.
->
-> Mise à jour 1.1 (2026-03-20) : ajout du domaine 0 "Planification et préparation des
-> tournées" (Core Domain) et de la sous-capability "Intégration TMS" dans le domaine
-> Intégration SI, suite à l'entretien complémentaire avec M. Renaud.
 
 ---
 
@@ -24,11 +20,6 @@
 
 ```
 DocuPost
-├── 0. Planification et préparation des tournées [Core Domain]
-│   ├── 0.1 Import TMS
-│   ├── 0.2 Vérification de composition
-│   ├── 0.3 Affectation livreur / véhicule
-│   └── 0.4 Lancement des tournées
 ├── 1. Gestion de l'exécution terrain           [Core Domain]
 │   ├── 1.1 Gestion de la tournée
 │   ├── 1.2 Gestion du cycle de vie des colis
@@ -45,8 +36,7 @@ DocuPost
 │   └── 4.2 Alerte superviseur
 ├── 5. Intégration SI                           [Generic]
 │   ├── 5.1 Synchronisation OMS
-│   ├── 5.2 Historisation des événements
-│   └── 5.3 Intégration TMS
+│   └── 5.2 Historisation des événements
 ├── 6. Gestion des utilisateurs                 [Supporting]
 │   ├── 6.1 Authentification et accès
 │   └── 6.2 Gestion des profils et rôles
@@ -61,29 +51,6 @@ DocuPost
 ---
 
 ## Détail des capacités
-
-### Domaine 0 — Planification et préparation des tournées
-
-**Classification** : Core Domain
-**Bounded Context** : BC-07 Planification de Tournée
-**Justification** : Prérequis bloquant pour l'ensemble de la chaîne de valeur terrain.
-Sans ce parcours, les livreurs n'ont pas de tournée dans DocuPost. C'est le point
-d'entrée quotidien du responsable logistique. "Chaque matin, je dois vérifier que
-chaque tournée est correcte avant de lancer les livreurs." (M. Renaud)
-
-| Capacité | Sous-capacité | Description | Périmètre | Source entretien |
-|---|---|---|---|---|
-| 0.1 Import TMS | 0.1.1 Réception des tournées TMS | Importer automatiquement la liste des tournées générées par le TMS pour la journée via API ou batch | MVP | M. Renaud |
-| 0.1 Import TMS | 0.1.2 Parsing et normalisation des données TMS | Transformer les données brutes TMS au format interne DocuPost (Anti-Corruption Layer) | MVP | M. Renaud |
-| 0.2 Vérification de composition | 0.2.1 Consultation de la composition d'une tournée | Afficher pour chaque tournée TMS : nombre de colis, zones géographiques, contraintes horaires | MVP | M. Renaud |
-| 0.2 Vérification de composition | 0.2.2 Validation de la composition par le logisticien | Permettre au responsable de confirmer qu'une tournée est prête à être affectée | MVP | M. Renaud |
-| 0.3 Affectation livreur / véhicule | 0.3.1 Affectation d'un livreur à une tournée TMS | Associer un livreur disponible à une TournéeTMS non encore affectée | MVP | M. Renaud |
-| 0.3 Affectation livreur / véhicule | 0.3.2 Affectation d'un véhicule à une tournée TMS | Associer un véhicule disponible à une TournéeTMS | MVP | M. Renaud |
-| 0.3 Affectation livreur / véhicule | 0.3.3 Contrôle d'unicité des affectations | Vérifier qu'un livreur ou un véhicule n'est pas déjà affecté à une autre tournée le même jour | MVP | M. Renaud |
-| 0.4 Lancement des tournées | 0.4.1 Lancement d'une tournée affectée | Valider l'affectation et rendre la tournée visible dans l'application mobile du livreur | MVP | M. Renaud |
-| 0.4 Lancement des tournées | 0.4.2 Vue du statut global du plan du jour | Afficher l'état de chaque tournée du plan : non affectée / affectée / lancée | MVP | M. Renaud |
-
----
 
 ### Domaine 1 — Gestion de l'exécution terrain
 
@@ -171,7 +138,7 @@ event-driven. Aucune logique métier différenciante.
 ### Domaine 5 — Intégration SI
 
 **Classification** : Generic Subdomain
-**Bounded Context** : BC-05 Intégration SI / OMS + adaptateur TMS (BC-07)
+**Bounded Context** : BC-05 Intégration SI / OMS
 **Justification** : "L'application livreur doit devenir une brique SI à part entière. Tout
 événement terrain doit remonter dans l'OMS sans double saisie." (M. Garnier). Adapter
 standard, pas de logique métier DocuPost.
@@ -183,8 +150,6 @@ standard, pas de logique métier DocuPost.
 | 5.1 Synchronisation OMS | 5.1.3 Intégration CRM et ERP | Étendre la synchronisation au CRM et à l'ERP en plus de l'OMS | Post-MVP R2 | M. Garnier, Mme Dubois |
 | 5.2 Historisation des événements | 5.2.1 Store d'événements immuable | Historiser chaque événement de livraison de façon immuable avec les 4 attributs obligatoires (qui, quoi, quand, géolocalisation) | MVP | M. Garnier, Mme Dubois |
 | 5.2 Historisation des événements | 5.2.2 Audit et traçabilité | Permettre la reconstitution complète de l'historique d'un colis ou d'une tournée pour les besoins d'audit | MVP | Mme Dubois, M. Garnier |
-| 5.3 Intégration TMS | 5.3.1 Import API TMS | Recevoir les tournées brutes depuis le TMS via API REST ou batch planifié (Anti-Corruption Layer) | MVP | M. Renaud |
-| 5.3 Intégration TMS | 5.3.2 Normalisation du modèle TMS | Transformer le format propriétaire TMS en modèle TournéeTMS DocuPost | MVP | M. Renaud |
 
 ---
 
@@ -200,7 +165,7 @@ SSO corporate.
 | 6.1 Authentification et accès | 6.1.1 Connexion via SSO corporate | Authentifier livreurs et superviseurs via OAuth2 / SSO Docaposte | MVP | M. Garnier, Mme Dubois |
 | 6.1 Authentification et accès | 6.1.2 Gestion des droits par rôle | Contrôle d'accès basé sur le rôle : livreur (mobile), superviseur (web), admin | MVP | M. Garnier |
 | 6.2 Gestion des profils | 6.2.1 Profil livreur | Gérer les données de profil et l'affectation à une tournée | MVP | M. Renaud |
-| 6.2 Gestion des profils | 6.2.2 Gestion des véhicules et capacités | Associer livreur et véhicule, gérer les capacités de chargement | MVP | M. Renaud |
+| 6.2 Gestion des profils | 6.2.2 Gestion des véhicules et capacités | Associer livreur et véhicule, gérer les capacités de chargement | Post-MVP R3 | M. Renaud |
 
 ---
 
@@ -237,21 +202,18 @@ Nécessaire mais les besoins MVP sont couverts par les vues de supervision.
 
 | Domaine | Classification | Périmètre MVP | Investissement recommandé |
 |---|---|---|---|
-| 0. Planification et préparation des tournées | Core Domain | Oui (import, vérification, affectation, lancement) | Maximal — modèle DDD riche, invariants stricts, TDD |
 | 1. Gestion de l'exécution terrain | Core Domain | Oui (complet) | Maximal — modèle DDD riche, TDD, revues approfondies |
 | 2. Capture et gestion des preuves | Supporting | Oui (capture et accès support) | Fort — modèle interne solide, immuabilité garantie |
 | 3. Supervision et pilotage temps réel | Core Domain | Oui (tableau de bord, alertes, instructions) | Maximal — logique de détection complexe |
 | 4. Notification et messaging | Supporting | Oui (push livreur, alertes superviseur) | Modéré — patterns standards event-driven |
-| 5. Intégration SI | Generic | Oui (OMS + TMS) | Faible — adapter standard, Anti-Corruption Layer |
+| 5. Intégration SI | Generic | Oui (OMS uniquement) | Faible — adapter standard, Anti-Corruption Layer |
 | 6. Gestion des utilisateurs | Supporting | Oui (SSO, rôles) | Faible — délégation au SSO corporate |
 | 7. Reporting et analytique | Supporting | Partiel (KPIs opérationnels) | Modéré MVP, Fort post-MVP R2 |
 | 8. Géolocalisation et cartographie | Generic | Oui (navigation, géoloc. capture) | Faible — service tiers standard |
 
-> **Core Domain identifié : Domaines 0, 1 et 3 (Planification de Tournée + Gestion de
-> l'exécution terrain + Supervision temps réel).**
-> Ces trois domaines constituent le coeur différenciateur de DocuPost et doivent concentrer
+> **Core Domain identifié : Domaines 1 et 3 (Gestion de l'exécution terrain +
+> Supervision temps réel).**
+> Ces deux domaines constituent le coeur différenciateur de DocuPost et doivent concentrer
 > l'essentiel de l'investissement en modélisation, conception et qualité.
 > Source : "Orchestration de tournée en temps réel — c'est le différenciateur central de
-> DocuPost." (perimetre-mvp.md, Classification stratégique DDD). La Planification de
-> Tournée a été identifiée comme second Core Domain lors de l'entretien complémentaire
-> avec M. Renaud (2026-03-20).
+> DocuPost." (perimetre-mvp.md, Classification stratégique DDD)
