@@ -22,10 +22,32 @@ export interface TourneePlanifieeDetailDTO {
   affecteeLe: string | null;
   lancee: string | null;
   compositionVerifiee: boolean;
+  poidsEstimeKg?: number | null;
 }
 
 export interface LivreurDisponible { id: string; nom: string; disponible: boolean; tourneeAffectee?: string; }
-export interface VehiculeDisponible { id: string; disponible: boolean; tourneeAffectee?: string; }
+export interface VehiculeDisponible { id: string; disponible: boolean; tourneeAffectee?: string; capaciteKg?: number; }
+
+// ─── Types compatibilité véhicule (US-030 / US-034) ──────────────────────────
+
+export type ResultatCompatibilite = 'COMPATIBLE' | 'DEPASSEMENT' | 'POIDS_ABSENT';
+
+export interface CompatibiliteVehiculeDTO {
+  resultat: ResultatCompatibilite;
+  poidsEstimeKg: number | null;
+  capaciteKg: number;
+  margeOuDepassementKg: number;
+  vehiculeId: string;
+  message: string;
+}
+
+export interface VehiculeCompatibleDTO {
+  vehiculeId: string;
+  immatriculation: string;
+  capaciteKg: number;
+  typeVehicule: string;
+  disponible: boolean;
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -39,13 +61,14 @@ interface DetailTourneePlanifieePageProps {
 }
 
 /**
- * DetailTourneePlanifieePage — Écran W-05 (US-022 + US-023 + US-024)
+ * DetailTourneePlanifieePage — Écran W-05 (US-022 + US-023 + US-024 + US-030 + US-034)
  *
  * Deux onglets :
  * - Composition : zones, contraintes, anomalies (US-022)
- * - Affectation : sélecteurs livreur + véhicule, boutons Valider / Valider et Lancer (US-023)
+ * - Affectation : sélecteurs livreur + véhicule, vérification compatibilité (US-023/030),
+ *                 panneau de réaffectation (US-034)
  *
- * Source : US-022, US-023, US-024
+ * Source : US-022, US-023, US-024, US-030, US-034
  */
 export default function DetailTourneePlanifieePage({
   tourneePlanifieeId,
@@ -67,10 +90,31 @@ export default function DetailTourneePlanifieePage({
   const [vehiculeSelectionne, setVehiculeSelectionne] = useState('');
   const [actionEnCours, setActionEnCours] = useState(false);
 
+  // Compatibilité véhicule (US-030)
+  const [compatibilite, setCompatibilite] = useState<CompatibiliteVehiculeDTO | null>(null);
+  const [depassementForce, setDepassementForce] = useState(false);
+
+  // Réaffectation véhicule (US-034)
+  const [panneauReaffectationOuvert, setPanneauReaffectationOuvert] = useState(false);
+  const [vehiculesCompatibles, setVehiculesCompatibles] = useState<VehiculeCompatibleDTO[]>([]);
+  const [chargementVehicules, setChargementVehicules] = useState(false);
+
   useEffect(() => {
     chargerDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourneePlanifieeId]);
+
+  // Réinitialiser la compatibilité quand le véhicule change
+  useEffect(() => {
+    setCompatibilite(null);
+    setDepassementForce(false);
+    setPanneauReaffectationOuvert(false);
+
+    if (vehiculeSelectionne && livreurSelectionne) {
+      verifierCompatibiliteVehicule(vehiculeSelectionne);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculeSelectionne]);
 
   const chargerDetail = async () => {
     setLoading(true);
@@ -88,6 +132,122 @@ export default function DetailTourneePlanifieePage({
     } finally {
       setLoading(false);
     }
+  };
+
+  // ─── US-030 : Vérification compatibilité véhicule ─────────────────────────
+
+  const verifierCompatibiliteVehicule = async (vehiculeId: string) => {
+    if (!vehiculeId || !detail?.poidsEstimeKg) return;
+    try {
+      const res = await fetchFn(
+        `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/verifier-compatibilite-vehicule`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehiculeId, forcerSiDepassement: false }),
+        }
+      );
+      const data: CompatibiliteVehiculeDTO = await res.json();
+      setCompatibilite(data);
+    } catch {
+      // Silencieux — la vérification est optionnelle
+    }
+  };
+
+  const forcerAffectationMalgreDepassement = async () => {
+    if (!vehiculeSelectionne) return;
+    try {
+      const res = await fetchFn(
+        `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/verifier-compatibilite-vehicule`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehiculeId: vehiculeSelectionne, forcerSiDepassement: true }),
+        }
+      );
+      const data: CompatibiliteVehiculeDTO = await res.json();
+      setCompatibilite(data);
+      setDepassementForce(true);
+      setPanneauReaffectationOuvert(false);
+    } catch {
+      setErreur('Erreur lors du forçage de l\'affectation.');
+    }
+  };
+
+  // ─── US-034 : Réaffectation vers un véhicule plus grand ───────────────────
+
+  const ouvrirPanneauReaffectation = async () => {
+    setPanneauReaffectationOuvert(true);
+    setChargementVehicules(true);
+    try {
+      const poidsMin = compatibilite?.poidsEstimeKg ?? detail?.poidsEstimeKg ?? 0;
+      const res = await fetchFn(
+        `${apiBaseUrl}/api/planification/vehicules/compatibles?poidsMinKg=${poidsMin}&date=${detail?.date ?? ''}`
+      );
+      if (res.ok) {
+        const data: VehiculeCompatibleDTO[] = await res.json();
+        setVehiculesCompatibles(data);
+      }
+    } catch {
+      setVehiculesCompatibles([]);
+    } finally {
+      setChargementVehicules(false);
+    }
+  };
+
+  const selectionnerVehiculeCompatible = async (vehiculeId: string) => {
+    setActionEnCours(true);
+    try {
+      const res = await fetchFn(
+        `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/reaffecter-vehicule`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nouveauVehiculeId: vehiculeId }),
+        }
+      );
+      const data: CompatibiliteVehiculeDTO = await res.json();
+      if (res.ok && data.resultat === 'COMPATIBLE') {
+        setCompatibilite(data);
+        setVehiculeSelectionne(vehiculeId);
+        setPanneauReaffectationOuvert(false);
+        setDepassementForce(false);
+        setMessageSucces(`Véhicule réaffecté : ${vehiculeId} (${data.capaciteKg} kg — marge ${data.margeOuDepassementKg} kg).`);
+        setTimeout(() => setMessageSucces(null), 4000);
+      } else if (res.status === 409) {
+        setErreur(`Ce véhicule est encore insuffisant (dépassement de ${data.margeOuDepassementKg} kg).`);
+      }
+    } catch {
+      setErreur('Erreur lors de la réaffectation.');
+    } finally {
+      setActionEnCours(false);
+    }
+  };
+
+  // ─── Helpers affectation ──────────────────────────────────────────────────
+
+  // ─── US-038 : Export composition en CSV ──────────────────────────────────
+  // Libellé bouton : "Télécharger la liste" (anciennement "Exporter CSV")
+
+  const telechargerListeCSV = () => {
+    if (!detail) return;
+    const lignes: string[] = [
+      'Tournée;Date;Nb colis',
+      `${detail.codeTms};${detail.date};${detail.nbColis}`,
+      '',
+      'Zone;Nb colis',
+      ...detail.zones.map(z => `${z.nom};${z.nbColis}`),
+    ];
+    const contenu = lignes.join('\n');
+    const blob = new Blob([contenu], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = `composition-${detail.codeTms}-${detail.date}.csv`;
+    document.body.appendChild(lien);
+    lien.click();
+    document.body.removeChild(lien);
+    URL.revokeObjectURL(url);
   };
 
   const validerComposition = async () => {
@@ -170,6 +330,10 @@ export default function DetailTourneePlanifieePage({
   const peutValider = livreurSelectionne && vehiculeSelectionne;
   const tourneeVerrouillee = detail?.statut === 'LANCEE';
 
+  // Dépassement non accepté = dépassement détecté ET pas encore forcé ET panneau pas ouvert
+  const depassementNonForce = compatibilite?.resultat === 'DEPASSEMENT' && !depassementForce;
+  const peutLancer = peutValider && !depassementNonForce;
+
   // ─── Rendu ──────────────────────────────────────────────────────────────────
 
   if (loading) return <div data-testid="chargement-detail">Chargement...</div>;
@@ -199,6 +363,9 @@ export default function DetailTourneePlanifieePage({
       <div style={{ background: '#f8f9fa', borderRadius: 4, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#495057' }}>
         Import TMS du {detail.date} à {new Date(detail.importeeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
         &nbsp;|&nbsp;{detail.nbColis} colis&nbsp;|&nbsp;{detail.zones.length} zone(s)
+        {detail.poidsEstimeKg != null && (
+          <>&nbsp;|&nbsp;<strong>Poids estimé : {detail.poidsEstimeKg} kg</strong></>
+        )}
       </div>
 
       {/* Messages */}
@@ -304,6 +471,15 @@ export default function DetailTourneePlanifieePage({
               {detail.compositionVerifiee ? 'Composition déjà vérifiée ✓' : 'Valider la vérification'}
             </button>
           )}
+
+          {/* Bouton export CSV — US-038 : libellé "Télécharger la liste" */}
+          <button
+            data-testid="btn-telecharger-liste"
+            onClick={telechargerListeCSV}
+            style={{ ...btnSecondaire, marginTop: 12 }}
+          >
+            Télécharger la liste
+          </button>
         </div>
       )}
 
@@ -342,9 +518,14 @@ export default function DetailTourneePlanifieePage({
               </div>
 
               {/* Sélecteur Véhicule */}
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 12 }}>
                 <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6, fontSize: 14 }}>
                   Véhicule
+                  {detail.poidsEstimeKg != null && (
+                    <span style={{ fontWeight: 'normal', fontSize: 12, color: '#6c757d', marginLeft: 8 }}>
+                      (charge estimée : {detail.poidsEstimeKg} kg)
+                    </span>
+                  )}
                 </label>
                 <select
                   data-testid="select-vehicule"
@@ -356,7 +537,7 @@ export default function DetailTourneePlanifieePage({
                   <option value="">Sélectionner un véhicule disponible...</option>
                   {vehicules.map(v => (
                     <option key={v.id} value={v.id} disabled={!v.disponible}>
-                      {v.id}{!v.disponible ? ` — Indisponible (${v.tourneeAffectee ?? 'déjà affecté'})` : ''}
+                      {v.id}{v.capaciteKg != null ? ` (${v.capaciteKg} kg)` : ''}{!v.disponible ? ` — Indisponible (${v.tourneeAffectee ?? 'déjà affecté'})` : ''}
                     </option>
                   ))}
                 </select>
@@ -365,6 +546,127 @@ export default function DetailTourneePlanifieePage({
                   &nbsp;({vehicules.filter(v => v.disponible).length}/{vehicules.length})
                 </div>
               </div>
+
+              {/* ─── Indicateur de compatibilité véhicule (US-030) ─── */}
+              {compatibilite && (
+                <div
+                  data-testid={`indicateur-compatibilite-${compatibilite.resultat}`}
+                  style={{
+                    borderRadius: 4,
+                    padding: '10px 14px',
+                    marginBottom: 12,
+                    fontSize: 13,
+                    background: compatibilite.resultat === 'COMPATIBLE' ? '#d1e7dd' : '#f8d7da',
+                    border: `1px solid ${compatibilite.resultat === 'COMPATIBLE' ? '#badbcc' : '#f5c2c7'}`,
+                    color: compatibilite.resultat === 'COMPATIBLE' ? '#0f5132' : '#842029',
+                  }}
+                >
+                  {compatibilite.resultat === 'COMPATIBLE' && (
+                    <span>Véhicule compatible — marge {compatibilite.margeOuDepassementKg} kg</span>
+                  )}
+
+                  {compatibilite.resultat === 'DEPASSEMENT' && !depassementForce && (
+                    <div>
+                      <strong>Chargement trop lourd</strong> — {compatibilite.message}
+
+                      {/* ─── Lien réaffectation (US-034 SC1) ─── */}
+                      <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <button
+                          data-testid="btn-reaffecter-vehicule-plus-grand"
+                          onClick={ouvrirPanneauReaffectation}
+                          style={{ ...btnPrimaire, fontSize: 13, padding: '6px 12px' }}
+                        >
+                          Réaffecter à un véhicule plus grand
+                        </button>
+                        <button
+                          data-testid="btn-affecter-quand-meme"
+                          onClick={forcerAffectationMalgreDepassement}
+                          disabled={actionEnCours}
+                          style={{ ...btnSecondaireOrange, fontSize: 13, padding: '6px 12px' }}
+                        >
+                          Affecter quand même
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {compatibilite.resultat === 'DEPASSEMENT' && depassementForce && (
+                    <span>Affectation forcée malgré le dépassement — surveiller la tournée</span>
+                  )}
+                </div>
+              )}
+
+              {/* ─── Panneau de réaffectation (US-034 SC2/SC3/SC4) ─── */}
+              {panneauReaffectationOuvert && (
+                <div
+                  data-testid="panneau-reaffectation"
+                  style={{
+                    border: '1px solid #0d6efd',
+                    borderRadius: 6,
+                    padding: 16,
+                    marginBottom: 16,
+                    background: '#f0f4ff',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <strong style={{ fontSize: 14 }}>
+                      Véhicules compatibles (capacité ≥ {compatibilite?.poidsEstimeKg ?? detail.poidsEstimeKg} kg)
+                    </strong>
+                    <button
+                      data-testid="btn-fermer-panneau-reaffectation"
+                      onClick={() => setPanneauReaffectationOuvert(false)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#6c757d' }}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {chargementVehicules && (
+                    <div data-testid="chargement-vehicules-compatibles" style={{ fontSize: 13, color: '#6c757d' }}>
+                      Recherche en cours...
+                    </div>
+                  )}
+
+                  {!chargementVehicules && vehiculesCompatibles.length === 0 && (
+                    <div data-testid="aucun-vehicule-disponible" style={{ fontSize: 13, color: '#6c757d', fontStyle: 'italic' }}>
+                      Aucun véhicule disponible pour cette capacité
+                    </div>
+                  )}
+
+                  {!chargementVehicules && vehiculesCompatibles.length > 0 && (
+                    <ul data-testid="liste-vehicules-compatibles" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {vehiculesCompatibles.map(v => (
+                        <li
+                          key={v.vehiculeId}
+                          data-testid={`vehicule-compatible-${v.vehiculeId}`}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '8px 12px',
+                            borderRadius: 4,
+                            marginBottom: 6,
+                            background: '#fff',
+                            border: '1px solid #dee2e6',
+                          }}
+                        >
+                          <div style={{ fontSize: 13 }}>
+                            <strong>{v.vehiculeId}</strong> — {v.capaciteKg} kg — {v.typeVehicule}
+                          </div>
+                          <button
+                            data-testid={`btn-selectionner-vehicule-${v.vehiculeId}`}
+                            onClick={() => selectionnerVehiculeCompatible(v.vehiculeId)}
+                            disabled={actionEnCours}
+                            style={{ ...btnPrimaire, fontSize: 12, padding: '4px 10px' }}
+                          >
+                            Sélectionner
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
               {/* Message si sélection incomplète */}
               {!peutValider && (
@@ -387,17 +689,23 @@ export default function DetailTourneePlanifieePage({
                 <button
                   data-testid="btn-valider-et-lancer"
                   onClick={affecterEtLancer}
-                  disabled={!peutValider || actionEnCours}
+                  disabled={!peutLancer || actionEnCours}
                   style={{
                     ...btnSucces,
-                    opacity: !peutValider ? 0.5 : 1,
+                    opacity: !peutLancer ? 0.5 : 1,
                   }}
                 >
-                  {detail.anomalies.length > 0
+                  {detail.anomalies.length > 0 && !depassementNonForce
                     ? 'Lancer malgré l\'anomalie'
                     : 'VALIDER ET LANCER'}
                 </button>
               </div>
+
+              {depassementNonForce && (
+                <div data-testid="msg-depassement-bloque" style={{ fontSize: 12, color: '#842029', marginTop: 6 }}>
+                  Le lancement est bloqué jusqu'à réaffectation ou forçage.
+                </div>
+              )}
             </>
           )}
         </div>
@@ -409,17 +717,19 @@ export default function DetailTourneePlanifieePage({
 // ─── Données mock pour les tests ──────────────────────────────────────────────
 
 const livreursMock: LivreurDisponible[] = [
-  { id: 'livreur-001', nom: 'P. Morel', disponible: true },
-  { id: 'livreur-002', nom: 'L. Petit', disponible: true },
-  { id: 'livreur-003', nom: 'S. Roger', disponible: true },
-  { id: 'livreur-004', nom: 'J. Dupont', disponible: false, tourneeAffectee: 'T-042' },
+  { id: 'livreur-001', nom: 'P. Morel',  disponible: false, tourneeAffectee: 'T-202' }, // déjà affecté (seedé)
+  { id: 'livreur-002', nom: 'L. Petit',  disponible: false, tourneeAffectee: 'T-204' }, // déjà lancé (seedé)
+  { id: 'livreur-003', nom: 'S. Roger',  disponible: true },
+  { id: 'livreur-004', nom: 'J. Dubois', disponible: true },
+  { id: 'livreur-005', nom: 'C. Leroy',  disponible: true },
 ];
 
 const vehiculesMock: VehiculeDisponible[] = [
-  { id: 'VH-04', disponible: true },
-  { id: 'VH-07', disponible: true },
-  { id: 'VH-11', disponible: true },
-  { id: 'VH-03', disponible: false, tourneeAffectee: 'T-204' },
+  { id: 'VH-04', disponible: true,  capaciteKg: 700 },
+  { id: 'VH-07', disponible: false, tourneeAffectee: 'T-202', capaciteKg: 600 }, // déjà affecté (seedé)
+  { id: 'VH-08', disponible: true,  capaciteKg: 800 },
+  { id: 'VH-11', disponible: true,  capaciteKg: 700 },
+  { id: 'VH-03', disponible: false, tourneeAffectee: 'T-204', capaciteKg: 500 }, // déjà lancé (seedé)
 ];
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -431,5 +741,6 @@ const ongletStyle: React.CSSProperties = {
 const h3Style: React.CSSProperties = { fontSize: 14, fontWeight: 'bold', marginBottom: 8, color: '#495057' };
 const btnPrimaire: React.CSSProperties = { background: '#0d6efd', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
 const btnSecondaire: React.CSSProperties = { background: '#6c757d', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 12px', cursor: 'pointer', fontSize: 13 };
+const btnSecondaireOrange: React.CSSProperties = { background: '#fd7e14', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
 const btnSucces: React.CSSProperties = { background: '#198754', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
 const selectStyle: React.CSSProperties = { width: '100%', padding: '8px', borderRadius: 4, border: '1px solid #ced4da', fontSize: 14 };

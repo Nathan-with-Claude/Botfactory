@@ -57,6 +57,9 @@ class EchecLivraisonControllerTest {
     @MockBean
     private com.docapost.tournee.application.ConfirmerLivraisonHandler confirmerLivraisonHandler;
 
+    @MockBean
+    private com.docapost.tournee.infrastructure.supervision.SupervisionNotifier supervisionNotifier;
+
     private static final TourneeId TOURNEE_ID = new TourneeId("tournee-001");
 
     private Colis unColisEchec() {

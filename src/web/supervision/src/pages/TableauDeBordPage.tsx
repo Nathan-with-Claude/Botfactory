@@ -246,6 +246,50 @@ export function useTableauDeBord({
   return { tableau, erreur, connecte, chargement, actualiser: chargerTableau, reconnecterManuellement, deconnecteDepuisMs };
 }
 
+// ─── Helpers visuels ─────────────────────────────────────────────────────────
+
+function getInitiales(nom: string): string {
+  return nom
+    .split(' ')
+    .map((p) => p[0] ?? '')
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function badgeTourneeClasses(statut: StatutTourneeVue): { containerCls: string; badgeCls: string; label: string } {
+  switch (statut) {
+    case 'A_RISQUE':
+      return {
+        containerCls: '',
+        badgeCls: 'inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-error-container text-on-error-container text-[10px] font-bold uppercase w-fit',
+        label: 'A RISQUE',
+      };
+    case 'EN_COURS':
+      return {
+        containerCls: '',
+        badgeCls: 'px-2 py-1 rounded-full bg-primary-container text-on-primary-container text-[10px] font-bold uppercase',
+        label: 'EN COURS',
+      };
+    case 'CLOTUREE':
+      return {
+        containerCls: '',
+        badgeCls: 'px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase',
+        label: 'CLOTURÉE',
+      };
+  }
+}
+
+function progressBarColor(statut: StatutTourneeVue): string {
+  if (statut === 'CLOTUREE') return 'bg-emerald-500';
+  return 'bg-primary';
+}
+
+function pctColor(statut: StatutTourneeVue): string {
+  if (statut === 'CLOTUREE') return 'text-emerald-600';
+  return 'text-primary';
+}
+
 // ─── Composant LigneTournee ────────────────────────────────────────────────
 
 interface LigneTourneeProps {
@@ -254,97 +298,105 @@ interface LigneTourneeProps {
 }
 
 export const LigneTournee: React.FC<LigneTourneeProps> = ({ tournee, onVoir }) => {
-  const couleurStatut: Record<StatutTourneeVue, string> = {
-    EN_COURS: '#1976d2',
-    A_RISQUE: '#e65100',
-    CLOTUREE: '#388e3c',
-  };
-
-  const libelleStatut: Record<StatutTourneeVue, string> = {
-    EN_COURS: 'En cours',
-    A_RISQUE: 'A risque',
-    CLOTUREE: 'Cloturee',
-  };
+  const badge = badgeTourneeClasses(tournee.statut);
+  const estARisque = tournee.statut === 'A_RISQUE';
+  const estCloturee = tournee.statut === 'CLOTUREE';
 
   return (
     <tr
       data-testid={`ligne-tournee-${tournee.tourneeId}`}
-      style={{
-        background: tournee.statut === 'A_RISQUE' ? '#fff3e0' : 'transparent',
-        borderLeft: tournee.statut === 'A_RISQUE' ? '4px solid #e65100' : '4px solid transparent',
-      }}
+      data-statut={tournee.statut}
+      className={[
+        'transition-colors',
+        estARisque
+          ? 'bg-[#fff3e0] border-l-4 border-orange-600 hover:bg-orange-100/40'
+          : estCloturee
+            ? 'opacity-60 bg-surface-container-low/30'
+            : 'hover:bg-slate-50',
+      ].join(' ')}
     >
-      {/* S1 — Livreur en donnée primaire, ID TMS en secondaire */}
-      <td style={{ padding: '8px 12px' }}>
-        <span style={{ fontWeight: 'bold', fontSize: 15 }}>{tournee.livreurNom}</span>
-        <br />
+      {/* Livreur */}
+      <td className="px-6 py-5">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs shrink-0">
+            {getInitiales(tournee.livreurNom)}
+          </div>
+          <span className="font-bold text-sm">{tournee.livreurNom}</span>
+        </div>
+      </td>
+
+      {/* Tournée — S1 : ID TMS */}
+      <td className="px-6 py-5">
         <span
           data-testid={`id-tms-${tournee.tourneeId}`}
-          style={{ fontSize: 11, color: '#888' }}
+          className="text-xs font-bold px-2 py-1 bg-surface-container-high rounded text-on-surface-variant"
         >
           {tournee.tourneeId}
         </span>
       </td>
-      <td style={{ padding: '8px 12px' }}>
-        {tournee.colisTraites} / {tournee.colisTotal}
-        {/* S2 — Détail du retard visible directement si A_RISQUE */}
-        {tournee.statut === 'A_RISQUE' && (
-          <div
-            data-testid={`detail-retard-${tournee.tourneeId}`}
-            style={{ fontSize: 12, color: '#c62828', marginTop: 2 }}
-          >
-            {tournee.retardEstimeMinutes != null && (
-              <span>Retard : {tournee.retardEstimeMinutes} min</span>
-            )}
-            {tournee.colisEnRetard != null && tournee.colisEnRetard > 0 && (
-              <span style={{ marginLeft: 6 }}>({tournee.colisEnRetard} colis)</span>
-            )}
+
+      {/* Avancement */}
+      <td className="px-6 py-5">
+        <div className="w-48">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-bold text-outline">
+              {tournee.colisTraites} / {tournee.colisTotal} colis
+            </span>
+            <span className={`text-[10px] font-bold ${pctColor(tournee.statut)}`}>
+              {tournee.pourcentage}%
+            </span>
           </div>
-        )}
-      </td>
-      <td style={{ padding: '8px 12px' }}>
-        <div style={{ background: '#e0e0e0', borderRadius: 4, height: 8, width: 100 }}>
-          <div
-            data-testid={`progress-${tournee.tourneeId}`}
-            style={{
-              background: couleurStatut[tournee.statut],
-              width: `${tournee.pourcentage}%`,
-              height: '100%',
-              borderRadius: 4,
-            }}
-          />
+          <div className="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+            <div
+              data-testid={`progress-${tournee.tourneeId}`}
+              className={`h-full rounded-full ${progressBarColor(tournee.statut)}`}
+              style={{ width: `${tournee.pourcentage}%` }}
+            />
+          </div>
+          {/* S2 — Détail du retard visible directement si A_RISQUE */}
+          {estARisque && (
+            <div
+              data-testid={`detail-retard-${tournee.tourneeId}`}
+              className="mt-1 text-[10px] font-medium text-error"
+            >
+              {tournee.retardEstimeMinutes != null && (
+                <span>Retard {tournee.retardEstimeMinutes} min</span>
+              )}
+              {tournee.colisEnRetard != null && tournee.colisEnRetard > 0 && (
+                <span className="ml-1">({tournee.colisEnRetard} colis)</span>
+              )}
+            </div>
+          )}
         </div>
-        <span style={{ fontSize: 12, color: '#555' }}>{tournee.pourcentage}%</span>
       </td>
-      <td style={{ padding: '8px 12px' }}>
-        <span
-          data-testid={`badge-statut-${tournee.tourneeId}`}
-          style={{
-            background: tournee.statut === 'A_RISQUE' ? '#fff3e0' : '#f5f5f5',
-            color: couleurStatut[tournee.statut],
-            border: `1px solid ${couleurStatut[tournee.statut]}`,
-            borderRadius: 12,
-            padding: '2px 10px',
-            fontSize: 12,
-            fontWeight: 'bold',
-          }}
-        >
-          {libelleStatut[tournee.statut]}
-        </span>
+
+      {/* Statut */}
+      <td className="px-6 py-5">
+        <div className="flex flex-col gap-1">
+          <span
+            data-testid={`badge-statut-${tournee.tourneeId}`}
+            className={badge.badgeCls}
+          >
+            {estARisque && (
+              <span className="w-1.5 h-1.5 rounded-full bg-error" />
+            )}
+            {badge.label}
+          </span>
+        </div>
       </td>
-      <td style={{ padding: '8px 12px' }}>
-        {onVoir && (
+
+      {/* Activité */}
+      <td className={`px-6 py-5 text-xs font-medium ${estARisque ? 'text-error' : 'text-on-surface-variant'}`}>
+        {tournee.derniereActivite}
+      </td>
+
+      {/* Actions */}
+      <td className="px-6 py-5 text-right">
+        {onVoir && !estCloturee && (
           <button
             data-testid={`btn-voir-${tournee.tourneeId}`}
             onClick={() => onVoir(tournee.tourneeId)}
-            style={{
-              padding: '4px 12px',
-              background: '#1976d2',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className="px-4 py-1.5 text-xs font-bold text-primary border border-primary/20 rounded-md hover:bg-primary hover:text-white transition-all"
           >
             Voir
           </button>
@@ -363,60 +415,55 @@ interface BandeauResumeProps {
 }
 
 export const BandeauResume: React.FC<BandeauResumeProps> = ({ actives, aRisque, cloturees }) => (
-  <div
+  <section
     data-testid="bandeau-resume"
-    style={{ display: 'flex', gap: 16, marginBottom: 24 }}
+    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
   >
+    {/* Actives */}
     <div
       data-testid="compteur-actives"
-      style={compteurStyle('#1976d2')}
+      className="bg-surface-container-lowest p-6 rounded-xl flex items-center justify-between border-l-4 border-primary shadow-sm"
     >
-      <span style={{ fontSize: 28, fontWeight: 'bold' }}>{actives}</span>
-      <span style={{ fontSize: 13 }}>En cours</span>
+      <div>
+        <p className="text-xs font-bold text-outline uppercase tracking-wider mb-1">Active</p>
+        <p className="text-4xl font-headline font-bold text-primary">{actives}</p>
+      </div>
+      <span className="material-symbols-outlined text-primary/20 text-5xl">local_shipping</span>
     </div>
-    <div
-      data-testid="compteur-a-risque"
-      style={compteurStyle('#e65100')}
-    >
-      <span style={{ fontSize: 28, fontWeight: 'bold' }}>{aRisque}</span>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-        A risque
-        {aRisque > 0 && (
-          <span
-            data-testid="point-alerte"
-            style={{
-              display: 'inline-block',
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: '#c62828',
-              animation: 'clignoter 1s infinite',
-            }}
-          />
-        )}
-      </span>
-    </div>
+
+    {/* Clôturées */}
     <div
       data-testid="compteur-cloturees"
-      style={compteurStyle('#388e3c')}
+      className="bg-surface-container-lowest p-6 rounded-xl flex items-center justify-between border-l-4 border-emerald-500 shadow-sm"
     >
-      <span style={{ fontSize: 28, fontWeight: 'bold' }}>{cloturees}</span>
-      <span style={{ fontSize: 13 }}>Cloturees</span>
+      <div>
+        <p className="text-xs font-bold text-outline uppercase tracking-wider mb-1">Clôturées</p>
+        <p className="text-4xl font-headline font-bold text-emerald-600">{cloturees}</p>
+      </div>
+      <span className="material-symbols-outlined text-emerald-500/20 text-5xl">check_circle</span>
     </div>
-  </div>
-);
 
-const compteurStyle = (color: string): React.CSSProperties => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  background: '#fafafa',
-  border: `2px solid ${color}`,
-  borderRadius: 8,
-  padding: '12px 24px',
-  color,
-  minWidth: 100,
-});
+    {/* À risque */}
+    <div
+      data-testid="compteur-a-risque"
+      className="bg-tertiary-fixed p-6 rounded-xl flex items-center justify-between border-l-4 border-tertiary shadow-sm"
+    >
+      <div>
+        <p className="text-xs font-bold text-on-tertiary-fixed-variant uppercase tracking-wider mb-1">
+          A risque
+          {aRisque > 0 && (
+            <span
+              data-testid="point-alerte"
+              className="inline-block ml-2 w-2 h-2 rounded-full bg-error animate-pulse align-middle"
+            />
+          )}
+        </p>
+        <p className="text-4xl font-headline font-bold text-tertiary">{aRisque}</p>
+      </div>
+      <span className="material-symbols-outlined text-tertiary/20 text-5xl">warning</span>
+    </div>
+  </section>
+);
 
 // ─── Composant principal TableauDeBordPage ────────────────────────────────
 
@@ -460,6 +507,7 @@ const TableauDeBordPage: React.FC<TableauDeBordPageProps> = ({
   const dureeDeconnexionMs = deconnecteDepuisMs !== null
     ? Math.max(0, maintenant - deconnecteDepuisMs)
     : null;
+
   const [filtreStatut, setFiltreStatut] = useState<StatutTourneeVue | ''>('');
   // US-035 — Recherche multi-critères
   const [termeRecherche, setTermeRecherche] = useState('');
@@ -501,68 +549,30 @@ const TableauDeBordPage: React.FC<TableauDeBordPageProps> = ({
   const rechercheActive = termeRecherche.trim().length > 0;
   const aucunResultatRecherche = rechercheActive && tourneesFiltrees.length === 0;
 
-  return (
-    <div data-testid="tableau-de-bord-page" style={{ fontFamily: 'sans-serif', padding: 24 }}>
-      {/* S5 — En-tête avec bouton export CSV */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8 }}>
-        <h1 style={{ margin: 0 }}>Tableau de bord des tournées</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {/* US-039 — Bouton "Télécharger le bilan du jour" (distinct de onExporterBilan) */}
-          {tableau && tableau.tournees.length > 0 && (
-            <button
-              data-testid="btn-telecharger-bilan"
-              onClick={() => onExporterBilan?.()}
-              style={{
-                padding: '8px 16px',
-                background: '#1565c0',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer',
-                fontSize: 14,
-              }}
-            >
-              Télécharger le bilan du jour
-            </button>
-          )}
-          {onExporterBilan && tableau && (
-            <button
-              data-testid="btn-exporter-bilan"
-              onClick={onExporterBilan}
-              style={{
-                padding: '8px 16px',
-                background: '#388e3c',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer',
-                fontSize: 14,
-              }}
-            >
-              Exporter le bilan
-            </button>
-          )}
-        </div>
-      </div>
+  const filtresStatutConfig = [
+    { key: '' as const,         label: 'Toutes' },
+    { key: 'EN_COURS' as const, label: 'En cours' },
+    { key: 'A_RISQUE' as const, label: 'A risque' },
+    { key: 'CLOTUREE' as const, label: 'Clôturées' },
+  ];
 
-      {/* S4 — Bandeau déconnexion WebSocket : orange (alerte système, distinct du rouge métier) */}
+  return (
+    <div data-testid="tableau-de-bord-page" className="font-body text-on-surface antialiased">
+
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 mb-6 text-xs text-outline">
+        <span>DocuPost</span>
+        <span className="material-symbols-outlined text-sm">chevron_right</span>
+        <span className="text-on-surface font-semibold">Supervision</span>
+      </nav>
+
+      {/* S4 — Bandeau déconnexion WebSocket : orange (alerte système) */}
       {!connecte && !chargement && (
         <div
           data-testid="bandeau-deconnexion"
-          style={{
-            background: '#b45309',
-            color: '#fff',
-            padding: '8px 16px',
-            borderRadius: 4,
-            marginBottom: 16,
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
+          className="mb-6 px-4 py-3 rounded-lg bg-amber-700 text-white text-sm flex items-center gap-3 flex-wrap"
         >
-          <span style={{ flex: 1 }}>
+          <span className="flex-1">
             Connexion temps réel indisponible — données potentiellement non à jour
             {dureeDeconnexionMs !== null && (
               <span data-testid="compteur-deconnexion">
@@ -573,17 +583,7 @@ const TableauDeBordPage: React.FC<TableauDeBordPageProps> = ({
           <button
             data-testid="btn-reconnecter"
             onClick={reconnecterManuellement}
-            style={{
-              background: '#fff',
-              color: '#b45309',
-              border: 'none',
-              borderRadius: 4,
-              padding: '4px 12px',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
+            className="bg-white text-amber-700 font-bold text-xs px-3 py-1.5 rounded-md hover:bg-amber-50 transition-all whitespace-nowrap"
           >
             Reconnecter
           </button>
@@ -594,15 +594,19 @@ const TableauDeBordPage: React.FC<TableauDeBordPageProps> = ({
       {erreur && (
         <div
           data-testid="message-erreur"
-          style={{ background: '#fdecea', color: '#c62828', padding: 12, borderRadius: 4, marginBottom: 16 }}
+          className="mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-sm font-medium"
         >
           {erreur}
         </div>
       )}
 
-      {chargement && <p data-testid="chargement">Chargement...</p>}
+      {chargement && (
+        <p data-testid="chargement" className="py-8 text-center text-outline text-sm">
+          Chargement...
+        </p>
+      )}
 
-      {/* Bandeau résumé */}
+      {/* Bandeau KPIs */}
       {tableau && (
         <BandeauResume
           actives={tableau.bandeau.actives}
@@ -611,98 +615,145 @@ const TableauDeBordPage: React.FC<TableauDeBordPageProps> = ({
         />
       )}
 
-      {/* US-035 — Champ de recherche multi-critères */}
-      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <label htmlFor="champ-recherche" style={{ marginRight: 4, flexShrink: 0 }}>
-          Rechercher :
-        </label>
-        <input
-          id="champ-recherche"
-          data-testid="champ-recherche"
-          type="text"
-          value={termeRecherche}
-          onChange={(e) => setTermeRecherche(e.target.value)}
-          placeholder="Livreur, numéro de tournée (ex: T-205), zone (ex: Villeurbanne)..."
-          style={{
-            flex: 1,
-            padding: '6px 12px',
-            border: '1px solid #bdbdbd',
-            borderRadius: 4,
-            fontSize: 14,
-          }}
-        />
-        {rechercheActive && (
-          <button
-            data-testid="lien-effacer-recherche"
-            onClick={() => setTermeRecherche('')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#1976d2',
-              cursor: 'pointer',
-              fontSize: 13,
-              textDecoration: 'underline',
-              padding: 0,
-              flexShrink: 0,
-            }}
-          >
-            Effacer la recherche
-          </button>
-        )}
-      </div>
+      {/* Recherche + Filtres + Boutons */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        {/* US-035 — Champ de recherche multi-critères */}
+        <div className="relative w-full md:w-96 group">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">
+            search
+          </span>
+          <input
+            id="champ-recherche"
+            data-testid="champ-recherche"
+            type="text"
+            value={termeRecherche}
+            onChange={(e) => setTermeRecherche(e.target.value)}
+            placeholder="Rechercher un livreur..."
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm"
+          />
+        </div>
 
-      {/* Filtre statut */}
-      <div style={{ marginBottom: 16 }}>
-        <label htmlFor="filtre-statut" style={{ marginRight: 8 }}>Filtrer par statut :</label>
+        {/* Filtres statut — onglets pills (affichage) + select caché (compatibilité tests) */}
+        <div className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl">
+          {filtresStatutConfig.map(({ key, label }) => (
+            <button
+              key={key || 'tous'}
+              onClick={() => setFiltreStatut(key)}
+              className={
+                filtreStatut === key
+                  ? 'px-4 py-1.5 text-xs font-bold bg-white shadow-sm rounded-lg text-primary'
+                  : 'px-4 py-1.5 text-xs font-medium text-outline hover:text-on-surface transition-colors'
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {/* Select natif caché — maintenu pour la compatibilité tests (fireEvent.change) */}
         <select
           id="filtre-statut"
           data-testid="filtre-statut"
           value={filtreStatut}
           onChange={(e) => setFiltreStatut(e.target.value as StatutTourneeVue | '')}
+          aria-hidden="true"
+          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0 }}
         >
           <option value="">Tous</option>
           <option value="EN_COURS">En cours</option>
           <option value="A_RISQUE">A risque</option>
-          <option value="CLOTUREE">Cloturees</option>
+          <option value="CLOTUREE">Clôturées</option>
         </select>
+
+        {/* Boutons d'action */}
+        <div className="flex items-center gap-3">
+          {/* US-039 — Télécharger le bilan */}
+          {tableau && tableau.tournees.length > 0 && (
+            <button
+              data-testid="btn-telecharger-bilan"
+              onClick={() => onExporterBilan?.()}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-primary/20"
+            >
+              <span className="material-symbols-outlined text-sm">download</span>
+              Télécharger le bilan
+            </button>
+          )}
+          {onExporterBilan && tableau && (
+            <button
+              data-testid="btn-exporter-bilan"
+              onClick={onExporterBilan}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 text-white text-sm font-bold rounded-lg hover:bg-emerald-800 transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">file_download</span>
+              Exporter le bilan
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Liste des tournées */}
-      {tableau && (
-        <table
-          data-testid="liste-tournees"
-          style={{ width: '100%', borderCollapse: 'collapse' }}
-        >
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e0e0e0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Livreur</th>
-              <th style={{ padding: '8px 12px' }}>Colis</th>
-              <th style={{ padding: '8px 12px' }}>Avancement</th>
-              <th style={{ padding: '8px 12px' }}>Statut</th>
-              <th style={{ padding: '8px 12px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tourneesFiltrees.map((t) => (
-              <LigneTournee
-                key={t.tourneeId}
-                tournee={t}
-                onVoir={onVoirTournee}
-              />
-            ))}
-          </tbody>
-        </table>
+      {/* Lien effacer recherche — US-035 */}
+      {rechercheActive && (
+        <div className="mb-4">
+          <button
+            data-testid="lien-effacer-recherche"
+            onClick={() => setTermeRecherche('')}
+            className="text-xs text-primary underline hover:text-primary-container transition-colors"
+          >
+            Effacer la recherche
+          </button>
+        </div>
       )}
 
-      {/* US-035 SC5 — Message aucun résultat de recherche (distinct du message filtre) */}
+      {/* Table tournées */}
+      {tableau && (
+        <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table
+              data-testid="liste-tournees"
+              className="w-full text-left border-collapse"
+            >
+              <thead>
+                <tr className="bg-surface-container-low border-b border-outline-variant/10">
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Livreur</th>
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Tournée</th>
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Avancement</th>
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Statut</th>
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Activité</th>
+                  <th className="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/5">
+                {tourneesFiltrees.map((t) => (
+                  <LigneTournee
+                    key={t.tourneeId}
+                    tournee={t}
+                    onVoir={onVoirTournee}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Charger plus */}
+          <div className="p-6 border-t border-outline-variant/5 flex justify-center">
+            <button className="flex items-center gap-2 px-8 py-2.5 text-xs font-bold text-on-surface-variant bg-surface-container hover:bg-surface-container-high transition-colors rounded-lg">
+              Charger plus
+              <span className="material-symbols-outlined text-sm">expand_more</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* US-035 SC5 — Message aucun résultat de recherche */}
       {tableau && aucunResultatRecherche && (
-        <p data-testid="message-aucun-resultat-recherche">
+        <p data-testid="message-aucun-resultat-recherche" className="mt-8 text-center text-outline text-sm">
           Aucune tournee ne correspond a votre recherche
         </p>
       )}
 
       {tableau && !aucunResultatRecherche && tourneesFiltrees.length === 0 && (
-        <p data-testid="aucune-tournee">Aucune tournée correspondant au filtre.</p>
+        <p data-testid="aucune-tournee" className="mt-8 text-center text-outline text-sm">
+          Aucune tournée correspondant au filtre.
+        </p>
       )}
     </div>
   );

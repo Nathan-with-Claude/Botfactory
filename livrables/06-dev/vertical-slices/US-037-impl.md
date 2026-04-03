@@ -28,23 +28,38 @@ Liens :
 |-------------|--------|-------|
 | SC1 — Persistance à la réception | Implémenté | Via `onConsignePersistee` dans BandeauInstructionOverlay |
 | SC2 — Accès depuis M-02 + liste M-07 | Implémenté | Bouton "Consignes" dans le bandeau de progression |
-| SC3 — "Prise en compte" à l'ouverture | Partiellement — lecture locale uniquement | `marquerToutesLues()` marque `lue=true` mais n'émet pas `InstructionPriseEnCompte` vers BC-03 |
+| SC3 — "Prise en compte" à l'ouverture | Implémenté | `prendreEnCompteNouvelles()` + PATCH backend |
 | SC4 — "Exécutée" via bouton dans M-07 | Implémenté | PATCH `/api/supervision/instructions/{id}/executer` (endpoint US-015 existant) |
-| SC5 — Navigation M-07 → M-03 | Non implémenté (déféré Sprint 5) | Complexité ajoutée hors périmètre session |
+| SC5 — Navigation M-07 → M-03 | Implémenté | Bouton "Voir le colis" (prop `onVoirColis`) |
+| SC5b — Consigne sans colis non interactive | Implémenté | Bouton absent si `colisId` vide ; affiche "Non associé à un colis" |
+| SC5c — Badges de statut colorés | Implémenté | NOUVELLE=bleu, PRISE EN COMPTE=gris, EXECUTÉE=vert |
+| SC5d — Liste vide | Implémenté (v1.3) | Message conforme au wireframe M-07 v1.3 |
+| SC5e — Mode offline avec bandeau orange | Implémenté (v1.3) | Prop `estHorsConnexion` + bandeau `bandeau-offline-consignes` + message dédié |
 | SC6 — Badge sur bouton | Implémenté | Badge rouge avec compteur des consignes non lues |
 | SC7 — Réinitialisation à minuit | Implémenté implicitement | Clé AsyncStorage `consignes_jour_YYYY-MM-DD` : changement de jour = nouvelle clé vide |
+| Texte libre consigne | Implémenté (v1.3) | Champ `texteConsigne` optionnel dans `InstructionMobileDTO` + affiché dans la ligne |
 
-### Delta déféré Sprint 5 — RÉSOLU (2026-03-30)
+### Delta Sprint 5 — RÉSOLU (2026-03-30)
 - **InstructionPriseEnCompte** : PATCH backend implémenté et câblé (voir section "Points déférés résolus").
 - **Navigation M-07→M-03** : bouton "Voir le colis" implémenté (voir section "Points déférés résolus").
+
+### Delta v1.3 (wireframe M-07 v1.3 — 2026-04-02)
+- **Texte libre** : champ `texteConsigne` ajouté à `InstructionMobileDTO` + affiché dans `LigneConsigne`.
+- **"Non associé à un colis"** : affiché lorsque `colisId` est vide (testID `non-associe-colis-{id}`).
+- **Bandeau offline** : prop `estHorsConnexion` dans `MesConsignesScreen` + bandeau orange + message dédié.
+- **Message liste vide** : corrigé pour correspondre exactement au wireframe M-07 v1.3.
+- **`estHorsConnexion`** : transmis depuis `ListeColisScreen` via `syncStatus === 'offline'`.
 
 ---
 
 ## Décisions d'implémentation
 
 ### Domain Layer
-Aucune modification — le domaine Instruction existe déjà dans BC-03 (svc-supervision).
+Aucune modification au domaine BC-03 (svc-supervision).
 Le mobile maintient un Read Model local (`ConsigneLocale`) qui étend `InstructionMobileDTO` avec le champ `lue: boolean`.
+
+**Ajout v1.3** : champ `texteConsigne?: string` dans `InstructionMobileDTO` (optionnel, rétrocompatible).
+Ce champ contient le texte libre rédigé par le superviseur (ex. "Prioriser le colis COLIS-042 — client urgent").
 
 ### Application Layer (mobile — hook)
 - **Nouveau fichier** : `src/mobile/src/hooks/useConsignesLocales.ts`
@@ -105,6 +120,7 @@ Le mobile maintient un Read Model local (`ConsigneLocale`) qui étend `Instructi
 ### Résultat suite complète
 - **303/303 tests verts** au moment de la session initiale (mode `--runInBand`)
 - **310/310 tests verts** après delta Sprint 5 (7 nouveaux tests)
+- **352/352 tests verts** après delta v1.3 (10 nouveaux tests : SC-TX1, SC-TX2, SC-OFF1, SC-OFF2, SC-OFF3, SC1-MSG + 4 ajustements fixtures)
 - Flaky timeout observé en mode parallèle sur `FiltreZone.test.tsx` : problème préexistant (contention setInterval), non introduit par cette US.
 
 ---
@@ -177,10 +193,10 @@ implémenté dans une session précédente (`InstructionController`, `PrendreEnC
 - `livrables/06-dev/vertical-slices/US-037-impl.md` (ce fichier)
 
 ### Modifiés
-- `src/mobile/src/screens/MesConsignesScreen.tsx` (réécriture : ajout stateless props, bouton Exécutée ; delta : prop onVoirColis + bouton "Voir le colis")
+- `src/mobile/src/screens/MesConsignesScreen.tsx` (réécriture : ajout stateless props, bouton Exécutée ; delta Sprint 5 : prop onVoirColis + bouton "Voir le colis" ; delta v1.3 : texteConsigne, "Non associé à un colis", bandeau offline, message liste vide conforme)
 - `src/mobile/src/components/BandeauInstructionOverlay.tsx` (ajout prop optionnelle `onConsignePersistee`)
-- `src/mobile/src/screens/ListeColisScreen.tsx` (navigation mesConsignes, bouton badge, hook ; delta : prendreEnCompteNouvelles useEffect + onVoirColis)
-- `src/mobile/src/hooks/useConsignesLocales.ts` (delta : prendreEnCompteNouvelles + prendreEnCompteFn injectable)
-- `src/mobile/src/api/supervisionApi.ts` (delta : prendreEnCompteInstruction)
-- `src/mobile/src/__tests__/useConsignesLocales.test.ts` (delta : SC9, SC10, SC11)
-- `src/mobile/src/__tests__/MesConsignesScreen.test.tsx` (delta : SC11, SC12, SC13, SC14)
+- `src/mobile/src/screens/ListeColisScreen.tsx` (navigation mesConsignes, bouton badge, hook ; delta Sprint 5 : prendreEnCompteNouvelles useEffect + onVoirColis ; delta v1.3 : prop estHorsConnexion transmise)
+- `src/mobile/src/hooks/useConsignesLocales.ts` (delta Sprint 5 : prendreEnCompteNouvelles + prendreEnCompteFn injectable)
+- `src/mobile/src/api/supervisionApi.ts` (delta Sprint 5 : prendreEnCompteInstruction ; delta v1.3 : champ texteConsigne optionnel dans InstructionMobileDTO)
+- `src/mobile/src/__tests__/useConsignesLocales.test.ts` (delta Sprint 5 : SC9, SC10, SC11)
+- `src/mobile/src/__tests__/MesConsignesScreen.test.tsx` (delta Sprint 5 : SC11-SC14 ; delta v1.3 : SC-TX1, SC-TX2, SC-OFF1, SC-OFF2, SC-OFF3, SC1-MSG)

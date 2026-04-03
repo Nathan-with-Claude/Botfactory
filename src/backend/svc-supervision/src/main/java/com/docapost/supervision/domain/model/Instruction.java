@@ -111,15 +111,39 @@ public class Instruction {
     }
 
     /**
+     * Prend en compte l'instruction par le livreur (lecture dans "Mes consignes" M-07).
+     * Transition : ENVOYEE → PRISE_EN_COMPTE.
+     * Idempotent : si déjà PRISE_EN_COMPTE, ne fait rien.
+     *
+     * @param livreurId identifiant du livreur qui prend en compte l'instruction
+     * @throws IllegalStateException si l'instruction est déjà EXECUTEE ou REFUSEE
+     *
+     * Source : US-037 delta Sprint 5 — InstructionPriseEnCompte
+     */
+    public void prendreEnCompte(String livreurId) {
+        if (this.statut == StatutInstruction.PRISE_EN_COMPTE) {
+            // Idempotent — déjà prise en compte, pas d'effet
+            return;
+        }
+        if (this.statut != StatutInstruction.ENVOYEE) {
+            throw new IllegalStateException(
+                    "Impossible de prendre en compte une instruction au statut " + this.statut
+            );
+        }
+        this.statut = StatutInstruction.PRISE_EN_COMPTE;
+    }
+
+    /**
      * Marque l'instruction comme exécutée par le livreur.
-     * Transition : ENVOYEE → EXECUTEE.
+     * Transition : ENVOYEE ou PRISE_EN_COMPTE → EXECUTEE.
      * Collecte l'événement InstructionExecutee.
      *
      * @param livreurId identifiant du livreur qui exécute l'instruction
-     * @throws IllegalStateException si l'instruction n'est pas au statut ENVOYEE
+     * @throws IllegalStateException si l'instruction n'est pas au statut ENVOYEE ou PRISE_EN_COMPTE
      */
     public void marquerExecutee(String livreurId) {
-        if (this.statut != StatutInstruction.ENVOYEE) {
+        if (this.statut != StatutInstruction.ENVOYEE
+                && this.statut != StatutInstruction.PRISE_EN_COMPTE) {
             throw new IllegalStateException(
                     "Impossible de marquer exécutée une instruction au statut " + this.statut
             );

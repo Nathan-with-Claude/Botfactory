@@ -54,7 +54,9 @@ public class VueTourneeRepositoryImpl implements VueTourneeRepository {
                     vueTournee.getColisTotal(),
                     vueTournee.getPourcentage(),
                     vueTournee.getStatut(),
-                    vueTournee.getDerniereActivite()
+                    vueTournee.getDerniereActivite(),
+                    vueTournee.getCodeTMS(),
+                    vueTournee.getZone()
             );
         } else {
             entity.setLivreurNom(vueTournee.getLivreurNom());
@@ -63,6 +65,8 @@ public class VueTourneeRepositoryImpl implements VueTourneeRepository {
             entity.setPourcentage(vueTournee.getPourcentage());
             entity.setStatut(vueTournee.getStatut());
             entity.setDerniereActivite(vueTournee.getDerniereActivite());
+            entity.setCodeTMS(vueTournee.getCodeTMS());
+            entity.setZone(vueTournee.getZone());
         }
 
         VueTourneeEntity saved = jpaRepository.save(entity);
@@ -83,7 +87,9 @@ public class VueTourneeRepositoryImpl implements VueTourneeRepository {
                 entity.getColisTraites(),
                 entity.getColisTotal(),
                 entity.getStatut(),
-                entity.getDerniereActivite()
+                entity.getDerniereActivite(),
+                entity.getCodeTMS(),
+                entity.getZone()
         );
     }
 }

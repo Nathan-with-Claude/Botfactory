@@ -65,6 +65,42 @@ Avant de commencer, tu DOIS disposer de :
 - /livrables/06-dev/vertical-slices/[US-NNN]-impl.md :
   description technique du vertical slice et décisions prises.
 
+## Stack UI — Règles Tailwind CSS (interface web superviseur)
+
+L’interface web superviseur (`src/web/supervision/`) utilise **Tailwind CSS v3 + DaisyUI**.
+Ces règles s’appliquent à toute nouvelle feature ou modification de cette interface.
+
+### Styling
+- **Toujours utiliser des classes Tailwind** pour le style. Pas de `style={{ }}` inline, sauf pour les valeurs dynamiques calculées (ex : `style={{ width: \`${pct}%\` }}`).
+- Utiliser les tokens du design system DocuPost définis dans `tailwind.config.js` : `bg-primary`, `text-on-surface`, `bg-error-container`, `bg-tertiary-fixed`, etc.
+- Pour les couleurs sans token Tailwind, utiliser les valeurs arbitraires : `bg-[#fff3e0]`.
+- Utiliser les composants DaisyUI (`btn`, `badge`, `table`, `input`, `modal`, etc.) quand ils correspondent au design.
+
+### Tests avec Tailwind (jsdom ne charge pas les feuilles de style)
+
+**Règle fondamentale** : dans jsdom, les classes Tailwind ne produisent pas de `style` calculé. Les assertions de style doivent être sémantiques, pas visuelles.
+
+| Ce qu’on veut tester | À utiliser |
+|---|---|
+| Un élément a une classe Tailwind | `toHaveClass(‘bg-amber-700’)` |
+| Un élément représente un état métier | `toHaveAttribute(‘data-statut’, ‘A_RISQUE’)` |
+| Une valeur dynamique calculée (width %) | `toHaveStyle({ width: ‘75%’ })` |
+| **Ne jamais utiliser** | `toHaveStyle({ backgroundColor: ‘#...’ })` pour un style Tailwind |
+
+**Pattern recommandé pour les états visuels** :
+```tsx
+// Composant : ajouter data-* pour l’état métier
+<tr
+  data-testid="ligne-tournee-123"
+  data-statut={tournee.statut}          // ← pour les tests
+  className={estARisque ? ‘bg-[#fff3e0] border-l-4 border-orange-600’ : ‘’}
+/>
+
+// Test : vérifier l’état métier, pas la couleur
+expect(ligne).toHaveAttribute(‘data-statut’, ‘A_RISQUE’);
+expect(bandeau).toHaveClass(‘bg-amber-700’);
+```
+
 ## Règles importantes
 - Tu n’implémentes qu’UNE User Story par session.
 - Tu appliques systématiquement le TDD pour la US (tests d’abord puis code).

@@ -56,6 +56,9 @@ class CloturerTourneeControllerTest {
     @MockBean
     private com.docapost.tournee.application.ConfirmerLivraisonHandler confirmerLivraisonHandler;
 
+    @MockBean
+    private com.docapost.tournee.infrastructure.supervision.SupervisionNotifier supervisionNotifier;
+
     private static final String TOURNEE_ID = "tournee-001";
 
     @Test

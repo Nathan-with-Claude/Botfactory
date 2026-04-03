@@ -51,6 +51,9 @@ class InstructionControllerTest {
     @MockBean
     private ConsulterInstructionsEnAttenteHandler consulterEnAttenteHandler;
 
+    @MockBean
+    private PrendreEnCompteInstructionHandler prendreEnCompteHandler;
+
     private final ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -190,5 +193,32 @@ class InstructionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].statut").value("ENVOYEE"))
                 .andExpect(jsonPath("$[0].tourneeId").value("t-001"));
+    }
+
+    // ─── US-037 (delta Sprint 5) : InstructionPriseEnCompte ──────────────────
+
+    @Test
+    @DisplayName("PATCH /instructions/{id}/prendre-en-compte retourne 200 avec statut PRISE_EN_COMPTE")
+    @WithMockUser(username = "livreur-001", roles = "LIVREUR")
+    void prendreEnCompte_retourne_200_avec_statut_prise_en_compte() throws Exception {
+        Instruction instruction = Instruction.envoyer("instr-001", "t-001", "c-001",
+                "superviseur-001", TypeInstruction.PRIORISER, null);
+        instruction.prendreEnCompte("livreur-001");
+        when(prendreEnCompteHandler.handle(any())).thenReturn(instruction);
+
+        mockMvc.perform(patch("/api/supervision/instructions/instr-001/prendre-en-compte"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statut").value("PRISE_EN_COMPTE"));
+    }
+
+    @Test
+    @DisplayName("PATCH /instructions/{id}/prendre-en-compte retourne 404 si instruction inconnue")
+    @WithMockUser(username = "livreur-001", roles = "LIVREUR")
+    void prendreEnCompte_retourne_404_si_instruction_inconnue() throws Exception {
+        when(prendreEnCompteHandler.handle(any()))
+                .thenThrow(new InstructionNotFoundException("instr-inconnu"));
+
+        mockMvc.perform(patch("/api/supervision/instructions/instr-inconnu/prendre-en-compte"))
+                .andExpect(status().isNotFound());
     }
 }

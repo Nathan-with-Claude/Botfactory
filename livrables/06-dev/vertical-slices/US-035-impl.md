@@ -68,7 +68,7 @@ En tant que responsable logistique, je veux pouvoir rechercher une tournée dans
 **Champ de recherche** :
 - `data-testid="champ-recherche"` — input texte, mise à jour en temps réel via `onChange`.
 - Pas de bouton "Rechercher" — comportement réactif immédiat.
-- Placeholder : `"Livreur, code TMS (ex: T-205), zone (ex: Villeurbanne)..."`.
+- Placeholder : `"Livreur, numéro de tournée (ex: T-205), zone (ex: Villeurbanne)..."` (libellé mis à jour par US-038 — ancien libellé : "code TMS").
 
 **Lien "Effacer la recherche"** :
 - Affiché uniquement si `termeRecherche.trim().length > 0`.

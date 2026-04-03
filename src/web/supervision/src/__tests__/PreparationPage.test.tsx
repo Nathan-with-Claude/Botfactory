@@ -96,7 +96,8 @@ describe('PreparationPage — US-021', () => {
 
     const badge = screen.getByTestId('badge-statut-tp-201');
     expect(badge.textContent).toBe('NON AFFECTÉE');
-    expect(badge.style.backgroundColor).toBe('rgb(220, 53, 69)');
+    // Visuel géré par Tailwind (bg-error-container) — on vérifie la classe sémantique
+    expect(badge).toHaveClass('bg-error-container');
   });
 
   it('affiche le badge AFFECTÉE en vert pour T-202', async () => {
@@ -221,5 +222,34 @@ describe('PreparationPage — US-024', () => {
     await waitFor(() => {
       expect(screen.getByTestId('message-succes')).toBeTruthy();
     });
+  });
+
+  // ─── S3 — Redirection automatique après lancement ─────────────────────────
+
+  it('S3 — appelle onTourneeeLancee après lancement réussi', async () => {
+    jest.useFakeTimers();
+    const onTourneeeLancee = jest.fn();
+    const fetchFn = jest.fn().mockImplementation((_url: string, options?: RequestInit) => {
+      if (options?.method === 'POST') {
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({}) } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => planMock() } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(<PreparationPage fetchFn={fetchFn} onTourneeeLancee={onTourneeeLancee} />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-lancer-tp-202'));
+    });
+
+    // La redirection est déclenchée après 800ms
+    await act(async () => {
+      jest.advanceTimersByTime(900);
+    });
+
+    expect(onTourneeeLancee).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 });

@@ -19,5 +19,6 @@ public record TourneeLancee(
         String livreurId,
         String livreurNom,
         String superviseurId,
-        Instant lanceeLe
+        Instant lanceeLe,
+        int nbColis
 ) {}

@@ -7,6 +7,7 @@
 **Priorité** : Should Have
 **Statut** : Prête
 **Complexité estimée** : M
+**Wireframe de référence** : /livrables/02-ux/wireframes.md#M-07 (v1.3 — 2026-04-02)
 
 ---
 
@@ -47,6 +48,14 @@ barre de navigation de la liste des colis (M-02). Les consignes sont stockees lo
   (LivraisonConfirmee ou EchecLivraisonDeclare sur le colis cible).
 - L'historique est limite a la journee en cours (reinitialise a minuit).
 - Les consignes sont affichees par ordre chronologique inverse (la plus recente en premier).
+- Chaque consigne affiche : badge de statut (NOUVELLE = bleu primaire, PRISE EN COMPTE = gris,
+  EXECUTEE = vert), texte de la consigne, code colis associe ou "Non associe a un colis",
+  et horodatage de reception (voir US-042 pour le format).
+- La navigation depuis une consigne associee a un colis vers M-03 (detail du colis) est possible.
+- Un ecran vide ("Aucune consigne recue aujourd'hui. Votre superviseur n'a pas envoye
+  d'instruction.") est affiche si aucune InstructionRecue n'est presente.
+- En mode offline : les consignes recues avant la perte de connexion restent accessibles
+  (stockage local). Un bandeau orange "Hors connexion" est affiche.
 
 ---
 
@@ -100,6 +109,48 @@ And l'evenement InstructionExecutee est emis vers BC-03 (supervision)
 Given M-07 affiche la consigne C-001 associee a COLIS-042
 When le livreur appuie sur la ligne de la consigne C-001
 Then l'ecran M-03 (detail du colis COLIS-042) s'affiche
+And M-03 affiche les informations completes du colis COLIS-042
+```
+
+### Scenario 5b — Consigne sans colis associe : pas de navigation
+
+```gherkin
+Given M-07 affiche la consigne C-002 "Eviter la Rue du Port (travaux)"
+And C-002 ne reference aucun colis (champ codeColis absent)
+When le livreur appuie sur la ligne de la consigne C-002
+Then aucune navigation n'est declenchee (la consigne est non interactive)
+And C-002 affiche "Non associe a un colis" dans la zone du code colis
+```
+
+### Scenario 5c — Affichage des badges de statut par couleur
+
+```gherkin
+Given M-07 est affiche avec 3 consignes aux statuts Nouvelle, Prise en compte et Executee
+When M-07 est affiche
+Then la consigne au statut "Nouvelle" affiche un badge bleu primaire
+And la consigne au statut "Prise en compte" affiche un badge gris neutre
+And la consigne au statut "Executee" affiche un badge vert success
+```
+
+### Scenario 5d — Liste vide si aucune consigne recue
+
+```gherkin
+Given aucune InstructionRecue n'est presente dans le Read Model local pour la journee en cours
+When le livreur ouvre M-07
+Then le message "Aucune consigne recue aujourd'hui. Votre superviseur n'a pas envoye d'instruction."
+  est affiche
+```
+
+### Scenario 5e — Mode offline : consignes locales accessibles
+
+```gherkin
+Given le livreur a recu 2 consignes avant la perte de connexion
+And le statut reseau est hors connexion
+When le livreur ouvre M-07
+Then les 2 consignes stockees localement sont affichees
+And un bandeau orange "Hors connexion" est visible en haut de l'ecran
+And le message "Les nouvelles consignes ne peuvent pas arriver en mode hors connexion."
+  est affiche sous le bandeau
 ```
 
 ### Scenario 6 — Indicateur de nouvelles consignes sur le bouton d'acces
@@ -117,7 +168,18 @@ Then l'icone "Mes consignes" dans le header affiche un badge avec le nombre de c
 Given le livreur a 5 consignes dans M-07 de la journee J
 When il ouvre M-07 le lendemain (jour J+1)
 Then la liste des consignes est vide
-And le message "Aucune consigne recue aujourd'hui" est affiche
+And le message "Aucune consigne recue aujourd'hui. Votre superviseur n'a pas envoye d'instruction."
+  est affiche
+```
+
+### Scenario 7b — Retour vers M-02 depuis M-07 met a jour le badge
+
+```gherkin
+Given le livreur est sur M-07 et a pris en compte toutes les consignes
+When il appuie sur le bouton retour [<] vers M-02
+Then M-02 est affiche
+And le badge de l'icone "Mes consignes" dans le header de M-02 disparait
+  (aucune consigne au statut "Nouvelle" restante)
 ```
 
 ---
@@ -127,14 +189,20 @@ And le message "Aucune consigne recue aujourd'hui" est affiche
 - [ ] Le Read Model local `InstructionRecue` est cree et persiste les consignes des leur
       reception (independamment de l'etat du bandeau M-06).
 - [ ] L'ecran M-07 "Mes consignes" est implemente avec la liste par ordre chronologique inverse.
+- [ ] Chaque consigne affiche : badge de statut colore, texte, code colis ou "Non associe a un colis",
+      et horodatage (US-042).
 - [ ] Le badge sur l'icone dans M-02 affiche le nombre de consignes "Nouvelles".
+- [ ] Le badge disparait sur M-02 apres retour depuis M-07 si toutes les consignes sont prises en compte.
 - [ ] Le passage au statut "Prise en compte" est declenche a l'ouverture de M-07.
 - [ ] Le passage au statut "Executee" est declenche apres l'action sur le colis cible.
 - [ ] L'evenement `InstructionPriseEnCompte` est emis vers BC-03 a la lecture.
-- [ ] La navigation depuis M-07 vers M-03 (detail colis cible) est implementee.
+- [ ] La navigation depuis M-07 vers M-03 (detail colis cible) est implementee uniquement si
+      la consigne a un codeColis associe.
+- [ ] L'ecran vide ("Aucune consigne recue aujourd'hui") est affiche si aucune InstructionRecue.
+- [ ] Le mode offline affiche les consignes locales avec bandeau orange.
 - [ ] La reinitialisation a minuit est implementee (TTL sur les entrees du Read Model local).
 - [ ] Tests unitaires sur le reducer/store des InstructionRecue.
-- [ ] Tests E2E couvrant les scenarios 1 a 6.
+- [ ] Tests E2E couvrant les scenarios 1 a 7b.
 - [ ] Aucune regression sur le bandeau M-06 (US-016) et le suivi instruction superviseur (US-015).
 
 ---
@@ -151,9 +219,11 @@ And le message "Aucune consigne recue aujourd'hui" est affiche
 
 ## Liens
 
-- Wireframe : /livrables/02-ux/wireframes.md#M-06 (ecran M-07 a creer)
+- Wireframe : /livrables/02-ux/wireframes.md#M-07 (v1.3 — ecran M-07 defini le 2026-04-02)
+- Design visuel : /livrables/02-ux/design_web_designer.md
 - Feedback source : /livrables/09-feedback/feedback-livreur-2026-03-30.md
 - US liees : /livrables/05-backlog/user-stories/US-014-envoyer-instruction-livreur.md
 - US liees : /livrables/05-backlog/user-stories/US-015-suivre-execution-instruction.md
 - US liees : /livrables/05-backlog/user-stories/US-016-notification-push-instruction.md
+- US complementaire horodatage : /livrables/05-backlog/user-stories/US-042-horodatage-consignes-ecran-m07.md
 - Architecture : /livrables/04-architecture-technique/architecture-applicative.md

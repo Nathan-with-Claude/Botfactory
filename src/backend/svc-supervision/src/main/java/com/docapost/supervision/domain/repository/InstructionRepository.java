@@ -43,4 +43,9 @@ public interface InstructionRepository {
      * Retourne les instructions ENVOYEE pour une tournée — polling mobile (US-016).
      */
     List<Instruction> findEnAttenteParTournee(String tourneeId);
+
+    /**
+     * Retourne les instructions ENVOYEE ou PRISE_EN_COMPTE pour une tournée — US-015.
+     */
+    List<Instruction> findEnCoursParTournee(String tourneeId);
 }

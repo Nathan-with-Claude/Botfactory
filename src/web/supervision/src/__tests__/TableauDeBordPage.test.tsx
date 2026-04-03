@@ -7,6 +7,7 @@ import TableauDeBordPage, { TableauDeBordDTO, MockWebSocket } from '../pages/Tab
  */
 
 const mockTableau: TableauDeBordDTO = {
+  bandeau: { actives: 2, aRisque: 1, cloturees: 0 },
   tournees: [
     {
       tourneeId: 't-001',
@@ -16,6 +17,8 @@ const mockTableau: TableauDeBordDTO = {
       pourcentage: 30,
       statut: 'EN_COURS',
       derniereActivite: '2026-03-24T10:00:00Z',
+      codeTMS: 'T-201',
+      zone: 'Lyon 3e',
     },
     {
       tourneeId: 't-002',
@@ -25,6 +28,8 @@ const mockTableau: TableauDeBordDTO = {
       pourcentage: 70,
       statut: 'EN_COURS',
       derniereActivite: '2026-03-24T10:30:00Z',
+      codeTMS: 'T-202',
+      zone: 'Villeurbanne',
     },
     {
       tourneeId: 't-003',
@@ -34,11 +39,12 @@ const mockTableau: TableauDeBordDTO = {
       pourcentage: 16,
       statut: 'A_RISQUE',
       derniereActivite: '2026-03-24T08:00:00Z',
+      retardEstimeMinutes: 45,
+      colisEnRetard: 4,
+      codeTMS: 'T-203',
+      zone: 'Lyon 3e',
     },
   ],
-  actives: 2,
-  aRisque: 1,
-  cloturees: 0,
 };
 
 function mockFetch(status: number, body?: object): () => Promise<Response> {
@@ -170,8 +176,7 @@ describe('TableauDeBordPage', () => {
     // Simuler un message WebSocket avec données mises à jour
     const tableauMisAJour: TableauDeBordDTO = {
       ...mockTableau,
-      actives: 1,
-      aRisque: 2,
+      bandeau: { actives: 1, aRisque: 2, cloturees: 0 },
     };
 
     act(() => {
@@ -246,7 +251,7 @@ describe('TableauDeBordPage', () => {
 
   test('US-013: n\'affiche pas le point alerte si aRisque = 0', async () => {
     const { factory } = createMockWsFactory();
-    const tableauSansRisque = { ...mockTableau, aRisque: 0 };
+    const tableauSansRisque = { ...mockTableau, bandeau: { actives: 2, aRisque: 0, cloturees: 0 } };
     render(
       <TableauDeBordPage
         fetchFn={mockFetch(200, tableauSansRisque)}
@@ -264,7 +269,7 @@ describe('TableauDeBordPage', () => {
     const alerteFn = jest.fn();
 
     // Début : 0 à risque
-    const tableauSansRisque = { ...mockTableau, aRisque: 0 };
+    const tableauSansRisque = { ...mockTableau, bandeau: { actives: 2, aRisque: 0, cloturees: 0 } };
     render(
       <TableauDeBordPage
         fetchFn={mockFetch(200, tableauSansRisque)}
@@ -278,7 +283,7 @@ describe('TableauDeBordPage', () => {
     expect(alerteFn).not.toHaveBeenCalled();
 
     // WebSocket : 1 nouvelle tournée à risque
-    const tableauAvecRisque = { ...mockTableau, aRisque: 1 };
+    const tableauAvecRisque = { ...mockTableau, bandeau: { actives: 2, aRisque: 1, cloturees: 0 } };
     act(() => {
       instance.onmessage?.({ data: JSON.stringify(tableauAvecRisque) });
     });
@@ -299,7 +304,355 @@ describe('TableauDeBordPage', () => {
     await waitFor(() => screen.getByTestId('ligne-tournee-t-003'));
 
     const ligneARisque = screen.getByTestId('ligne-tournee-t-003');
-    // La ligne A_RISQUE doit avoir un style de fond distinctif
-    expect(ligneARisque).toHaveStyle({ background: '#fff3e0' });
+    // La ligne A_RISQUE doit indiquer son statut via data-statut (le visuel est géré par Tailwind)
+    expect(ligneARisque).toHaveAttribute('data-statut', 'A_RISQUE');
+  });
+
+  // ─── Tests feedback terrain 2026-03-30 ────────────────────────────────────
+
+  test('S1 — affiche le nom du livreur en donnée primaire et l\'ID TMS en secondaire', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    // Le nom du livreur doit être visible en premier
+    expect(screen.getByText('Pierre Martin')).toBeInTheDocument();
+    expect(screen.getByText('Marie Lambert')).toBeInTheDocument();
+    expect(screen.getByText('Jean Moreau')).toBeInTheDocument();
+
+    // L'ID TMS doit être visible comme info secondaire
+    expect(screen.getByTestId('id-tms-t-001')).toHaveTextContent('t-001');
+    expect(screen.getByTestId('id-tms-t-003')).toHaveTextContent('t-003');
+  });
+
+  test('S2 — affiche le détail du retard directement dans la ligne A_RISQUE', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('detail-retard-t-003'));
+
+    const detailRetard = screen.getByTestId('detail-retard-t-003');
+    expect(detailRetard).toHaveTextContent('45 min');
+    expect(detailRetard).toHaveTextContent('4 colis');
+  });
+
+  test('S2 — n\'affiche pas de détail retard pour une tournée EN_COURS', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+    expect(screen.queryByTestId('detail-retard-t-001')).not.toBeInTheDocument();
+  });
+
+  test('S4 — le bandeau déconnexion WebSocket est orange (alerte système, pas rouge)', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('bandeau-deconnexion'));
+    // Orange #b45309, distinct du rouge métier #ba1a1a
+    // Orange bg-amber-700 = #b45309, distinct du rouge métier (bg-error)
+    expect(screen.getByTestId('bandeau-deconnexion')).toHaveClass('bg-amber-700');
+  });
+
+  test('S5 — affiche le bouton Exporter le bilan si onExporterBilan est fourni', async () => {
+    const { factory } = createMockWsFactory();
+    const onExporter = jest.fn();
+
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+        onExporterBilan={onExporter}
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('btn-exporter-bilan'));
+    fireEvent.click(screen.getByTestId('btn-exporter-bilan'));
+    expect(onExporter).toHaveBeenCalledTimes(1);
+  });
+
+  test('S5 — n\'affiche pas le bouton export si onExporterBilan non fourni', async () => {
+    const { factory } = createMockWsFactory();
+
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+    expect(screen.queryByTestId('btn-exporter-bilan')).not.toBeInTheDocument();
+  });
+
+  // ─── Tests US-035 — Recherche multi-critères ──────────────────────────────
+
+  test('US-035 SC1 — recherche par code TMS filtre les tournées correspondantes', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 'T-202' },
+    });
+
+    expect(screen.getByTestId('ligne-tournee-t-002')).toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-001')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-003')).not.toBeInTheDocument();
+  });
+
+  test('US-035 SC1 — recherche par code TMS partiel (insensible à la casse)', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 't-20' },
+    });
+
+    // t-20 match T-201, T-202, T-203 (tous)
+    expect(screen.getByTestId('ligne-tournee-t-001')).toBeInTheDocument();
+    expect(screen.getByTestId('ligne-tournee-t-002')).toBeInTheDocument();
+    expect(screen.getByTestId('ligne-tournee-t-003')).toBeInTheDocument();
+  });
+
+  test('US-035 SC2 — recherche par zone géographique (correspondance partielle)', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 'Villeurb' },
+    });
+
+    expect(screen.getByTestId('ligne-tournee-t-002')).toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-001')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-003')).not.toBeInTheDocument();
+  });
+
+  test('US-035 SC3 — recherche par nom de livreur (comportement existant préservé)', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 'Marie' },
+    });
+
+    expect(screen.getByTestId('ligne-tournee-t-002')).toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-001')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-003')).not.toBeInTheDocument();
+  });
+
+  test('US-035 SC4 — recherche intersectée avec filtre de statut', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('filtre-statut'));
+
+    // Filtrer par A_RISQUE
+    fireEvent.change(screen.getByTestId('filtre-statut'), {
+      target: { value: 'A_RISQUE' },
+    });
+
+    // Puis chercher "Lyon 3" — t-001 (EN_COURS) et t-003 (A_RISQUE) sont en zone Lyon 3e
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 'Lyon 3' },
+    });
+
+    // Seule t-003 (A_RISQUE) doit apparaître — t-001 (EN_COURS) est masquée par le filtre statut
+    expect(screen.getByTestId('ligne-tournee-t-003')).toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-001')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ligne-tournee-t-002')).not.toBeInTheDocument();
+  });
+
+  test('US-035 SC5 — recherche sans résultat affiche message et lien effacer', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 'XYZ999' },
+    });
+
+    expect(screen.getByTestId('message-aucun-resultat-recherche')).toBeInTheDocument();
+    expect(screen.getByTestId('lien-effacer-recherche')).toBeInTheDocument();
+    expect(screen.queryByTestId('aucune-tournee')).not.toBeInTheDocument();
+  });
+
+  test('US-035 SC5 — le bandeau résumé n\'est pas modifié par la recherche', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('bandeau-resume'));
+
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 'T-202' },
+    });
+
+    // Les compteurs ne changent pas malgré la recherche
+    expect(screen.getByTestId('compteur-actives')).toHaveTextContent('2');
+    expect(screen.getByTestId('compteur-a-risque')).toHaveTextContent('1');
+    expect(screen.getByTestId('compteur-cloturees')).toHaveTextContent('0');
+  });
+
+  test('US-035 SC6 — effacement de la recherche restaure toutes les tournées', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    // Recherche qui masque tout
+    fireEvent.change(screen.getByTestId('champ-recherche'), {
+      target: { value: 'XYZ999' },
+    });
+
+    // Effacer via le lien
+    fireEvent.click(screen.getByTestId('lien-effacer-recherche'));
+
+    // Toutes les tournées sont de nouveau visibles
+    await waitFor(() => {
+      expect(screen.getByTestId('ligne-tournee-t-001')).toBeInTheDocument();
+      expect(screen.getByTestId('ligne-tournee-t-002')).toBeInTheDocument();
+      expect(screen.getByTestId('ligne-tournee-t-003')).toBeInTheDocument();
+    });
+
+    // Le champ de recherche est vide
+    expect(screen.getByTestId('champ-recherche')).toHaveValue('');
+  });
+
+  test('US-035 — recherche en temps réel, pas de bouton Rechercher', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('liste-tournees'));
+
+    // Pas de bouton "Rechercher"
+    expect(screen.queryByTestId('btn-rechercher')).not.toBeInTheDocument();
+    // Champ de recherche présent
+    expect(screen.getByTestId('champ-recherche')).toBeInTheDocument();
+  });
+
+  // ─── Bloquant 5 — Bouton Reconnecter + compteur déconnexion ─────────────────
+
+  test('Bloquant-5: affiche le bouton "Reconnecter" dans le bandeau déconnexion', async () => {
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={mockFetch(200, mockTableau)}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('bandeau-deconnexion'));
+    expect(screen.getByTestId('btn-reconnecter')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-reconnecter')).toHaveTextContent('Reconnecter');
+  });
+
+  test('Bloquant-5: le bouton Reconnecter recharge les données au clic', async () => {
+    const fetchSpy = jest.fn(mockFetch(200, mockTableau));
+    const { factory } = createMockWsFactory();
+    render(
+      <TableauDeBordPage
+        fetchFn={fetchSpy}
+        wsFactory={factory}
+        apiBaseUrl="http://localhost:8082"
+      />
+    );
+
+    await waitFor(() => screen.getByTestId('bandeau-deconnexion'));
+    const callsAvant = fetchSpy.mock.calls.length;
+    fireEvent.click(screen.getByTestId('btn-reconnecter'));
+    // Un nouvel appel fetch a été émis
+    await waitFor(() => {
+      expect(fetchSpy.mock.calls.length).toBeGreaterThan(callsAvant);
+    });
   });
 });

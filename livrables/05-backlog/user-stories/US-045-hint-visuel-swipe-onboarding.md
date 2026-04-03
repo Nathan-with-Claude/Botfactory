@@ -7,6 +7,7 @@
 **Priorite** : Could Have
 **Statut** : Prete
 **Complexite estimee** : S
+**Wireframe de référence** : /livrables/02-ux/wireframes.md#M-02 (v1.3 — 2026-04-02)
 
 ---
 
@@ -32,13 +33,15 @@ Solution proposee par Pierre (feedback 01/04) : un hint textuel visible uniqueme
 disparait pour les utilisateurs experimentes. Le compteur d'utilisations est memorise
 en AsyncStorage.
 
-**Comportement detaille** :
-- Un texte d'aide ("Glissez vers la gauche pour declarer un probleme") est affiche
-  sous ou sur la carte colis, en typographie secondaire legere, uniquement si le
+**Comportement detaille (wireframe M-02 v1.3)** :
+- Un texte d'aide "← Glissez vers la gauche pour declarer un probleme" est affiche
+  sous chaque carte colis, en typographie secondaire legere, uniquement si le
   compteur d'utilisations < SEUIL_HINT (3 utilisations).
-- Optionnel : une micro-animation "fremissement" de la carte au premier chargement de
-  la liste (un leger deplacement de 8px a gauche puis retour) peut renforcer la
-  suggestion du geste.
+- Le texte du hint est exactement : "← Glissez vers la gauche pour declarer un probleme"
+  (fleche gauche + texte, en minuscules, non intrusif).
+- Option visuelle (Could Have imbriquee) : une micro-animation "fremissement" de la carte
+  au premier chargement de la liste (deplacement de 8px a gauche, puis spring-back) renforce
+  la suggestion du geste. Cette animation se produit une seule fois au premier chargement.
 - A chaque fois que le livreur utilise le swipe avec succes (seuil 80px atteint et
   ecran M-05 ouvert), le compteur s'incremente dans AsyncStorage.
 - Quand compteur >= SEUIL_HINT : le hint textuel n'est plus affiche.
@@ -57,14 +60,14 @@ en AsyncStorage.
 
 ## Criteres d'acceptation (Gherkin)
 
-### Scenario 1 — Hint visible a la premiere utilisation
+### Scenario 1 — Hint visible a la premiere utilisation avec texte exact
 
 ```gherkin
 Given le livreur ouvre la liste de colis (M-02) pour la premiere fois
 And le compteur swipeHintCount dans AsyncStorage est 0 (ou absent)
 When M-02 est affiche
-Then chaque carte colis affiche le texte "Glissez vers la gauche pour déclarer un problème"
-And le texte est affiche en typographie secondaire (leger, non intrusif)
+Then chaque carte colis affiche le texte "← Glissez vers la gauche pour déclarer un problème"
+And le texte est affiche sous la carte, en typographie secondaire (leger, non intrusif)
 ```
 
 ### Scenario 2 — Hint toujours visible aux 2eme et 3eme utilisations
@@ -113,14 +116,16 @@ Then le hint est affiche sur les cartes colis (comportement par defaut)
 
 ## Definition of Done
 
-- [ ] Hint textuel "Glissez vers la gauche pour declarer un probleme" affiche si
-      swipeHintCount < SEUIL_HINT (3).
+- [ ] Hint textuel "← Glissez vers la gauche pour déclarer un problème" affiche si
+      swipeHintCount < SEUIL_HINT (3), positionne sous chaque carte colis.
 - [ ] SEUIL_HINT est une constante configurable dans le code.
 - [ ] Compteur swipeHintCount gere dans AsyncStorage.
 - [ ] Increment du compteur uniquement apres un swipe reussi (M-05 ouvert).
-- [ ] Comportement fail-safe si AsyncStorage indisponible.
-- [ ] Tests unitaires sur la logique de hint (increment, seuil, fail-safe).
+- [ ] Comportement fail-safe si AsyncStorage indisponible (hint affiche par defaut).
+- [ ] Option : micro-animation fremissement 8px au premier chargement (Could Have).
+- [ ] Tests unitaires sur la logique de hint (texte exact, increment, seuil, fail-safe).
 - [ ] Aucune regression sur US-029 (swipe gauche echec livraison).
+- [ ] Aucune interference avec l'icone "Mes consignes" et son badge rouge dans le header M-02.
 
 ---
 

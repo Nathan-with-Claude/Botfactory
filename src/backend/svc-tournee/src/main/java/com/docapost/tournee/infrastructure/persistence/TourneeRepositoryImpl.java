@@ -57,4 +57,9 @@ public class TourneeRepositoryImpl implements TourneeRepository {
         return jpaRepository.findById(tourneeId.value())
                 .map(mapper::toDomain);
     }
+
+    @Override
+    public void deleteByLivreurIdAndDate(LivreurId livreurId, java.time.LocalDate date) {
+        jpaRepository.deleteByLivreurIdAndDate(livreurId.value(), date);
+    }
 }

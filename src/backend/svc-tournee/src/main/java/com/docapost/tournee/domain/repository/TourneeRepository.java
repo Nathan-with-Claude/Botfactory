@@ -30,4 +30,10 @@ public interface TourneeRepository {
      * Trouve une tournee par son identifiant.
      */
     Optional<Tournee> findById(TourneeId tourneeId);
+
+    /**
+     * Supprime la tournee d'un livreur pour une date donnee.
+     * Utilise par DevTourneeController pour remplacer une tournee existante.
+     */
+    void deleteByLivreurIdAndDate(LivreurId livreurId, LocalDate date);
 }

@@ -1,0 +1,228 @@
+/**
+ * tokens.css — Design System DocuPost v2.0 (Material Design 3)
+ *
+ * Palette MD3 validée par le designer UI (2026-03-25).
+ * US-027 : Refactorisation interface web superviseur.
+ *
+ * Source de vérité pour couleurs, espacements, typographie, ombres, animations.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+:root {
+  /* ─── Material Design 3 — Palette primaire ───────────────────────────────── */
+  --color-primary:                  #0037b0;
+  --color-primary-container:        #1d4ed8;
+  --color-on-primary:               #ffffff;
+  --color-on-primary-container:     #cad3ff;
+  --color-primary-fixed:            #dce1ff;
+  --color-primary-fixed-dim:        #b7c4ff;
+  --color-on-primary-fixed:         #001551;
+  --color-on-primary-fixed-variant: #0039b5;
+
+  /* ─── Material Design 3 — Palette secondaire ─────────────────────────────── */
+  --color-secondary:                #4d5b94;
+  --color-secondary-container:      #b0befe;
+  --color-on-secondary:             #ffffff;
+  --color-on-secondary-container:   #3d4c83;
+
+  /* ─── Material Design 3 — Palette tertiaire (Avertissement/Anomalie) ─────── */
+  --color-tertiary:                 #7f2500;
+  --color-tertiary-container:       #a73400;
+  --color-tertiary-fixed:           #ffdbcf;
+  --color-tertiary-fixed-dim:       #ffb59c;
+  --color-on-tertiary:              #ffffff;
+  --color-on-tertiary-container:    #ffc9b7;
+  --color-on-tertiary-fixed:        #390c00;
+  --color-on-tertiary-fixed-variant: #832700;
+
+  /* ─── Erreurs ─────────────────────────────────────────────────────────────── */
+  --color-error:                    #ba1a1a;
+  --color-error-container:          #ffdad6;
+  --color-on-error:                 #ffffff;
+  --color-on-error-container:       #93000a;
+
+  /* ─── Surfaces ────────────────────────────────────────────────────────────── */
+  --color-background:               #f7f9fb;
+  --color-surface:                  #f7f9fb;
+  --color-surface-bright:           #f7f9fb;
+  --color-surface-dim:              #d8dadc;
+  --color-surface-variant:          #e0e3e5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low:    #f2f4f6;
+  --color-surface-container:        #eceef0;
+  --color-surface-container-high:   #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-on-surface:               #191c1e;
+  --color-on-surface-variant:       #434655;
+  --color-on-background:            #191c1e;
+
+  /* ─── Contours ────────────────────────────────────────────────────────────── */
+  --color-outline:                  #747686;
+  --color-outline-variant:          #c4c5d7;
+
+  /* ─── Sémantique DocuPost ─────────────────────────────────────────────────── */
+  --color-statut-non-affectee:      var(--color-error);
+  --color-statut-affectee:          var(--color-secondary);
+  --color-statut-lancee:            var(--color-primary);
+  --color-statut-cloturee:          #16A34A;
+  --color-statut-a-risque:          var(--color-error);
+  --color-bandeau-alerte:           var(--color-tertiary-fixed);
+  --color-fond-alerte:              rgba(167, 52, 0, 0.08);
+
+  /* ─── Rétrocompatibilité — anciens tokens utilisés par les composants ─────── */
+  --color-primaire:            var(--color-primary);
+  --color-primaire-hover:      #1E40AF;
+  --color-primaire-leger:      var(--color-primary-fixed);
+
+  --color-succes:              #16A34A;
+  --color-succes-leger:        #F0FDF4;
+  --color-succes-fonce:        #14532D;
+
+  --color-alerte:              var(--color-error);
+  --color-alerte-leger:        var(--color-error-container);
+  --color-alerte-fonce:        var(--color-on-error-container);
+
+  --color-avertissement:       #D97706;
+  --color-avertissement-leger: #FFFBEB;
+  --color-avertissement-fonce: #78350F;
+
+  --color-info:                var(--color-primary-container);
+  --color-info-leger:          var(--color-primary-fixed);
+  --color-info-fonce:          var(--color-on-primary-fixed);
+
+  --color-surface-primary:     var(--color-surface-container-lowest);
+  --color-surface-secondary:   var(--color-surface-container-low);
+  --color-fond-neutre:         var(--color-surface-container);
+
+  --color-texte-primaire:      var(--color-on-surface);
+  --color-texte-secondaire:    var(--color-on-surface-variant);
+  --color-texte-tertiaire:     var(--color-outline);
+  --color-texte-inverse:       #FFFFFF;
+
+  --color-bordure-neutre:      var(--color-outline-variant);
+  --color-bordure-focus:       var(--color-primary);
+  --color-bordure-erreur:      var(--color-error);
+
+  --color-progres-encours:     var(--color-primary);
+  --color-progres-risque:      #F59E0B;
+  --color-progres-done:        #16A34A;
+
+  --color-lien:                var(--color-primary);
+  --color-lien-visite:         #7C3AED;
+
+  /* ─── Typographie — Web (1280px) §2 ─────────────────────────────────────── */
+  --font-family-corps:         'Inter', sans-serif;
+  --font-family-titre:         'Work Sans', sans-serif;
+
+  --text-h1-size:              28px;
+  --text-h1-weight:            600;
+  --text-h1-line-height:       1.3;
+
+  --text-h2-size:              22px;
+  --text-h2-weight:            600;
+  --text-h2-line-height:       1.35;
+
+  --text-h3-size:              18px;
+  --text-h3-weight:            600;
+  --text-h3-line-height:       1.4;
+
+  --text-body-lg-size:         16px;
+  --text-body-lg-weight:       400;
+  --text-body-lg-line-height:  1.6;
+
+  --text-body-sm-size:         14px;
+  --text-body-sm-weight:       400;
+  --text-body-sm-line-height:  1.5;
+
+  --text-label-size:           12px;
+  --text-label-weight:         600;
+  --text-label-line-height:    1.4;
+
+  --text-caption-size:         12px;
+  --text-caption-weight:       400;
+  --text-caption-line-height:  1.3;
+
+  --text-button-size:          14px;
+  --text-button-weight:        600;
+  --text-button-line-height:   1.0;
+
+  --text-badge-size:           12px;
+  --text-badge-weight:         600;
+  --text-badge-line-height:    1.0;
+
+  /* ─── Espacements §4 ─────────────────────────────────────────────────────── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+
+  /* ─── Ombres §5 ──────────────────────────────────────────────────────────── */
+  --shadow-card-sm:    0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-card-md:    0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-modal:      0 20px 60px rgba(0,0,0,0.15);
+  --shadow-overlay:    0 8px 24px rgba(0,0,0,0.20);
+  --shadow-header:     0 1px 3px rgba(0,0,0,0.10);
+  --shadow-dropdown:   0 4px 16px rgba(0,0,0,0.12);
+
+  /* ─── Bords arrondis §9 ──────────────────────────────────────────────────── */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-full: 9999px;
+
+  /* ─── Animations §7 ──────────────────────────────────────────────────────── */
+  --transition-fast:   150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow:   400ms ease-in-out;
+
+  /* ─── Grille §4 ──────────────────────────────────────────────────────────── */
+  --grid-colonnes:      12;
+  --grid-gouttiere:     24px;
+  --grid-marge:         32px;
+  --grid-max-width:     1216px;
+}
+
+/* ─── Animations globales §7 ─────────────────────────────────────────────── */
+
+.pulse-live {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.slide-down {
+  animation: slideDown 300ms ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp 200ms ease-in;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(-100%); opacity: 0; }
+}
+
+.fade-update {
+  animation: fadeUpdate 600ms ease-in-out;
+}
+
+@keyframes fadeUpdate {
+  0%   { background-color: #DBEAFE; }
+  100% { background-color: transparent; }
+}

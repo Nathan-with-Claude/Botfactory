@@ -7,6 +7,7 @@
 **Priorite** : Should Have
 **Statut** : Prete
 **Complexite estimee** : S
+**Wireframe de référence** : /livrables/02-ux/wireframes.md#M-01 (v1.3 — 2026-04-02)
 
 ---
 
@@ -46,32 +47,45 @@ meme si aucune connexion n'a encore eu lieu.
 - US-036 : repliage apres connexion reussie → memorise en AsyncStorage
 - US-043 : repliage avant connexion (session courante uniquement) → non memorise
 
+**Specifications visuelles (wireframe M-01 v1.3)** :
+- Etat etendu (par defaut) : la card affiche le texte explicatif SSO complet.
+  Le chevron haut [^] est visible en haut a droite de la card (libelle implicite "Reduire").
+- Etat replie (apres appui [^]) : seule la ligne de titre "Comment fonctionne... [v]" est visible.
+  Le chevron bas [v] indique que la card peut etre deployee a nouveau.
+- Le bouton "Se connecter (via compte Docaposte)" est toujours visible sous la card,
+  que celle-ci soit etendue ou repliee — il ne se cache jamais.
+- La version applicative est affichee en pied d'ecran.
+
 **Invariants a respecter** :
 - Le bouton "Se connecter" reste accessible a tout moment, que la card soit etendue ou repliee.
-- Le chevron de la card indique l'etat : pointe vers le haut si etendue (peut etre repliee),
-  vers le bas si repliee (peut etre etendue).
+- Le chevron de la card indique l'etat : [^] si etendue (peut etre repliee),
+  [v] si repliee (peut etre etendue).
 - La logique de memorisation AsyncStorage de US-036 est preservee intacte.
 
 ---
 
 ## Criteres d'acceptation (Gherkin)
 
-### Scenario 1 — Bouton de reduction present des la premiere ouverture
+### Scenario 1 — Bouton de reduction present des la premiere ouverture avec chevron haut visible
 
 ```gherkin
 Given l'application est ouverte pour la premiere fois (aucune connexion precedente en AsyncStorage)
 When ConnexionScreen est affiche
 Then la card SSO est affichee en mode etendu (comportement US-036 preserve)
-And un bouton de reduction (chevron ou icone "Fermer") est visible sur la card
+And le texte explicatif SSO complet est visible dans la card
+And un chevron haut [^] est visible en haut a droite de la card SSO
+And le bouton "Se connecter (via compte Docaposte)" est visible sous la card
 ```
 
-### Scenario 2 — Repliage immediat a la premiere session
+### Scenario 2 — Repliage immediat a la premiere session avec chevron bas
 
 ```gherkin
 Given ConnexionScreen est affiche avec la card SSO etendue (premiere session)
-When le livreur appuie sur le bouton de reduction
+When le livreur appuie sur le chevron haut [^] de la card
 Then la card SSO se replie immediatement dans la session courante
-And le bouton "Se connecter" reste visible et accessible
+And seule la ligne "Comment fonctionne... [v]" est visible dans la card
+And le chevron bas [v] est visible sur la card repliee
+And le bouton "Se connecter (via compte Docaposte)" reste visible et accessible sous la card
 And aucune valeur n'est ecrite en AsyncStorage pour le statut de la card
 ```
 
@@ -93,24 +107,37 @@ When ConnexionScreen est affiche lors de la session suivante
 Then la card SSO est affichee en mode replie (comportement US-036 — memorise en AsyncStorage)
 ```
 
-### Scenario 5 — Card etendue/repliee restent fonctionnelles
+### Scenario 5 — Card repliee peut etre re-etendue via chevron bas
 
 ```gherkin
-Given la card SSO est en mode replie (manuel ou memorise)
-When le livreur appuie sur le chevron bas
-Then la card se re-etend et affiche les explications SSO
-And le bouton de reduction est a nouveau visible
+Given la card SSO est en mode replie (seule la ligne de titre est visible avec [v])
+When le livreur appuie sur le chevron bas [v]
+Then la card se re-etend et affiche le texte explicatif SSO complet
+And le chevron haut [^] est a nouveau visible en haut a droite de la card
+And le bouton "Se connecter (via compte Docaposte)" reste visible sous la card
+```
+
+### Scenario 6 — Bouton connexion accessible en permanence (etat quelconque)
+
+```gherkin
+Given la card SSO est en mode etendu ou en mode replie
+When ConnexionScreen est affiche
+Then le bouton "Se connecter (via compte Docaposte)" est visible et interactif
+And l'appui sur ce bouton declenche la redirection SSO OAuth2 corporate
 ```
 
 ---
 
 ## Definition of Done
 
-- [ ] Bouton de reduction present sur la card SSO des la premiere ouverture.
-- [ ] Repliage immediat dans la session courante (state local, non AsyncStorage).
+- [ ] Chevron haut [^] visible en haut a droite de la card SSO des la premiere ouverture (etat etendu).
+- [ ] Appui sur [^] : card repliee immediatement, seule la ligne de titre + chevron bas [v] visible.
+- [ ] Appui sur [v] : card re-etendue avec texte SSO complet et chevron [^] visible.
+- [ ] Le bouton "Se connecter (via compte Docaposte)" est visible et accessible a tout moment.
+- [ ] Repliage avant connexion : state local uniquement (non memorise en AsyncStorage).
 - [ ] Aucune ecriture AsyncStorage lors d'un repliage avant connexion.
 - [ ] Comportement AsyncStorage de US-036 preserve apres connexion reussie.
-- [ ] Tests unitaires sur ConnexionScreen couvrant les 5 scenarios.
+- [ ] Tests unitaires sur ConnexionScreen couvrant les 6 scenarios.
 - [ ] Aucune regression sur US-036 (memorisation apres connexion) et US-019 (authentification SSO).
 
 ---

@@ -3,6 +3,63 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-04-03T18:30Z @developpeur UPDATE → src/web/supervision/ (tailwind.config.js, postcss.config.js, globals.css, index.tsx, PreparationPage.tsx, TableauDeBordPage.tsx, TopAppBar.tsx, SideNavBar.tsx, AppLayout.tsx)
+  US-027 session 2 : intégration Tailwind CSS v3 + DaisyUI + refactorisation visuelle W-04/W-01 selon design_web_designer.md. 265/265 tests verts. Rétrocompat tests inline styles assurée.
+
+- 2026-04-03T17:00Z @developpeur FIX → src/web/supervision/e2e/US-011-tableau-de-bord.spec.ts
+  OBS-011-02 : TC-011-04 corrigé — totalTournees → actives (alignement modèle domaine TableauDeBord). Tests web 265/265 verts.
+
+- 2026-04-03T17:01Z @developpeur FIX → src/web/supervision/e2e/US-014-envoyer-instruction.spec.ts
+  OBS-014-01 : TC-014-02 isolation données — colisId colis-s-003 → colis-s-014-02 pour éviter 409 avant validation 422.
+
+- 2026-04-03T17:02Z @developpeur FIX → src/mobile/e2e/US-008-capturer-signature.spec.ts, livrables/06-dev/vertical-slices/US-008-impl.md
+  OBS-008-01/TC-270 : timeout étendu 20s + waitForSelector SplashScreen Expo Web + graceful degradation. Limitation documentée dans US-008-impl.md.
+
+- 2026-04-03T17:03Z @developpeur UPDATE → livrables/00-contexte/journaux/journal-developpeur.md, livrables/00-contexte/journaux/archives/journal-developpeur-2026-04.md
+  Mise à jour journal post-session (3 corrections post-QA). Archivage entrées antérieures (journal 141 lignes).
+
+- 2026-04-03T10:15Z @qa RUN → src/mobile, src/web/supervision, src/backend/svc-supervision, src/backend/svc-oms (US-016 à US-030)
+  Campagne re-run US-016 à US-030 — 15 US, toutes PASS (0 FAIL). Détail : US-016 5/5, US-017 23/23, US-018 23/23, US-019 47/47, US-020 15/15, US-021 64/64, US-022 19/19, US-023 40/40, US-024 50/50, US-025 161/161, US-026 88/88, US-027 81/81, US-028 68/68, US-029 22/22, US-030 54/54.
+
+- 2026-04-03T15:30Z @qa RUN → src/backend (svc-tournee/svc-supervision/svc-oms), src/mobile, src/web/supervision (US-001 à US-015)
+  Campagne re-run US-001 à US-015 — L1 : 112/112 + 144/144 + 23/23 + 365/365 + 265/265 PASS (909 tests) — L3 BLOQUE (services DOWN).
+  13 US validées, 2 partielles (US-011 OBS-011-02, US-014 OBS-014-01/02). Archive journal-qa-2026-04.md créée.
+
+- 2026-04-03T14:00Z @qa RUN → src/mobile, src/web/supervision, src/backend (US-031 à US-045)
+  Campagne re-run 11 US (US-031/032/033/034/035/036/037/038/042/043/045) — 532/532 PASS — 0 FAIL.
+  US-031: 36/36, US-032: 144/144, US-033: 256/256, US-034: 43/43, US-035: 28/28,
+  US-036: 16/16, US-037: 51/51, US-038: 4/4, US-042: 27/27, US-043: 10/10, US-045: 17/17.
+
+- 2026-04-03T14:01Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  Ajout 11 lignes interventions re-run + 7 nouvelles US dans tableau de suivi.
+
+- 2026-04-03T12:00Z @qa RUN → src/web/supervision (US-039/040/041/044), src/mobile (US-046)
+  Campagne d'exécution 5 US Sprint 6 : US-039 13/13, US-040 15/15, US-041 14/14, US-044 11/11 (post-fix SC2), US-046 13/13. Total 66/66 PASS.
+
+- 2026-04-03T12:01Z @qa CREATE → /livrables/07-tests/scenarios/US-039-scenarios.md
+  Scénarios créés (7 TCs) — suite 13/13 PASS.
+
+- 2026-04-03T12:02Z @qa CREATE → /livrables/07-tests/scenarios/US-040-scenarios.md
+  Scénarios créés (8 TCs incluant non régression US-028) — suite 15/15 PASS.
+
+- 2026-04-03T12:03Z @qa CREATE → /livrables/07-tests/scenarios/US-041-scenarios.md
+  Scénarios créés (6 TCs incluant 8 cas limites calculerNiveauAlerte) — suite 14/14 PASS.
+
+- 2026-04-03T12:04Z @qa CREATE → /livrables/07-tests/scenarios/US-044-scenarios.md
+  Scénarios créés v2.0 (11 TCs : FD1-FD7 + SC1/SC2/SC3/SC5) — suite 11/11 PASS après correction SC2.
+
+- 2026-04-03T12:05Z @qa CREATE → /livrables/07-tests/scenarios/US-046-scenarios.md
+  Scénarios créés (13 TCs RNTL + 19 non régressions US-008/009) — suite 32/32 PASS.
+
+- 2026-04-03T12:06Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  Suivi des 5 US validées, OBS-SUP-001/002 marquées résolues, interventions journalisées.
+
+- 2026-04-03T09:00Z @developpeur FIX → /livrables/06-dev/vertical-slices/US-044-impl.md, src/web/supervision/src/__tests__/TableauDeBordPage.US044.test.tsx
+  Bug SC2 corrigé : test "compteur 1 min 30 s" affichait "0 s". Cause : advanceTimersByTime(90000) s'exécutait avant le flush React du useEffect créant le setInterval. Fix : ajout d'un act(runAllTimers) préalable. 265/265 tests web verts.
+
+- 2026-04-03T09:01Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Mise à jour suivi US-044 (tests exécutables, 265/265), décisions et interventions bugfix SC2.
+
 - 2026-04-02T16:00Z @po UPDATE → /livrables/05-backlog/user-stories/US-037-historique-consignes-livreur.md
   Enrichissement suite wireframes v1.3 : référence wireframe ajoutée, invariants badges statut colores, scenarios 5b/5c/5d/5e (navigation M-07→M-03, badge disparu au retour, liste vide, offline), scenario 7b (badge M-02 mis à jour), DoD complété.
 

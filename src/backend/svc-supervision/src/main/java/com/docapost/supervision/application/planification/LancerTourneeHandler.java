@@ -3,10 +3,12 @@ package com.docapost.supervision.application.planification;
 import com.docapost.supervision.domain.planification.events.TourneeLancee;
 import com.docapost.supervision.domain.planification.model.TourneePlanifiee;
 import com.docapost.supervision.domain.planification.repository.TourneePlanifieeRepository;
+import com.docapost.supervision.infrastructure.dev.DevEventBridge;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * LancerTourneeHandler — Application Service BC-07 (US-024)
@@ -23,9 +25,14 @@ import java.util.Objects;
 public class LancerTourneeHandler {
 
     private final TourneePlanifieeRepository tourneePlanifieeRepository;
+    private final Optional<DevEventBridge> devEventBridge;
 
-    public LancerTourneeHandler(TourneePlanifieeRepository tourneePlanifieeRepository) {
+    public LancerTourneeHandler(
+            TourneePlanifieeRepository tourneePlanifieeRepository,
+            Optional<DevEventBridge> devEventBridge
+    ) {
         this.tourneePlanifieeRepository = Objects.requireNonNull(tourneePlanifieeRepository);
+        this.devEventBridge = devEventBridge;
     }
 
     /**
@@ -53,6 +60,10 @@ public class LancerTourneeHandler {
                 .orElseThrow(() -> new IllegalStateException("TourneeLancee introuvable après lancer()"));
 
         tournee.clearEvenements();
+
+        // Dev uniquement : propager TourneeLancee vers BC-03 (VueTournee) et BC-01 (svc-tournee)
+        devEventBridge.ifPresent(bridge -> bridge.propaguerTourneeLancee(tourneeLancee));
+
         return tourneeLancee;
     }
 

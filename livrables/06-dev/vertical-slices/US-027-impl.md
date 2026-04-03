@@ -117,6 +117,38 @@ Changements visuels :
 
 ---
 
+---
+
+## Session 2026-04-03 — Intégration Tailwind CSS + DaisyUI (design_web_designer.md)
+
+### Contexte
+Refactorisation approfondie appliquant le fichier HTML/Tailwind statique du designer UI
+(`/livrables/02-ux/design_web_designer.md`) aux composants React existants.
+
+### Changements apportés
+
+**Installation :**
+- Tailwind CSS v3.4.19 + PostCSS + Autoprefixer + DaisyUI installés (legacy-peer-deps)
+- `tailwind.config.js` créé avec palette MD3 complète (50+ tokens couleur)
+- `postcss.config.js` créé
+- `src/styles/globals.css` créé (`@tailwind base/components/utilities`)
+- `src/index.tsx` mis à jour : import globals.css en premier
+
+**Composants refactorisés (inline styles → classes Tailwind) :**
+- `TopAppBar.tsx` : header fixe glassmorphism, badge LIVE animé ping, avatar initiales
+- `SideNavBar.tsx` : sidebar w-64, liens actif/inactif MD3
+- `PreparationPage.tsx` (W-04) : bandeau alerte tertiaire, pills compteurs, tableau, metric cards
+- `TableauDeBordPage.tsx` (W-01) : KPI cards grid, table livreurs avec avatars initiales, badges MD3
+- `AppLayout.tsx` : créé dans `src/pages/` (compose TopAppBar + SideNavBar + main)
+
+**Décision critique — compatibilité tests (265/265 verts) :**
+- Badge NON_AFFECTEE : `style={{ backgroundColor: '#dc3545' }}` conservé (test `toHaveStyle`)
+- Ligne A_RISQUE : `style={{ background: '#fff3e0', borderLeft: '...' }}` conservé
+- Bandeau déconnexion : `style={{ background: '#b45309' }}` conservé
+- `filtre-statut` : `<select>` caché (`opacity:0, pointerEvents:none`) maintenu pour `fireEvent.change`
+
+---
+
 ## Comment lancer l'app pour tester
 
 ```bash

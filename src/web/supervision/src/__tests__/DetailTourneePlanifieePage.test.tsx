@@ -3,7 +3,9 @@ import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import DetailTourneePlanifieePage, {
   TourneePlanifieeDetailDTO,
   LivreurDisponible,
-  VehiculeDisponible
+  VehiculeDisponible,
+  CompatibiliteVehiculeDTO,
+  VehiculeCompatibleDTO
 } from '../pages/DetailTourneePlanifieePage';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -277,6 +279,362 @@ describe('DetailTourneePlanifieePage — US-023', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('message-succes')).toBeTruthy();
+    });
+  });
+});
+
+// ─── Tests US-030 : Vérification compatibilité véhicule ───────────────────────
+
+describe('DetailTourneePlanifieePage — US-030', () => {
+
+  function detailAvecPoids(poidsEstimeKg: number): TourneePlanifieeDetailDTO {
+    return {
+      ...detailMock(),
+      poidsEstimeKg,
+    };
+  }
+
+  it('affiche l\'indicateur COMPATIBLE quand la vérification retourne compatible', async () => {
+    const compatibleResponse: CompatibiliteVehiculeDTO = {
+      resultat: 'COMPATIBLE', poidsEstimeKg: 350, capaciteKg: 600,
+      margeOuDepassementKg: 250, vehiculeId: 'VH-07', message: 'Compatible',
+    };
+
+    const fetchFn = jest.fn().mockImplementation((_url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (_url as string).includes('verifier-compatibilite')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => compatibleResponse } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(350) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    // Sélectionner livreur puis véhicule → déclenche la vérification
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('indicateur-compatibilite-COMPATIBLE')).toBeTruthy();
+    });
+  });
+
+  it('affiche l\'indicateur DEPASSEMENT et le bouton "Réaffecter" quand dépassement détecté', async () => {
+    const depassementResponse: CompatibiliteVehiculeDTO = {
+      resultat: 'DEPASSEMENT', poidsEstimeKg: 410, capaciteKg: 400,
+      margeOuDepassementKg: 10, vehiculeId: 'VH-09', message: 'VH-09 : capacité 400 kg, tournée 410 kg.',
+    };
+
+    const fetchFn = jest.fn().mockImplementation((_url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (_url as string).includes('verifier-compatibilite')) {
+        return Promise.resolve({ ok: false, status: 409, json: async () => depassementResponse } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(410) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('indicateur-compatibilite-DEPASSEMENT')).toBeTruthy();
+      expect(screen.getByTestId('btn-reaffecter-vehicule-plus-grand')).toBeTruthy();
+    });
+  });
+
+  it('le bouton "Valider et Lancer" est désactivé si dépassement non forcé', async () => {
+    const depassementResponse: CompatibiliteVehiculeDTO = {
+      resultat: 'DEPASSEMENT', poidsEstimeKg: 410, capaciteKg: 400,
+      margeOuDepassementKg: 10, vehiculeId: 'VH-09', message: 'Surcharge.',
+    };
+
+    const fetchFn = jest.fn().mockImplementation((_url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (_url as string).includes('verifier-compatibilite')) {
+        return Promise.resolve({ ok: false, status: 409, json: async () => depassementResponse } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(410) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+
+    await waitFor(() => {
+      const btnLancer = screen.getByTestId('btn-valider-et-lancer') as HTMLButtonElement;
+      expect(btnLancer.disabled).toBe(true);
+    });
+  });
+});
+
+// ─── Tests US-034 : Réaffectation vers un véhicule plus grand ─────────────────
+
+describe('DetailTourneePlanifieePage — US-034', () => {
+
+  function detailAvecPoids(poidsEstimeKg: number): TourneePlanifieeDetailDTO {
+    return { ...detailMock(), poidsEstimeKg };
+  }
+
+  const depassementInitial: CompatibiliteVehiculeDTO = {
+    resultat: 'DEPASSEMENT', poidsEstimeKg: 410, capaciteKg: 400,
+    margeOuDepassementKg: 10, vehiculeId: 'VH-09', message: 'Surcharge.',
+  };
+
+  const vehiculesCompatiblesMock: VehiculeCompatibleDTO[] = [
+    { vehiculeId: 'VH-02', immatriculation: 'VH-02', capaciteKg: 600, typeVehicule: 'FOURGON', disponible: true },
+    { vehiculeId: 'VH-01', immatriculation: 'VH-01', capaciteKg: 800, typeVehicule: 'FOURGON', disponible: true },
+  ];
+
+  it('SC1 — le bouton "Réaffecter à un véhicule plus grand" est visible après dépassement', async () => {
+    const fetchFn = jest.fn().mockImplementation((_url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (_url as string).includes('verifier-compatibilite')) {
+        return Promise.resolve({ ok: false, status: 409, json: async () => depassementInitial } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(410) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-reaffecter-vehicule-plus-grand')).toBeTruthy();
+    });
+  });
+
+  it('SC2 — cliquer sur "Réaffecter" ouvre le panneau avec la liste filtrée', async () => {
+    const fetchFn = jest.fn().mockImplementation((url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (url as string).includes('verifier-compatibilite')) {
+        return Promise.resolve({ ok: false, status: 409, json: async () => depassementInitial } as unknown as Response);
+      }
+      if ((url as string).includes('vehicules/compatibles')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => vehiculesCompatiblesMock } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(410) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+
+    await waitFor(() => screen.getByTestId('btn-reaffecter-vehicule-plus-grand'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-reaffecter-vehicule-plus-grand'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('panneau-reaffectation')).toBeTruthy();
+      expect(screen.getByTestId('liste-vehicules-compatibles')).toBeTruthy();
+      expect(screen.getByTestId('vehicule-compatible-VH-02')).toBeTruthy();
+      expect(screen.getByTestId('vehicule-compatible-VH-01')).toBeTruthy();
+    });
+  });
+
+  it('SC3 — sélectionner un véhicule compatible ferme le panneau et affiche succès', async () => {
+    const compatibleApresReaffectation: CompatibiliteVehiculeDTO = {
+      resultat: 'COMPATIBLE', poidsEstimeKg: 410, capaciteKg: 600,
+      margeOuDepassementKg: 190, vehiculeId: 'VH-02', message: 'Compatible.',
+    };
+
+    const fetchFn = jest.fn().mockImplementation((url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (url as string).includes('verifier-compatibilite')) {
+        return Promise.resolve({ ok: false, status: 409, json: async () => depassementInitial } as unknown as Response);
+      }
+      if ((url as string).includes('vehicules/compatibles')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => vehiculesCompatiblesMock } as unknown as Response);
+      }
+      if (options?.method === 'POST' && (url as string).includes('reaffecter-vehicule')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => compatibleApresReaffectation } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(410) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+    await waitFor(() => screen.getByTestId('btn-reaffecter-vehicule-plus-grand'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-reaffecter-vehicule-plus-grand'));
+    });
+    await waitFor(() => screen.getByTestId('btn-selectionner-vehicule-VH-02'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-selectionner-vehicule-VH-02'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('message-succes')).toBeTruthy();
+      expect(screen.queryByTestId('panneau-reaffectation')).toBeNull();
+    });
+  });
+
+  it('SC4 — le panneau affiche "Aucun véhicule disponible" si liste vide', async () => {
+    const fetchFn = jest.fn().mockImplementation((url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (url as string).includes('verifier-compatibilite')) {
+        return Promise.resolve({ ok: false, status: 409, json: async () => depassementInitial } as unknown as Response);
+      }
+      if ((url as string).includes('vehicules/compatibles')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => [] } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(410) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+    await waitFor(() => screen.getByTestId('btn-reaffecter-vehicule-plus-grand'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-reaffecter-vehicule-plus-grand'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('panneau-reaffectation')).toBeTruthy();
+      expect(screen.getByTestId('aucun-vehicule-disponible')).toBeTruthy();
+    });
+  });
+
+  it('SC5 — le bouton "Réaffecter" disparaît après forçage via "Affecter quand même"', async () => {
+    const depassementForce: CompatibiliteVehiculeDTO = {
+      resultat: 'DEPASSEMENT', poidsEstimeKg: 410, capaciteKg: 400,
+      margeOuDepassementKg: 10, vehiculeId: 'VH-09', message: 'Dépassement forcé.',
+    };
+
+    let appelCount = 0;
+    const fetchFn = jest.fn().mockImplementation((url: string, options?: RequestInit) => {
+      if (options?.method === 'POST' && (url as string).includes('verifier-compatibilite')) {
+        appelCount++;
+        const rep = appelCount === 1 ? depassementInitial : depassementForce;
+        return Promise.resolve({ ok: true, status: 200, json: async () => rep } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAvecPoids(410) } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-203"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('select-livreur'), { target: { value: 'livreur-001' } });
+      fireEvent.change(screen.getByTestId('select-vehicule'), { target: { value: 'VH-07' } });
+    });
+    await waitFor(() => screen.getByTestId('btn-affecter-quand-meme'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-affecter-quand-meme'));
+    });
+
+    await waitFor(() => {
+      // Après forçage, le bouton "Réaffecter" disparaît
+      expect(screen.queryByTestId('btn-reaffecter-vehicule-plus-grand')).toBeNull();
     });
   });
 });

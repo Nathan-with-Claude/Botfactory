@@ -68,10 +68,12 @@ test.describe('US-011 — Backend : Tableau de bord des tournees', () => {
     if (response.status() !== 200) return;
     const body = await response.json();
 
-    expect(body.bandeau).toHaveProperty('totalTournees');
+    // OBS-011-02 corrigé : le champ s'appelle 'actives' (tournées EN_COURS) dans l'API,
+    // non 'totalTournees'. Alignement du test sur le modèle de domaine TableauDeBord.
+    expect(body.bandeau).toHaveProperty('actives');
     expect(body.bandeau).toHaveProperty('aRisque');
     expect(body.bandeau).toHaveProperty('cloturees');
-    expect(typeof body.bandeau.totalTournees).toBe('number');
+    expect(typeof body.bandeau.actives).toBe('number');
   });
 
   test('TC-011-05 : DevDataSeeder - au moins une tournee EN_COURS dans le tableau de bord', async ({ request }) => {

@@ -1,0 +1,10 @@
+/**
+ * globals.css — Tailwind CSS base directives pour DocuPost Web Supervision
+ *
+ * Importé dans index.tsx AVANT tokens.css pour que les tokens CSS
+ * puissent surcharger les valeurs Tailwind.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

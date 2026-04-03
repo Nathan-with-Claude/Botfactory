@@ -38,8 +38,18 @@ public class VueTourneeEntity {
     @Column(name = "derniere_activite")
     private Instant derniereActivite;
 
+    // US-035 — Champs pour la recherche multi-critères tableau de bord
+    @Column(name = "code_tms")
+    private String codeTMS;
+
+    @Column(name = "zone")
+    private String zone;
+
     protected VueTourneeEntity() {}
 
+    /**
+     * Constructeur minimal (rétrocompatibilité US-011/013) — codeTMS et zone null.
+     */
     public VueTourneeEntity(
             String tourneeId,
             String livreurNom,
@@ -49,6 +59,23 @@ public class VueTourneeEntity {
             StatutTourneeVue statut,
             Instant derniereActivite
     ) {
+        this(tourneeId, livreurNom, colisTraites, colisTotal, pourcentage, statut, derniereActivite, null, null);
+    }
+
+    /**
+     * Constructeur complet avec codeTMS et zone (US-035).
+     */
+    public VueTourneeEntity(
+            String tourneeId,
+            String livreurNom,
+            int colisTraites,
+            int colisTotal,
+            int pourcentage,
+            StatutTourneeVue statut,
+            Instant derniereActivite,
+            String codeTMS,
+            String zone
+    ) {
         this.tourneeId = tourneeId;
         this.livreurNom = livreurNom;
         this.colisTraites = colisTraites;
@@ -56,6 +83,8 @@ public class VueTourneeEntity {
         this.pourcentage = pourcentage;
         this.statut = statut;
         this.derniereActivite = derniereActivite;
+        this.codeTMS = codeTMS;
+        this.zone = zone;
     }
 
     // Getters / Setters
@@ -72,4 +101,8 @@ public class VueTourneeEntity {
     public void setStatut(StatutTourneeVue statut) { this.statut = statut; }
     public Instant getDerniereActivite() { return derniereActivite; }
     public void setDerniereActivite(Instant derniereActivite) { this.derniereActivite = derniereActivite; }
+    public String getCodeTMS() { return codeTMS; }
+    public void setCodeTMS(String codeTMS) { this.codeTMS = codeTMS; }
+    public String getZone() { return zone; }
+    public void setZone(String zone) { this.zone = zone; }
 }

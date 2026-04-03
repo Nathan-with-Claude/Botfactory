@@ -1,14 +1,13 @@
 # Features DocuPost (par Epic)
 
-> Document de référence — Version 1.0 — 2026-03-19
-> Produit par le Product Owner à partir des livrables vision, UX et architecture métier.
+> Document de référence — Version 1.1 — 2026-04-02
+> Mis à jour par le Product Owner suite aux wireframes v1.3 (design_web_designer.md).
+> Produit à partir des livrables vision, UX et architecture métier.
 > Chaque Feature correspond à une capacité fonctionnelle d'un Bounded Context.
 > Les termes sont issus de l'Ubiquitous Language (/livrables/03-architecture-metier/domain-model.md).
 
 ---
 
-<<<<<<< Updated upstream
-=======
 ## EPIC-007 : Planification et Préparation des Tournées (interface web logisticien)
 
 ### F-018 : Import et visualisation du plan du jour
@@ -79,7 +78,6 @@ User Stories rattachées :
 
 ---
 
->>>>>>> Stashed changes
 ## EPIC-001 : Exécution de la Tournée (application mobile livreur)
 
 ### F-001 : Chargement et prise en main de la tournée
@@ -195,6 +193,8 @@ est automatiquement horodatée et géolocalisée.
 User Stories rattachées :
 - US-008 : Capturer une signature numérique comme preuve de livraison
 - US-009 : Capturer une photo ou identifier un tiers comme preuve de livraison
+- US-046 : Integrer le pad de trace reel pour la capture de signature numerique dans M-04
+  (Must Have — bloquant legal — remplace la dette technique pad simule de US-008)
 
 ---
 
@@ -292,15 +292,20 @@ User Stories rattachées :
 **Description** : Livrer en temps réel une notification push au livreur lorsque le
 superviseur envoie une instruction, avec affichage d'un bandeau overlay sur l'écran
 courant de l'application mobile et mise à jour automatique de la liste de colis.
+L'historique des consignes du jour est consultable depuis l'écran M-07 "Mes consignes"
+(accessible depuis le header de M-02), avec badges de statut NOUVELLE / PRISE EN COMPTE /
+EXÉCUTÉE, horodatage adaptatif et navigation vers le colis associé.
 
 **Capability** : 4.1.1 Transmission d'instruction + 4.1.2 Notification d'ajout de colis
-**Screens couverts** : M-06 (Notification d'instruction reçue)
-**Domain Events** : InstructionReçue, TournéeModifiée
+**Screens couverts** : M-06 (Notification d'instruction reçue), M-07 (Mes consignes — wireframe v1.3)
+**Domain Events** : InstructionReçue, InstructionPriseEnCompte, TournéeModifiée
 **Priorité MoSCoW** : Must Have
+**Design** : /livrables/02-ux/wireframes.md#M-07, /livrables/02-ux/design_web_designer.md
 
 User Stories rattachées :
 - US-016 : Recevoir une notification push quand le superviseur modifie ma tournée
 - US-037 : Accéder à l'historique des consignes superviseur reçues dans la journée
+- US-042 : Afficher la date et l'heure d'émission de chaque consigne dans M-07
 
 ---
 
@@ -499,13 +504,16 @@ User Stories rattachees :
 
 **Description** : En tant que livreur terrain, je veux pouvoir replier la card SSO des
 la premiere ouverture, avant de me connecter, afin d'acceder directement au bouton de
-connexion quand j'ai deja mes identifiants en main.
+connexion quand j'ai deja mes identifiants en main. La card presente un chevron haut [^]
+visible en etat etendu (par defaut) et un chevron bas [v] en etat replie. Le bouton
+"Se connecter" reste accessible a tout moment, quel que soit l'etat de la card.
 
 **Capability** : 6.1.1 Connexion SSO (UX onboarding)
-**Screens couverts** : M-01 (Connexion mobile)
+**Screens couverts** : M-01 (Connexion mobile — wireframe v1.3)
 **Domain Events** : aucun
 **Priorite MoSCoW** : Should Have
 **Dependances** : US-036 (card SSO retractable apres connexion)
+**Design** : /livrables/02-ux/wireframes.md#M-01, /livrables/02-ux/design_web_designer.md
 
 User Stories rattachees :
 
@@ -520,12 +528,16 @@ User Stories rattachees :
 **Description** : En tant que livreur qui utilise l'application pour la premiere fois, je
 veux voir une indication visuelle sur les cartes colis pour decouvrir le geste swipe gauche,
 afin d'adopter la fonctionnalite de declaration rapide d'echec sans formation prealable.
+Le hint affiche le texte exact "← Glissez vers la gauche pour declarer un probleme" sous
+chaque carte colis, disparait apres 3 utilisations reussies (seuil configurable), et inclut
+une option de micro-animation fremissement 8px au premier chargement.
 
 **Capability** : 1.3.1 Saisie du motif normalise (onboarding gestuel)
-**Screens couverts** : M-02 (liste des colis)
+**Screens couverts** : M-02 (liste des colis — wireframe v1.3)
 **Domain Events** : aucun (affordance visuelle uniquement)
 **Priorite MoSCoW** : Could Have
 **Dependances** : US-029 (swipe rapide echec livraison)
+**Design** : /livrables/02-ux/wireframes.md#M-02, /livrables/02-ux/design_web_designer.md
 
 User Stories rattachees :
 

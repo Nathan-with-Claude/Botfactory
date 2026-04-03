@@ -27,6 +27,7 @@ import com.docapost.tournee.interfaces.dto.ConfirmerLivraisonRequest;
 import com.docapost.tournee.interfaces.dto.DeclarerEchecRequest;
 import com.docapost.tournee.interfaces.dto.PreuveLivraisonDTO;
 import com.docapost.tournee.interfaces.dto.RecapitulatifTourneeDTO;
+import com.docapost.tournee.infrastructure.supervision.SupervisionNotifier;
 import com.docapost.tournee.interfaces.dto.TourneeDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -76,19 +77,22 @@ public class TourneeController {
     private final DeclarerEchecLivraisonHandler declarerEchecLivraisonHandler;
     private final CloturerTourneeHandler cloturerTourneeHandler;
     private final ConfirmerLivraisonHandler confirmerLivraisonHandler;
+    private final SupervisionNotifier supervisionNotifier;
 
     public TourneeController(
             ConsulterListeColisHandler consulterListeColisHandler,
             ConsulterDetailColisHandler consulterDetailColisHandler,
             DeclarerEchecLivraisonHandler declarerEchecLivraisonHandler,
             CloturerTourneeHandler cloturerTourneeHandler,
-            ConfirmerLivraisonHandler confirmerLivraisonHandler
+            ConfirmerLivraisonHandler confirmerLivraisonHandler,
+            SupervisionNotifier supervisionNotifier
     ) {
         this.consulterListeColisHandler = consulterListeColisHandler;
         this.consulterDetailColisHandler = consulterDetailColisHandler;
         this.declarerEchecLivraisonHandler = declarerEchecLivraisonHandler;
         this.cloturerTourneeHandler = cloturerTourneeHandler;
         this.confirmerLivraisonHandler = confirmerLivraisonHandler;
+        this.supervisionNotifier = supervisionNotifier;
     }
 
     /**
@@ -169,7 +173,8 @@ public class TourneeController {
     public ResponseEntity<ColisDTO> declarerEchecLivraison(
             @PathVariable String tourneeId,
             @PathVariable String colisId,
-            @RequestBody DeclarerEchecRequest request
+            @RequestBody DeclarerEchecRequest request,
+            Authentication authentication
     ) {
         DeclarerEchecLivraisonCommand command = new DeclarerEchecLivraisonCommand(
                 new TourneeId(tourneeId),
@@ -181,6 +186,9 @@ public class TourneeController {
 
         try {
             Colis colis = declarerEchecLivraisonHandler.handle(command);
+            // US-032 — Notifier svc-supervision avec le vrai livreurId (Bloquant 1)
+            String livreurId = authentication != null ? authentication.getName() : "inconnu";
+            supervisionNotifier.notifierAsync("ECHEC_DECLAREE", tourneeId, livreurId, colisId);
             return ResponseEntity.ok(ColisDTO.from(colis));
         } catch (TourneeNotFoundException | ColisNotFoundException ex) {
             return ResponseEntity.notFound().build();
@@ -216,7 +224,8 @@ public class TourneeController {
     public ResponseEntity<PreuveLivraisonDTO> confirmerLivraison(
             @PathVariable String tourneeId,
             @PathVariable String colisId,
-            @RequestBody ConfirmerLivraisonRequest request
+            @RequestBody ConfirmerLivraisonRequest request,
+            Authentication authentication
     ) {
         try {
             Coordonnees coordonnees = null;
@@ -249,6 +258,9 @@ public class TourneeController {
             };
 
             PreuveLivraison preuve = confirmerLivraisonHandler.handle(command);
+            // US-032 — Notifier svc-supervision avec le vrai livreurId (Bloquant 1)
+            String livreurId = authentication != null ? authentication.getName() : "inconnu";
+            supervisionNotifier.notifierAsync("COLIS_LIVRE", tourneeId, livreurId, colisId);
             return ResponseEntity.ok(PreuveLivraisonDTO.from(preuve));
         } catch (TourneeNotFoundException | ColisNotFoundException ex) {
             return ResponseEntity.notFound().build();
@@ -273,12 +285,16 @@ public class TourneeController {
      */
     @PostMapping("/{tourneeId}/cloture")
     public ResponseEntity<RecapitulatifTourneeDTO> cloturerTournee(
-            @PathVariable String tourneeId
+            @PathVariable String tourneeId,
+            Authentication authentication
     ) {
         CloturerTourneeCommand command = new CloturerTourneeCommand(new TourneeId(tourneeId));
 
         try {
             RecapitulatifTourneeResult recap = cloturerTourneeHandler.handle(command);
+            // US-032 — Notifier svc-supervision avec le vrai livreurId (Bloquant 1)
+            String livreurId = authentication != null ? authentication.getName() : "inconnu";
+            supervisionNotifier.notifierAsync("TOURNEE_CLOTUREE", tourneeId, livreurId, null);
             return ResponseEntity.ok(RecapitulatifTourneeDTO.from(recap));
         } catch (TourneeNotFoundException ex) {
             return ResponseEntity.notFound().build();

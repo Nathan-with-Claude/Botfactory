@@ -51,7 +51,8 @@ const PanneauInstructionPage: React.FC<PanneauInstructionPageProps> = ({
 
   // REPROGRAMMER requiert date + heure cibles
   const creneauValide = type !== 'REPROGRAMMER' || (dateCible.length > 0 && heureCible.length > 0);
-  const peutEnvoyer = creneauValide && envoi !== 'loading';
+  // Bloquant 4 — désactivé aussi après succès pour éviter les doublons
+  const peutEnvoyer = creneauValide && envoi !== 'loading' && envoi !== 'succes';
 
   const creneauCibleISO = type === 'REPROGRAMMER' && dateCible && heureCible
     ? new Date(`${dateCible}T${heureCible}:00`).toISOString()
@@ -155,10 +156,12 @@ const PanneauInstructionPage: React.FC<PanneauInstructionPageProps> = ({
           {livreurNom && <> — Livreur : <strong>{livreurNom}</strong></>}
         </p>
 
-        {/* Toast succès */}
+        {/* Toast succès — Bloquant 4 : mention livreur + "notifié" + accessibilité */}
         {envoi === 'succes' && (
           <div
             data-testid="toast-succes"
+            role="status"
+            aria-live="polite"
             style={{
               background: '#e8f5e9',
               color: '#2e7d32',
@@ -166,10 +169,16 @@ const PanneauInstructionPage: React.FC<PanneauInstructionPageProps> = ({
               borderRadius: 4,
               marginBottom: 16,
               fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
-            Instruction envoyée
-            {livreurNom ? ` à ${livreurNom}` : ''} !
+            <span>✓</span>
+            <span>
+              Instruction envoyée{livreurNom ? ` à ${livreurNom}` : ''}.{' '}
+              Le livreur a été notifié.
+            </span>
           </div>
         )}
 

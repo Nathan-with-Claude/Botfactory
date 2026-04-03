@@ -71,6 +71,13 @@ public class InstructionRepositoryImpl implements InstructionRepository {
                 .stream().map(this::toInstruction).toList();
     }
 
+    @Override
+    public List<Instruction> findEnCoursParTournee(String tourneeId) {
+        return jpaRepository.findByTourneeIdAndStatutIn(tourneeId,
+                java.util.List.of(StatutInstruction.ENVOYEE, StatutInstruction.PRISE_EN_COMPTE))
+                .stream().map(this::toInstruction).toList();
+    }
+
     private Instruction toInstruction(InstructionEntity e) {
         return Instruction.reconstruire(
                 e.getInstructionId(), e.getTourneeId(), e.getColisId(),

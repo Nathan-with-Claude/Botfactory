@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,6 +44,8 @@ class PlanificationControllerTest {
     @MockBean private ValiderCompositionHandler validerCompositionHandler;
     @MockBean private AffecterLivreurVehiculeHandler affecterHandler;
     @MockBean private LancerTourneeHandler lancerTourneeHandler;
+    @MockBean private VerifierCompatibiliteVehiculeHandler verifierCompatibiliteHandler;
+    @MockBean private ReaffecterVehiculeHandler reaffecterVehiculeHandler;
 
     // ─── US-021 : Visualiser plan du jour ─────────────────────────────────────
 
@@ -152,7 +155,7 @@ class PlanificationControllerTest {
     @DisplayName("POST /api/planification/tournees/{id}/lancer retourne 200 si lancement réussi")
     @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
     void lancerTournee_retourne_200() throws Exception {
-        TourneeLancee event = new TourneeLancee("tp-002", "T-202", "livreur-001", "Pierre Morel", "superviseur-001", Instant.now());
+        TourneeLancee event = new TourneeLancee("tp-002", "T-202", "livreur-001", "Pierre Morel", "superviseur-001", Instant.now(), 10);
         TourneePlanifiee tourneeLancee = tourneeLancee("tp-002", "T-202", LocalDate.now());
         when(lancerTourneeHandler.handle(any())).thenReturn(event);
         when(consulterDetailHandler.handle(any())).thenReturn(tourneeLancee);
@@ -183,6 +186,125 @@ class PlanificationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nbTourneesLancees").value(3))
                 .andExpect(jsonPath("$.message").value("3 tournée(s) lancée(s) avec succès."));
+    }
+
+    // ─── US-030 : Vérifier compatibilité véhicule ─────────────────────────────
+
+    @Test
+    @DisplayName("POST /api/planification/tournees/{id}/verifier-compatibilite-vehicule retourne 200 si compatible")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void verifierCompatibiliteVehicule_retourne_200_si_compatible() throws Exception {
+        CompatibiliteVehiculeResultatDTO resultat = CompatibiliteVehiculeResultatDTO.compatible("VH-07", 350, 500);
+        when(verifierCompatibiliteHandler.handle(any())).thenReturn(resultat);
+
+        mockMvc.perform(post("/api/planification/tournees/tp-001/verifier-compatibilite-vehicule")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"vehiculeId":"VH-07","forcerSiDepassement":false}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultat").value("COMPATIBLE"))
+                .andExpect(jsonPath("$.capaciteKg").value(500))
+                .andExpect(jsonPath("$.margeOuDepassementKg").value(150));
+    }
+
+    @Test
+    @DisplayName("POST /api/planification/tournees/{id}/verifier-compatibilite-vehicule retourne 409 si dépassement")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void verifierCompatibiliteVehicule_retourne_409_si_depassement() throws Exception {
+        when(verifierCompatibiliteHandler.handle(any()))
+                .thenThrow(new CapaciteVehiculeDepasseeException("VH-09", 400, 410));
+
+        mockMvc.perform(post("/api/planification/tournees/tp-001/verifier-compatibilite-vehicule")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"vehiculeId":"VH-09","forcerSiDepassement":false}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.resultat").value("DEPASSEMENT"));
+    }
+
+    // ─── US-034 : Réaffecter véhicule ─────────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/planification/vehicules/compatibles retourne 200 avec liste filtrée")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void getVehiculesCompatibles_retourne_200_avec_liste_filtree() throws Exception {
+        List<Vehicule> compatibles = List.of(
+                new Vehicule(new VehiculeId("VH-02"), "VH-02", 600, TypeVehicule.FOURGON),
+                new Vehicule(new VehiculeId("VH-01"), "VH-01", 800, TypeVehicule.FOURGON)
+        );
+        when(reaffecterVehiculeHandler.rechercherVehiculesCompatibles(anyInt(), any())).thenReturn(compatibles);
+
+        mockMvc.perform(get("/api/planification/vehicules/compatibles")
+                        .param("poidsMinKg", "410"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].vehiculeId").value("VH-02"))
+                .andExpect(jsonPath("$[0].capaciteKg").value(600));
+    }
+
+    @Test
+    @DisplayName("GET /api/planification/vehicules/compatibles retourne 200 avec liste vide si aucun compatible")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void getVehiculesCompatibles_retourne_200_liste_vide() throws Exception {
+        when(reaffecterVehiculeHandler.rechercherVehiculesCompatibles(anyInt(), any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/planification/vehicules/compatibles")
+                        .param("poidsMinKg", "1000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    @DisplayName("POST /api/planification/tournees/{id}/reaffecter-vehicule retourne 200 si réaffectation réussie")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void reaffecterVehicule_retourne_200_si_compatible() throws Exception {
+        CompatibiliteVehiculeResultatDTO resultat = CompatibiliteVehiculeResultatDTO.compatible("VH-02", 410, 600);
+        when(reaffecterVehiculeHandler.handle(any())).thenReturn(resultat);
+
+        mockMvc.perform(post("/api/planification/tournees/tp-001/reaffecter-vehicule")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nouveauVehiculeId":"VH-02"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultat").value("COMPATIBLE"))
+                .andExpect(jsonPath("$.vehiculeId").value("VH-02"))
+                .andExpect(jsonPath("$.margeOuDepassementKg").value(190));
+    }
+
+    @Test
+    @DisplayName("POST /api/planification/tournees/{id}/reaffecter-vehicule retourne 409 si encore insuffisant")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void reaffecterVehicule_retourne_409_si_encore_insuffisant() throws Exception {
+        when(reaffecterVehiculeHandler.handle(any()))
+                .thenThrow(new CapaciteVehiculeDepasseeException("VH-06", 300, 410));
+
+        mockMvc.perform(post("/api/planification/tournees/tp-001/reaffecter-vehicule")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nouveauVehiculeId":"VH-06"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.resultat").value("DEPASSEMENT"));
+    }
+
+    @Test
+    @DisplayName("POST /api/planification/tournees/{id}/reaffecter-vehicule retourne 404 si tournée introuvable")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void reaffecterVehicule_retourne_404_si_tournee_introuvable() throws Exception {
+        when(reaffecterVehiculeHandler.handle(any()))
+                .thenThrow(new TourneePlanifieeNotFoundException("tp-inconnu"));
+
+        mockMvc.perform(post("/api/planification/tournees/tp-inconnu/reaffecter-vehicule")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nouveauVehiculeId":"VH-02"}
+                                """))
+                .andExpect(status().isNotFound());
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -51,6 +51,9 @@ class ConfirmerLivraisonControllerTest {
     @MockBean
     private ConfirmerLivraisonHandler confirmerLivraisonHandler;
 
+    @MockBean
+    private com.docapost.tournee.infrastructure.supervision.SupervisionNotifier supervisionNotifier;
+
     private static final String TOURNEE_ID = "tournee-dev-001";
     private static final String COLIS_ID = "colis-001";
 

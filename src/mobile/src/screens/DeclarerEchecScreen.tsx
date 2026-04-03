@@ -69,23 +69,30 @@ const DISPOSITIONS_ORDONNEES: Disposition[] = [
 
 const NOTE_MAX_LONGUEUR = 250;
 
+// ─── Constante toast (injectable pour les tests) ─────────────────────────────
+
+const TOAST_DUREE_MS = 2500;
+
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-export const DeclarerEchecScreen: React.FC<DeclarerEchecScreenProps> = ({
+export const DeclarerEchecScreen: React.FC<DeclarerEchecScreenProps & { toastDureeMs?: number }> = ({
   tourneeId,
   colisId,
   destinataireNom,
   onRetour,
   onEchecEnregistre,
+  toastDureeMs = TOAST_DUREE_MS,
 }) => {
   const [motifSelectionne, setMotifSelectionne] = useState<MotifNonLivraison | null>(null);
   const [dispositionSelectionnee, setDispositionSelectionnee] = useState<Disposition | null>(null);
   const [note, setNote] = useState('');
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  // L4 — Toast de confirmation après enregistrement réussi
+  const [toastVisible, setToastVisible] = useState(false);
 
   // Le bouton est actif uniquement si motif ET disposition sont sélectionnés (Scénario 2)
-  const boutonActif = motifSelectionne !== null && dispositionSelectionnee !== null && !enCours;
+  const boutonActif = motifSelectionne !== null && dispositionSelectionnee !== null && !enCours && !toastVisible;
 
   const handleEnregistrer = async () => {
     if (!motifSelectionne || !dispositionSelectionnee) return;
@@ -99,7 +106,12 @@ export const DeclarerEchecScreen: React.FC<DeclarerEchecScreenProps> = ({
         disposition: dispositionSelectionnee,
         noteLibre: note.trim() || undefined,
       });
-      onEchecEnregistre();
+      // L4 — Afficher le toast puis rediriger
+      setToastVisible(true);
+      setTimeout(() => {
+        setToastVisible(false);
+        onEchecEnregistre();
+      }, toastDureeMs);
     } catch (err) {
       if (err instanceof EchecDejaDeClareError) {
         setErreur('Échec déjà déclaré pour ce colis.');
@@ -113,7 +125,16 @@ export const DeclarerEchecScreen: React.FC<DeclarerEchecScreenProps> = ({
 
   return (
     <View style={styles.fullScreen} testID="declarer-echec-screen">
-      {/* Header */}
+      {/* L4 — Toast de confirmation */}
+      {toastVisible && (
+        <View style={styles.toast} testID="toast-echec-enregistre">
+          <Text style={styles.toastTexte}>
+            Echec enregistre — Votre superviseur a ete notifie
+          </Text>
+        </View>
+      )}
+
+      {/* Header — L7 : couleur #C62828 (ratio 5.9:1 blanc/rouge, WCAG AA conforme) */}
       <View style={styles.header}>
         <TouchableOpacity
           testID="bouton-retour"
@@ -182,9 +203,14 @@ export const DeclarerEchecScreen: React.FC<DeclarerEchecScreenProps> = ({
           ))}
         </View>
 
-        {/* Section disposition */}
+        {/* Section disposition — L8 : texte d'aide si aucun motif sélectionné */}
         <View style={styles.section} testID="section-disposition">
           <Text style={styles.sectionTitre}>Que faire de ce colis ?</Text>
+          {motifSelectionne === null && (
+            <Text style={styles.aideDisposition} testID="aide-disposition">
+              Choisissez d'abord un motif pour débloquer cette section
+            </Text>
+          )}
           {DISPOSITIONS_ORDONNEES.map((disposition) => (
             <TouchableOpacity
               key={disposition}
@@ -433,6 +459,36 @@ const styles = StyleSheet.create({
   },
   boutonEnregistrerTexteDesactive: {
     color: '#9E9E9E',
+  },
+  // L4 — Toast de confirmation
+  toast: {
+    position: 'absolute',
+    bottom: 32,
+    left: 16,
+    right: 16,
+    backgroundColor: '#1B5E20',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    zIndex: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  toastTexte: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // L8 — Texte d'aide disposition grisée
+  aideDisposition: {
+    color: '#9E9E9E',
+    fontSize: 13,
+    fontStyle: 'italic',
+    marginBottom: 8,
   },
 });
 

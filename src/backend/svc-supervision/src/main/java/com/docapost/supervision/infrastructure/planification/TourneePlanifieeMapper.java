@@ -39,7 +39,8 @@ public class TourneePlanifieeMapper {
                 entity.getVehiculeId(),
                 entity.getAffecteeLe(),
                 entity.getLancee(),
-                entity.isCompositionVerifiee()
+                entity.isCompositionVerifiee(),
+                entity.getPoidsEstimeKg()
         );
     }
 
@@ -59,7 +60,8 @@ public class TourneePlanifieeMapper {
                 domain.getVehiculeId(),
                 domain.getAffecteeLe(),
                 domain.getLancee(),
-                domain.isCompositionVerifiee()
+                domain.isCompositionVerifiee(),
+                domain.getPoidsEstimeKg()
         );
     }
 

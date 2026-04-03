@@ -280,6 +280,45 @@ Chaque agent dispose d’un fichier de journal dans `/livrables/00-contexte/jour
    - Section **"Points d’attention"** : mettre à jour si de nouveaux risques ou dépendances ont été identifiés
 2. Ajouter une entrée dans `/livrables/CHANGELOG-actions-agents.md`.
 
+### Archivage automatique des journaux
+
+**Seuil** : 150 lignes. En fin de session, avant de mettre à jour le journal, vérifier le nombre de lignes :
+
+```bash
+wc -l /livrables/00-contexte/journaux/journal-[agent].md
+```
+
+Si le fichier dépasse 150 lignes, déclencher l'archivage :
+
+1. **Créer ou compléter** `/livrables/00-contexte/journaux/archives/journal-[agent]-[YYYY-MM].md`
+   (YYYY-MM = mois courant, ex. `2026-04`)
+   Format attendu :
+   ```markdown
+   # Archive — Journal @[agent] — [YYYY-MM]
+   > Archivé le [date ISO]. Source : journal-[agent].md
+
+   ## Interventions archivées
+   | Date | … |
+   | --- | … |
+   [lignes archivées]
+
+   ## Décisions archivées
+   | Date | … |
+   | --- | … |
+   [lignes archivées]
+   ```
+
+2. **Déplacer dans l'archive** :
+   - `## Interventions réalisées` : toutes les lignes de tableau **sauf les 10 dernières**
+   - `## Décisions techniques prises` / `## Décisions structurantes` : toutes les lignes **sauf les 10 dernières**
+
+3. **Dans le journal principal**, remplacer les lignes déplacées par une seule ligne de référence :
+   `> ← Entrées antérieures archivées dans [archives/journal-[agent]-[YYYY-MM].md]`
+
+4. **Ne jamais archiver** : `## Contexte synthétisé`, `## Suivi des User Stories` / `## Suivi des travaux`, `## Points d'attention`.
+
+> Le but est de garder chaque journal sous 150 lignes pour limiter la consommation de tokens en début de session.
+
 ### Format CHANGELOG
 
 Toutes les actions importantes réalisées par les agents

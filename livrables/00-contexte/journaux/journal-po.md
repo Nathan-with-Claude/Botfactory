@@ -8,8 +8,8 @@
 ## Contexte synthétisé
 
 - **Livrables propriété** : `05-backlog/`
-- **État backlog MVP** : 7 Epics / 21 Features / 37 User Stories / 119 story points (MVP inchangé) + 4 US feedback post-cycle dev
-- **Prochaine US libre** : US-038
+- **État backlog MVP** : 8 Epics / 29 Features / 46 User Stories (MVP inchangé) + feedbacks terrain intégrés
+- **Prochaine US libre** : US-047
 
 ### Récapitulatif Epics
 
@@ -22,6 +22,7 @@
 | EPIC-004 | Notification et Messaging | BC-04 | MVP | US-016 |
 | EPIC-005 | Intégration SI et Historisation Immuable | BC-05 | MVP | US-017→018 |
 | EPIC-006 | Authentification et Accès | BC-06 | MVP | US-019→020 |
+| EPIC-008 | Qualité UX et Accessibilité | transverse | Post-MVP | US-038 |
 
 ### Suivi des User Stories
 
@@ -56,31 +57,38 @@
 
 ## Décisions structurantes
 
+> ← Entrées antérieures archivées dans [archives/journal-po-2026-04.md]
+
 | Date | Décision | Justification |
 |------|----------|---------------|
-| 2026-03-19 | US-006 (offline) taille L — non découpée | Complexité offline-first transversale, doit rester unitaire |
-| 2026-03-19 | US-010 "Should Have" (not Must) | Support client peut utiliser solutions intermédiaires en attendant |
-| 2026-03-19 | 1 US = 1 Bounded Context | Cohérence DDD, éviter les US transversales |
-| 2026-03-20 | EPIC-007 en tête du backlog (Parcours 0 = prérequis) | Dépendance technique : US-021→024 doivent être implémentées avant que les livreurs puissent utiliser l'app |
-| 2026-03-20 | US-022 "Should Have" (vérification composition) | Affectation et lancement sont bloquants, vérification détaillée peut être allégée au MVP |
+| 2026-04-01 | Corrections de libelles regroupees en US-038 | Nature homogene — affichage pur |
+| 2026-04-01 | EPIC-008 "Qualite UX et Accessibilite" creee | Pour accueillir les US sans BC metier propre |
+| 2026-04-01 | US-042 est un delta sur US-037 terminee | Nouvelle US plutot que rouverture |
+| 2026-04-01 | US-043 est distinct de US-036 | Comportement session vs memorise AsyncStorage |
+| 2026-04-01 | US-045 priorisee Could Have | Affordance visuelle, non bloquant fonctionnel |
+| 2026-04-02 | US-046 classee Must Have (bloquant legal) | SignatureNumerique sans tracé non opposable |
+| 2026-04-02 | US-037 enrichie avec scenarios M-07 complets | Wireframes v1.3 precisent M-07 (badges statut, liste vide, offline, retour M-02) |
+| 2026-04-02 | US-043 enrichie avec specs chevron [^]/[v] | Wireframes v1.3 precisent le composant visuel de la card SSO |
+| 2026-04-02 | US-045 : texte exact hint et micro-animation | Wireframes v1.3 precisent "← Glissez vers la gauche..." et animation 8px |
+| 2026-04-02 | Conflit git dans features.md resolu | Marqueurs upstream/stashed supprimés, version 1.1 |
 
 ---
 
 ## Interventions réalisées
 
+> ← Entrées antérieures archivées dans [archives/journal-po-2026-04.md]
+
 | Date | Version | Sujet | Fichiers |
 |------|---------|-------|----------|
-| 2026-03-19 | 1.0 | Création backlog initial — 6 Epics, 17 Features, 20 US (US-001→020), definition-mvp | epics.md, features.md, US-001→020, definition-mvp.md |
-| 2026-03-20 | 1.1 | Ajout Parcours 0 — EPIC-007, F-018→021, US-021→024, definition-mvp mise à jour (24 US, 119 pts) | epics.md, features.md, US-021→024, definition-mvp.md |
-| 2026-03-30 | 1.2 | Création US-034→037 issues du feedback terrain 2026-03-30 (4 améliorations non implémentées) | US-034 à US-037, features.md, journal-po.md |
+| 2026-04-02 | 1.4 | Mise à jour US-037, US-043, US-045 suite wireframes v1.3 + résolution conflit features.md | US-037, US-043, US-045, features.md |
 
 ---
 
 ## Points d'attention — prochaines interventions
 
-- **EPIC-007 est un prérequis** : US-021, US-023, US-024 doivent être développées avant US-001 (le livreur ne peut pas consulter sa tournée si personne ne l'a lancée)
+- **EPIC-007 est un prérequis** : US-021, US-023, US-024 doivent être développées avant US-001
 - Ordre de développement recommandé : US-019/020 (SSO) → US-021/023/024 (planification) → US-001 (livreur)
-- **US-046+** prochaine US libre suite à la session du 2026-04-01
+- **US-047+** prochaine US libre
 - Toute nouvelle US doit avoir ses critères d'acceptation en format GIVEN/WHEN/THEN
 
 ### US-034 à US-037 — feedback terrain 2026-03-30
@@ -98,32 +106,25 @@
 
 ---
 
-### US-038 à US-045 — feedback terrain 2026-04-01
+### US-038 à US-046 — feedbacks terrain 2026-04-01 et 2026-04-02
 
 | US | Titre court | Epic | Feature | BC | Priorité | Taille | Source |
 |----|-------------|------|---------|-----|----------|--------|--------|
-| US-038 | Harmonisation libelles UX | EPIC-008 | F-022 | BC-01 / BC-03 | Should Have | S | Feedback livreur + superviseur |
+| US-038 | Harmonisation libellés UX | EPIC-008 | F-022 | BC-01 / BC-03 | Should Have | S | Feedback livreur + superviseur |
 | US-039 | Export CSV bilan tableau de bord (W-01) | EPIC-003 | F-023 | BC-03 | Should Have | M | Feedback superviseur |
 | US-040 | Enrichir colonnes CSV export (destinataire + statut) | EPIC-007 | F-024 | BC-07 | Should Have | S | Feedback superviseur |
-| US-041 | Poids estime + alerte surcharge dans W-04 | EPIC-007 | F-025 | BC-07 | Should Have | M | Feedback superviseur |
+| US-041 | Poids estimé + alerte surcharge dans W-04 | EPIC-007 | F-025 | BC-07 | Should Have | M | Feedback superviseur |
 | US-042 | Horodatage consignes dans M-07 | EPIC-004 | F-027 | BC-04 | Should Have | XS | Feedback livreur |
-| US-043 | Card SSO retractable avant connexion | EPIC-006 | F-028 | BC-06 | Should Have | S | Feedback livreur |
-| US-044 | Compteur duree deconnexion WebSocket | EPIC-003 | F-026 | BC-03 | Should Have | S | Feedback superviseur |
+| US-043 | Card SSO rétractable avant connexion | EPIC-006 | F-028 | BC-06 | Should Have | S | Feedback livreur |
+| US-044 | Compteur durée déconnexion WebSocket | EPIC-003 | F-026 | BC-03 | Should Have | S | Feedback superviseur |
 | US-045 | Hint visuel swipe onboarding | EPIC-001 | F-029 | BC-01 | Could Have | S | Feedback livreur |
+| US-046 | Pad de tracé réel signature numérique dans M-04 | EPIC-002 | F-007 | BC-02 | Must Have | M | Dette technique US-008 + 3x feedback Pierre Morel |
 
-Decisions cles session 2026-04-01 :
+Prochaine US libre : US-047
 
-- Corrections de libelles regroupees en une seule US-038 (nature homogene — affichage pur).
-- EPIC-008 "Qualite UX et Accessibilite" creee pour accueillir les US sans BC metier propre.
-- US-042 est un delta sur US-037 (terminee) — nouvelle US creee plutot que rouverture.
-- US-043 est un comportement distinct de US-036 (session vs memorise AsyncStorage).
-- US-045 priorisee Could Have (affordance visuelle, non bloquant fonctionnel).
+Bugs à traiter par @developpeur (pas de nouvelles US) :
 
-Bugs a traiter par @developpeur (pas de nouvelles US) :
-
-- Signature simulee (US-008) : pad de tracé reel non intégré.
-- Offline silencieux dans ListeColisScreen (US-006 / US-026) : hook useNetworkStatus non branche.
-- Confirmation apres envoi instruction (US-014) : retour visuel manquant.
-- livreurId litteral dans US-032 : "livreur" affiché à la place du nom réel.
-
-Prochaine US libre : US-046
+- Signature simulée (US-008) : pad de tracé réel non intégré → remplacé par US-046.
+- Offline silencieux dans ListeColisScreen (US-006 / US-026) : hook useNetworkStatus non branché.
+- Confirmation après envoi instruction (US-014) : retour visuel manquant.
+- livreurId littéral dans US-032 : "livreur" affiché à la place du nom réel.

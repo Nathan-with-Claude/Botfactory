@@ -44,13 +44,17 @@ interface LancerToutesResponse {
   message: string;
 }
 
-// ─── Styles Badge Statut ──────────────────────────────────────────────────────
+// ─── Badge Statut — classes Tailwind ─────────────────────────────────────────
 
-function badgeStatut(statut: StatutAffectation): { label: string; bg: string; color: string } {
+function badgeStatutClasses(statut: StatutAffectation): { label: string; classes: string } {
+  const base = 'text-[0.6875rem] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter';
   switch (statut) {
-    case 'NON_AFFECTEE': return { label: 'NON AFFECTÉE', bg: '#dc3545', color: '#fff' };
-    case 'AFFECTEE':     return { label: 'AFFECTÉE',     bg: '#198754', color: '#fff' };
-    case 'LANCEE':       return { label: 'LANCÉE',       bg: '#0d6efd', color: '#fff' };
+    case 'NON_AFFECTEE':
+      return { label: 'NON AFFECTÉE', classes: `${base} bg-error-container text-on-error-container` };
+    case 'AFFECTEE':
+      return { label: 'AFFECTÉE',     classes: `${base} bg-primary-container text-on-primary-container` };
+    case 'LANCEE':
+      return { label: 'LANCÉE',       classes: `${base} bg-secondary-container text-on-secondary-container` };
   }
 }
 
@@ -71,7 +75,10 @@ interface PreparationPageProps {
  * Affiche le plan du jour : liste des tournées TMS importées avec bandeau résumé,
  * filtres par statut, et actions (Affecter, Voir détail, Lancer).
  *
- * Source : US-021, US-024
+ * Refactorisé avec Tailwind CSS + design system DocuPost (US-027).
+ * Toute la logique métier est conservée (hooks, state, appels API, data-testid).
+ *
+ * Source : US-021, US-024, US-027
  */
 export default function PreparationPage({
   apiBaseUrl = 'http://localhost:8082',
@@ -169,235 +176,415 @@ export default function PreparationPage({
 
   // ─── Rendu ──────────────────────────────────────────────────────────────────
 
+  const filtresConfig = [
+    { key: 'TOUTES' as const,       label: 'Toutes' },
+    { key: 'NON_AFFECTEE' as const, label: 'Non affectées' },
+    { key: 'AFFECTEE' as const,     label: 'Affectées' },
+    { key: 'LANCEE' as const,       label: 'Lancées' },
+  ];
+
   return (
-    <div data-testid="preparation-page" style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 1100 }}>
+    <div data-testid="preparation-page" className="font-body text-on-surface antialiased">
 
-      {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h1 style={{ fontSize: 22, margin: 0 }}>DocuPost Préparation — {today}</h1>
-      </header>
+      {/* Breadcrumb */}
+      <nav className="mb-6 flex items-center gap-2 text-xs text-outline font-medium">
+        <span>Logistique</span>
+        <span className="material-symbols-outlined text-sm">chevron_right</span>
+        <span className="text-on-surface font-semibold">Plan du jour</span>
+      </nav>
 
-      {/* Bandeau résumé */}
+      {/* Bandeau résumé + alerte non affectées */}
       {plan && (
         <div
           data-testid="bandeau-resume"
-          style={{
-            background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: 6,
-            padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 24
-          }}
+          className="mb-8 p-5 rounded-xl bg-tertiary-fixed flex flex-wrap items-center justify-between gap-4 border-l-[6px] border-tertiary shadow-sm"
         >
-          <span>Plan du jour : <strong data-testid="total-tournees">{plan.totalTournees}</strong> tournées</span>
-          <span><strong style={{ color: '#dc3545' }}>{plan.nonAffectees}</strong> non affectées</span>
-          <span><strong style={{ color: '#198754' }}>{plan.affectees}</strong> affectées</span>
-          <span><strong style={{ color: '#0d6efd' }}>{plan.lancees}</strong> lancées</span>
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Alerte si tournées non affectées */}
+            {plan.nonAffectees > 0 && (
+              <div className="flex flex-col">
+                <span className="text-[0.65rem] font-bold uppercase tracking-widest text-on-tertiary-fixed-variant">
+                  Alerte Préparation
+                </span>
+                <span className="text-sm font-semibold text-on-tertiary-fixed">
+                  Il reste {plan.nonAffectees} tournée{plan.nonAffectees > 1 ? 's' : ''} non affectée{plan.nonAffectees > 1 ? 's' : ''} à un livreur.
+                </span>
+              </div>
+            )}
 
-          {plan.affectees > 0 && plan.lancees === 0 && (
+            {/* Séparateur */}
+            {plan.nonAffectees > 0 && (
+              <div className="h-10 w-px bg-tertiary-fixed-dim opacity-30 hidden md:block" />
+            )}
+
+            {/* Compteurs pills */}
+            <div className="flex flex-wrap gap-2">
+              <div className="bg-surface-container-lowest px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
+                <span className="text-xs font-bold text-outline">Toutes</span>
+                <span
+                  className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold"
+                  data-testid="total-tournees"
+                >
+                  {plan.totalTournees}
+                </span>
+              </div>
+              <div className="bg-error-container px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
+                <span className="text-xs font-bold text-on-error-container">Non affectées</span>
+                <span className="bg-error text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                  {plan.nonAffectees}
+                </span>
+              </div>
+              <div className="bg-secondary-container px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
+                <span className="text-xs font-bold text-on-secondary-container">Affectées</span>
+                <span className="bg-secondary text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                  {plan.affectees}
+                </span>
+              </div>
+              <div className="bg-primary-fixed-dim px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
+                <span className="text-xs font-bold text-on-primary-fixed">Lancées</span>
+                <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                  {plan.lancees}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-3">
+            {/* Rafraîchir depuis TMS */}
             <button
-              data-testid="btn-lancer-toutes"
-              onClick={lancerToutes}
-              style={{
-                marginLeft: 'auto', background: '#0d6efd', color: '#fff',
-                border: 'none', borderRadius: 4, padding: '6px 14px', cursor: 'pointer'
-              }}
+              data-testid="bouton-forcer-import"
+              onClick={forcerImportTms}
+              disabled={importEnCours}
+              className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-lowest text-primary font-bold text-sm rounded-md shadow-sm border border-outline-variant/15 hover:bg-primary-fixed transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              LANCER TOUTES LES TOURNÉES
+              <span className="material-symbols-outlined text-sm">refresh</span>
+              {importEnCours ? 'Import en cours…' : 'Rafraîchir depuis TMS'}
             </button>
-          )}
-          {plan.lancees === plan.totalTournees && plan.totalTournees > 0 && (
-            <span
-              data-testid="toutes-lancees-banniere"
-              style={{ marginLeft: 'auto', color: '#198754', fontWeight: 'bold' }}
-            >
-              Toutes les tournées ont été lancées. Les livreurs ont reçu leur tournée.
-            </span>
-          )}
+
+            {/* Lancer toutes — disabled si non-affectées restantes */}
+            {plan.lancees === plan.totalTournees && plan.totalTournees > 0 ? (
+              <span
+                data-testid="toutes-lancees-banniere"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-on-tertiary-fixed-variant"
+              >
+                Toutes les tournées ont été lancées.
+              </span>
+            ) : (
+              <button
+                data-testid="btn-lancer-toutes"
+                onClick={lancerToutes}
+                disabled={plan.nonAffectees > 0}
+                className={
+                  plan.nonAffectees > 0
+                    ? 'flex items-center gap-2 px-4 py-2.5 bg-slate-200 text-slate-400 font-bold text-sm rounded-md cursor-not-allowed'
+                    : 'flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-bold text-sm rounded-md shadow-sm hover:bg-primary-container transition-all'
+                }
+              >
+                <span className="material-symbols-outlined text-sm">play_arrow</span>
+                Lancer toutes les tournées
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       {/* Messages */}
       {messageSucces && (
-        <div data-testid="message-succes" style={{ background: '#d1e7dd', border: '1px solid #a3cfbb', borderRadius: 4, padding: '8px 12px', marginBottom: 8, color: '#0f5132' }}>
+        <div
+          data-testid="message-succes"
+          className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium"
+        >
           {messageSucces}
         </div>
       )}
       {erreur && (
-        <div data-testid="message-erreur" style={{ background: '#f8d7da', border: '1px solid #f5c2c7', borderRadius: 4, padding: '8px 12px', marginBottom: 8, color: '#842029' }}>
+        <div
+          data-testid="message-erreur"
+          className="mb-4 p-3 rounded-lg bg-error-container border border-error/20 text-on-error-container text-sm font-medium"
+        >
           {erreur}
         </div>
       )}
 
-      {/* Filtres */}
-      <div data-testid="filtres-statut" style={{ marginBottom: 12, display: 'flex', gap: 8 }}>
-        {(['TOUTES', 'NON_AFFECTEE', 'AFFECTEE', 'LANCEE'] as const).map(f => (
-          <button
-            key={f}
-            data-testid={`filtre-${f}`}
-            onClick={() => setFiltre(f)}
-            style={{
-              padding: '4px 12px', borderRadius: 4, cursor: 'pointer',
-              background: filtre === f ? '#0d6efd' : '#e9ecef',
-              color: filtre === f ? '#fff' : '#212529',
-              border: 'none', fontWeight: filtre === f ? 'bold' : 'normal'
-            }}
-          >
-            {f === 'TOUTES' ? 'Toutes' : f === 'NON_AFFECTEE' ? 'Non affectées' : f === 'AFFECTEE' ? 'Affectées' : 'Lancées'}
-          </button>
-        ))}
+      {/* Filtres + Recherche */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div
+          data-testid="filtres-statut"
+          className="flex items-center gap-1 bg-surface-container-low p-1 rounded-lg"
+        >
+          {filtresConfig.map(({ key, label }) => (
+            <button
+              key={key}
+              data-testid={`filtre-${key}`}
+              onClick={() => setFiltre(key)}
+              className={
+                filtre === key
+                  ? 'px-5 py-2 text-sm font-semibold rounded-md bg-white shadow-sm text-primary'
+                  : 'px-5 py-2 text-sm font-medium text-outline hover:text-on-surface transition-colors'
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="relative w-80">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">
+            search
+          </span>
+          <input
+            type="text"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border-none rounded-xl shadow-sm focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-outline"
+            placeholder="Rechercher une tournée..."
+          />
+        </div>
       </div>
 
-      {/* Tableau */}
+      {/* Tableau / États de chargement */}
       {loading ? (
-        <div data-testid="chargement">Chargement du plan du jour...</div>
+        <div data-testid="chargement" className="py-12 text-center text-outline text-sm">
+          Chargement du plan du jour...
+        </div>
       ) : !plan || plan.tournees.length === 0 ? (
-        <div data-testid="aucune-tournee" style={{ color: '#6c757d', padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div
+          data-testid="aucune-tournee"
+          className="py-12 text-center text-outline text-sm flex flex-col items-center gap-4"
+        >
+          <span className="material-symbols-outlined text-4xl text-outline">inbox</span>
           <span>Aucune tournée importée pour aujourd'hui.</span>
           <button
             data-testid="bouton-forcer-import"
             onClick={forcerImportTms}
             disabled={importEnCours}
-            style={{ padding: '6px 14px', borderRadius: 4, border: 'none', background: '#0d6efd', color: '#fff', cursor: importEnCours ? 'not-allowed' : 'pointer', opacity: importEnCours ? 0.7 : 1 }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-bold text-sm rounded-md shadow-sm hover:bg-primary-container transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {importEnCours ? 'Import en cours…' : 'Forcer l\'import TMS'}
+            <span className="material-symbols-outlined text-sm">refresh</span>
+            {importEnCours ? 'Import en cours…' : "Forcer l'import TMS"}
           </button>
         </div>
       ) : (
-        <table data-testid="tableau-tournees" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead>
-            <tr style={{ background: '#e9ecef', textAlign: 'left' }}>
-              <th style={th}>Tournée</th>
-              <th style={th}>Nb colis</th>
-              <th style={th}>Zone(s)</th>
-              {/* US-041 — Colonne Poids */}
-              <th style={th} data-testid="colonne-poids-entete">Poids</th>
-              <th style={th}>Statut</th>
-              <th style={th}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plan.tournees.map(tournee => {
-              const badge = badgeStatut(tournee.statut);
-              const surcharge = tournee.aDesAnomalies;
-              return (
-                <tr
-                  key={tournee.id}
-                  data-testid={`ligne-tournee-${tournee.id}`}
-                  style={{
-                    borderBottom: '1px solid #dee2e6',
-                    background: surcharge ? '#fff3cd' : 'white'
-                  }}
-                >
-                  <td style={td}>
-                    <strong>{tournee.codeTms}</strong>
-                    {surcharge && (
-                      <span data-testid={`anomalie-${tournee.id}`} style={{ marginLeft: 6, color: '#856404' }}>⚠ Charge</span>
-                    )}
-                  </td>
-                  <td style={td}>{tournee.nbColis} colis</td>
-                  <td style={td}>
-                    {tournee.zones.slice(0, 2).map(z => (
-                      <div key={z.nom} style={{ fontSize: 12 }}>{z.nom}</div>
-                    ))}
-                  </td>
-                  {/* US-041 — Cellule Poids avec alerte surcharge */}
-                  <td style={td} data-testid={`poids-${tournee.id}`}>
-                    {tournee.poidsEstimeKg != null ? (
-                      <>
-                        <span>{tournee.poidsEstimeKg} kg</span>
-                        {(() => {
-                          const niveau = calculerNiveauAlerte(tournee.poidsEstimeKg!, tournee.capaciteVehiculeKg);
-                          const tooltip = genererTooltipPoids(tournee.poidsEstimeKg!, tournee.capaciteVehiculeKg, niveau);
-                          if (niveau === 'AUCUNE') return null;
-                          return (
-                            <span
-                              data-testid={`alerte-surcharge-${tournee.id}`}
-                              data-niveau={niveau}
-                              title={tooltip ?? undefined}
-                              style={{
-                                marginLeft: 6,
-                                color: niveau === 'CRITIQUE' ? '#c62828' : '#e65100',
-                                fontWeight: 'bold',
-                                cursor: 'help',
-                              }}
-                            >
-                              {niveau === 'CRITIQUE' ? '⛔' : '⚠'}
-                            </span>
-                          );
-                        })()}
-                      </>
-                    ) : (
-                      <span style={{ color: '#9e9e9e', fontSize: 12 }}>—</span>
-                    )}
-                  </td>
-                  <td style={td}>
-                    <span
-                      data-testid={`badge-statut-${tournee.id}`}
-                      style={{
-                        background: badge.bg, color: badge.color,
-                        borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 'bold'
-                      }}
-                    >
-                      {badge.label}
-                    </span>
-                    {tournee.statut === 'AFFECTEE' && tournee.livreurNom && (
-                      <div style={{ fontSize: 12, marginTop: 2 }}>
-                        {tournee.livreurNom} / {tournee.vehiculeId}
-                      </div>
-                    )}
-                    {tournee.statut === 'LANCEE' && tournee.livreurNom && (
-                      <div style={{ fontSize: 12, marginTop: 2 }}>
-                        {tournee.livreurNom} / {tournee.vehiculeId}
-                      </div>
-                    )}
-                  </td>
-                  <td style={td}>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {/* Voir détail — toujours disponible */}
-                      <button
-                        data-testid={`btn-detail-${tournee.id}`}
-                        onClick={() => onVoirDetail?.(tournee.id)}
-                        style={btnSecondaire}
-                      >
-                        Voir détail
-                      </button>
-
-                      {/* Affecter — si NON_AFFECTEE */}
-                      {tournee.statut === 'NON_AFFECTEE' && (
-                        <button
-                          data-testid={`btn-affecter-${tournee.id}`}
-                          onClick={() => onAffecter?.(tournee.id)}
-                          style={btnPrimaire}
-                        >
-                          Affecter
-                        </button>
-                      )}
-
-                      {/* Lancer — si AFFECTEE */}
-                      {tournee.statut === 'AFFECTEE' && (
-                        <button
-                          data-testid={`btn-lancer-${tournee.id}`}
-                          onClick={() => lancerTournee(tournee.id, tournee.codeTms)}
-                          disabled={lancementEnCours === tournee.id}
-                          style={{ ...btnSucces, opacity: lancementEnCours === tournee.id ? 0.6 : 1 }}
-                        >
-                          {lancementEnCours === tournee.id ? 'Lancement...' : 'Lancer'}
-                        </button>
-                      )}
-                    </div>
-                  </td>
+        <div className="bg-surface-container-low rounded-xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table
+              data-testid="tableau-tournees"
+              className="w-full border-collapse text-left"
+            >
+              <thead>
+                <tr className="text-[0.6875rem] font-bold uppercase tracking-wider text-outline border-b border-outline-variant/10">
+                  <th className="py-4 px-6">Code TMS</th>
+                  <th className="py-4 px-6">Colis</th>
+                  <th className="py-4 px-6">Zones</th>
+                  <th className="py-4 px-6" data-testid="colonne-poids-entete">Poids</th>
+                  <th className="py-4 px-6">Statut</th>
+                  <th className="py-4 px-6">Livreur / Véhicule</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="text-sm font-medium">
+                {plan.tournees.map((tournee) => {
+                  const badge = badgeStatutClasses(tournee.statut);
+                  const surcharge = tournee.aDesAnomalies;
+                  const estLancee = tournee.statut === 'LANCEE';
+
+                  return (
+                    <tr
+                      key={tournee.id}
+                      data-testid={`ligne-tournee-${tournee.id}`}
+                      className={[
+                        'group hover:bg-surface-container-high transition-colors',
+                        surcharge
+                          ? 'bg-tertiary-fixed/20 border-l-4 border-tertiary'
+                          : estLancee
+                            ? 'bg-white/60 opacity-60'
+                            : 'bg-white',
+                      ].join(' ')}
+                    >
+                      {/* Code TMS */}
+                      <td className="py-5 px-6 font-headline font-bold text-on-surface">
+                        <div className="flex items-center gap-2">
+                          {tournee.codeTms}
+                          {surcharge && (
+                            <span
+                              data-testid={`anomalie-${tournee.id}`}
+                              className="material-symbols-outlined text-tertiary text-lg"
+                              title="Anomalie de charge"
+                            >
+                              warning
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Nb colis */}
+                      <td className="py-5 px-6 text-slate-600">
+                        {tournee.nbColis} colis
+                      </td>
+
+                      {/* Zones */}
+                      <td className="py-5 px-6 text-slate-600">
+                        {tournee.zones.slice(0, 2).map((z) => (
+                          <div key={z.nom} className="text-xs">{z.nom}</div>
+                        ))}
+                      </td>
+
+                      {/* US-041 — Poids */}
+                      <td className="py-5 px-6 text-slate-600" data-testid={`poids-${tournee.id}`}>
+                        {tournee.poidsEstimeKg != null ? (
+                          <span className="flex items-center gap-1">
+                            <span>{tournee.poidsEstimeKg} kg</span>
+                            {(() => {
+                              const niveau = calculerNiveauAlerte(tournee.poidsEstimeKg!, tournee.capaciteVehiculeKg);
+                              const tooltip = genererTooltipPoids(tournee.poidsEstimeKg!, tournee.capaciteVehiculeKg, niveau);
+                              if (niveau === 'AUCUNE') return null;
+                              return (
+                                <span
+                                  data-testid={`alerte-surcharge-${tournee.id}`}
+                                  data-niveau={niveau}
+                                  title={tooltip ?? undefined}
+                                  className={
+                                    niveau === 'CRITIQUE'
+                                      ? 'font-bold text-on-error-container cursor-help'
+                                      : 'font-bold text-on-tertiary-fixed-variant cursor-help'
+                                  }
+                                >
+                                  {niveau === 'CRITIQUE' ? '⛔' : '⚠'}
+                                </span>
+                              );
+                            })()}
+                          </span>
+                        ) : (
+                          <span className="text-outline text-xs">—</span>
+                        )}
+                      </td>
+
+                      {/* Statut */}
+                      <td className="py-5 px-6">
+                        <span
+                          data-testid={`badge-statut-${tournee.id}`}
+                          className={badge.classes}
+                        >
+                          {badge.label}
+                        </span>
+                      </td>
+
+                      {/* Livreur / Véhicule */}
+                      <td className="py-5 px-6">
+                        {tournee.livreurNom ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-on-surface font-semibold">{tournee.livreurNom}</span>
+                            {tournee.vehiculeId && (
+                              <span className="text-xs text-outline">{tournee.vehiculeId}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-outline italic">—</span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-5 px-6 text-right space-x-4">
+                        {/* Voir détail — toujours disponible */}
+                        <button
+                          data-testid={`btn-detail-${tournee.id}`}
+                          onClick={() => onVoirDetail?.(tournee.id)}
+                          className="text-outline font-medium hover:text-on-surface transition-all"
+                        >
+                          Voir le détail
+                        </button>
+
+                        {/* Affecter — si NON_AFFECTEE */}
+                        {tournee.statut === 'NON_AFFECTEE' && (
+                          <button
+                            data-testid={`btn-affecter-${tournee.id}`}
+                            onClick={() => onAffecter?.(tournee.id)}
+                            className="text-primary font-bold hover:underline transition-all"
+                          >
+                            Affecter
+                          </button>
+                        )}
+
+                        {/* Lancer — si AFFECTEE */}
+                        {tournee.statut === 'AFFECTEE' && (
+                          <button
+                            data-testid={`btn-lancer-${tournee.id}`}
+                            onClick={() => lancerTournee(tournee.id, tournee.codeTms)}
+                            disabled={lancementEnCours === tournee.id}
+                            className="px-4 py-1.5 bg-primary text-white text-xs font-bold rounded shadow-sm hover:shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {lancementEnCours === tournee.id ? 'Lancement...' : 'Lancer →'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="p-6 flex flex-col items-center gap-4 bg-surface-container-lowest border-t border-outline-variant/10">
+            <button className="px-8 py-2.5 bg-white text-on-surface font-bold text-sm rounded-lg shadow-sm border border-outline-variant/20 hover:bg-slate-50 transition-all flex items-center gap-2">
+              Charger plus
+              <span className="material-symbols-outlined text-sm">expand_more</span>
+            </button>
+            <span className="text-[0.6875rem] font-bold text-outline uppercase tracking-widest">
+              Affichage {plan.tournees.length} / {plan.totalTournees} tournées
+            </span>
+          </div>
+        </div>
       )}
+
+      {/* Metric Cards Grid */}
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-6 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/5">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-xs font-bold text-outline uppercase tracking-widest">Capacité Globale</span>
+            <span className="material-symbols-outlined text-primary">local_shipping</span>
+          </div>
+          <div className="text-3xl font-bold font-headline text-on-surface mb-2">
+            {plan ? Math.round((plan.lancees / Math.max(plan.totalTournees, 1)) * 100) : 0}%
+          </div>
+          <div className="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full"
+              style={{ width: plan ? `${Math.round((plan.lancees / Math.max(plan.totalTournees, 1)) * 100)}%` : '0%' }}
+            />
+          </div>
+          <p className="mt-3 text-[10px] font-medium text-outline">
+            {plan?.lancees ?? 0} tournées lancées sur {plan?.totalTournees ?? 0}
+          </p>
+        </div>
+
+        <div className="p-6 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/5">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-xs font-bold text-outline uppercase tracking-widest">Colis en attente</span>
+            <span className="material-symbols-outlined text-tertiary">package_2</span>
+          </div>
+          <div className="text-3xl font-bold font-headline text-on-surface mb-2">
+            {plan
+              ? plan.tournees
+                  .filter((t) => t.statut !== 'LANCEE')
+                  .reduce((acc, t) => acc + t.nbColis, 0)
+              : 0}
+          </div>
+          <p className="text-xs text-outline font-medium">colis non encore pris en charge</p>
+        </div>
+
+        <div className="p-6 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/5">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-xs font-bold text-outline uppercase tracking-widest">Estimation de fin</span>
+            <span className="material-symbols-outlined text-secondary">schedule</span>
+          </div>
+          <div className="text-3xl font-bold font-headline text-on-surface mb-2">
+            {plan && plan.nonAffectees === 0 && plan.lancees === plan.totalTournees ? '—' : 'En attente'}
+          </div>
+          <p className="text-xs text-secondary font-bold flex items-center gap-1">
+            <span className="material-symbols-outlined text-sm">info</span>
+            Disponible après lancement de toutes les tournées
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
-
-// ─── Styles utilitaires ──────────────────────────────────────────────────────
-
-const th: React.CSSProperties = { padding: '8px 12px', fontWeight: 'bold', fontSize: 13 };
-const td: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'top' };
-const btnPrimaire: React.CSSProperties = { background: '#0d6efd', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontSize: 12 };
-const btnSecondaire: React.CSSProperties = { background: '#6c757d', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontSize: 12 };
-const btnSucces: React.CSSProperties = { background: '#198754', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontSize: 12 };

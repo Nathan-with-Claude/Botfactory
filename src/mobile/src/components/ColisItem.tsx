@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { ColisDTO, StatutColis } from '../api/tourneeTypes';
 
 /**
@@ -18,16 +18,24 @@ import { ColisDTO, StatutColis } from '../api/tourneeTypes';
  * Source wireframe : M-02 — Liste des colis de la tournee.
  */
 
+/** Seuil swipe gauche pour déclarer un échec (Bloquant 6 + US-029) */
+const SWIPE_THRESHOLD = 80;
+const SWIPE_ACTION_WIDTH = 80;
+
 interface ColisItemProps {
   colis: ColisDTO;
   onPress?: (colisId: string) => void; // US-004 : navigation vers DetailColisScreen
+  /** US-045 — Afficher le hint "← Glissez vers la gauche pour déclarer un problème" (masqué après SEUIL_HINT swipes réussis) */
+  afficherHintSwipe?: boolean;
+  /** US-029 — Callback déclenché quand l'utilisateur tape sur le bouton "Échec" révélé par swipe */
+  onSwipeEchec?: (colisId: string) => void;
 }
 
 const STATUT_LABELS: Record<StatutColis, string> = {
   A_LIVRER: 'A livrer',
   LIVRE: 'Livre',
   ECHEC: 'Echec',
-  A_REPRESENTER: 'A representer',
+  A_REPRESENTER: 'Repassage',
 };
 
 const STATUT_COLORS: Record<StatutColis, string> = {
@@ -37,10 +45,136 @@ const STATUT_COLORS: Record<StatutColis, string> = {
   A_REPRESENTER: '#FF9800', // orange
 };
 
-export const ColisItem: React.FC<ColisItemProps> = ({ colis, onPress }) => {
+export const ColisItem: React.FC<ColisItemProps> = ({
+  colis,
+  onPress,
+  afficherHintSwipe = false,
+  onSwipeEchec,
+}) => {
   const statutColor = STATUT_COLORS[colis.statut];
   const statutLabel = STATUT_LABELS[colis.statut];
   const estTraite = colis.estTraite;
+  const swipeActif = colis.statut === 'A_LIVRER' && !!onSwipeEchec;
+
+  // Animation swipe (Bloquant 6 + US-029)
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, gestureState) =>
+        swipeActif && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 2,
+      onPanResponderMove: (_evt, gestureState) => {
+        const dx = Math.min(0, Math.max(-SWIPE_ACTION_WIDTH, gestureState.dx));
+        translateX.setValue(dx);
+      },
+      onPanResponderRelease: (_evt, gestureState) => {
+        if (!swipeActif) return;
+        if (gestureState.dx < -SWIPE_THRESHOLD) {
+          Animated.spring(translateX, { toValue: -SWIPE_ACTION_WIDTH, useNativeDriver: true, bounciness: 4 }).start();
+        } else {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, bounciness: 8 }).start();
+        }
+      },
+    })
+  ).current;
+
+  const handleSwipeEchec = () => {
+    Animated.spring(translateX, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
+    onSwipeEchec?.(colis.colisId);
+  };
+
+  // Contenu de la carte (partagé)
+  const contenu = (
+    <>
+      {/* En-tete : adresse + badge statut */}
+      <View style={styles.header}>
+        <Text
+          style={[styles.adresse, estTraite && styles.adresseTraite]}
+          numberOfLines={2}
+          testID="colis-adresse"
+        >
+          {colis.adresseLivraison.adresseComplete}
+        </Text>
+        <View style={[styles.badge, { backgroundColor: statutColor }]}>
+          <Text style={styles.badgeText} testID="colis-statut">
+            {statutLabel}
+          </Text>
+        </View>
+      </View>
+
+      {/* Destinataire */}
+      <Text style={styles.destinataire} testID="colis-destinataire">
+        {colis.destinataire.nom}
+      </Text>
+
+      {/* Contraintes */}
+      {colis.contraintes.length > 0 && (
+        <View style={styles.contraintesContainer} testID="colis-contraintes">
+          {colis.contraintes.map((contrainte, idx) => (
+            <View
+              key={idx}
+              style={[
+                styles.contrainte,
+                contrainte.estHoraire && styles.contrainteHoraire,
+              ]}
+              testID={`colis-contrainte-${idx}`}
+            >
+              <Text
+                style={[
+                  styles.contrainteText,
+                  contrainte.estHoraire && styles.contrainteHoraireText,
+                ]}
+              >
+                {contrainte.estHoraire ? '⚑ ' : ''}{contrainte.valeur}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* US-045 — Hint swipe : affiché sous la carte, uniquement si swipeActif et hint activé */}
+      {afficherHintSwipe && swipeActif && (
+        <Text
+          testID="hint-swipe"
+          style={styles.hintSwipe}
+          accessibilityLabel="Glissez vers la gauche pour déclarer un problème"
+          accessibilityRole="text"
+        >
+          {'← Glissez vers la gauche pour déclarer un problème'}
+        </Text>
+      )}
+    </>
+  );
+
+  if (swipeActif) {
+    return (
+      <View testID="colis-item" style={styles.swipeWrapper}>
+        {/* Zone d'action rouge (derrière la carte) */}
+        <View style={styles.zoneActionEchec} pointerEvents="box-none">
+          <TouchableOpacity
+            testID="bouton-swipe-echec"
+            accessibilityRole="button"
+            accessibilityLabel={`Déclarer l'échec de livraison du colis ${colis.colisId}`}
+            style={styles.boutonEchec}
+            onPress={handleSwipeEchec}
+          >
+            <Text style={styles.boutonEchecTexte}>Échec</Text>
+          </TouchableOpacity>
+        </View>
+        <Animated.View style={{ transform: [{ translateX }] }} {...panResponder.panHandlers}>
+          <TouchableOpacity
+            style={[styles.container, estTraite && styles.containerTraite, styles.containerInSwipe]}
+            onPress={() => onPress?.(colis.colisId)}
+            accessibilityRole="button"
+            accessibilityLabel={`Voir le detail du colis ${colis.colisId}`}
+            activeOpacity={0.7}
+          >
+            {contenu}
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    );
+  }
 
   return (
     <TouchableOpacity
@@ -173,6 +307,44 @@ const styles = StyleSheet.create({
   contrainteHoraireText: {
     color: '#E65100',
     fontWeight: '600',
+  },
+  // Styles swipe (US-029 + US-045)
+  swipeWrapper: {
+    position: 'relative',
+    overflow: 'hidden',
+    marginHorizontal: 16,
+    marginVertical: 4,
+  },
+  containerInSwipe: {
+    marginHorizontal: 0,
+    marginVertical: 0,
+  },
+  zoneActionEchec: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: SWIPE_ACTION_WIDTH,
+    backgroundColor: '#F44336',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boutonEchec: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boutonEchecTexte: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  // Hint swipe (US-045) — positionné sous la carte, typographie secondaire légère
+  hintSwipe: {
+    fontSize: 10,
+    color: '#9E9E9E',
+    fontStyle: 'italic',
   },
 });
 

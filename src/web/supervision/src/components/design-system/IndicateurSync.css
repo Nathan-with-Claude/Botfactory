@@ -1,0 +1,76 @@
+/**
+ * IndicateurSync.css — Styles du composant IndicateurSync
+ *
+ * RÈGLE : toutes les valeurs référencent les tokens de tokens.css.
+ * US-025 : Design System DocuPost.
+ */
+
+.indicateur-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 24px;
+  font-family: var(--font-family-corps);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-caption-weight);
+  color: var(--color-texte-secondaire);
+}
+
+/* ─── Point de statut ─────────────────────────────────────────────────────── */
+
+.indicateur-sync__point {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.indicateur-sync--live .indicateur-sync__point {
+  background-color: var(--color-succes);
+}
+
+.indicateur-sync--offline .indicateur-sync__point {
+  background-color: var(--color-alerte);
+}
+
+.indicateur-sync--polling .indicateur-sync__point {
+  background-color: var(--color-avertissement);
+}
+
+/* ─── Icône rotation (syncing) ────────────────────────────────────────────── */
+
+.indicateur-sync__icone-rotation {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  font-size: 14px;
+  color: var(--color-primaire);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Label ───────────────────────────────────────────────────────────────── */
+
+.indicateur-sync__label {
+  font-size: var(--text-caption-size);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.indicateur-sync--live .indicateur-sync__label {
+  color: var(--color-succes);
+}
+
+.indicateur-sync--offline .indicateur-sync__label {
+  color: var(--color-alerte);
+}
+
+.indicateur-sync--polling .indicateur-sync__label {
+  color: var(--color-avertissement);
+}
+
+.indicateur-sync--syncing .indicateur-sync__label {
+  color: var(--color-primaire);
+}

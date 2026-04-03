@@ -137,4 +137,40 @@ describe('PanneauInstructionPage (US-014)', () => {
     fireEvent.click(screen.getByTestId('btn-fermer'));
     expect(onFermer).toHaveBeenCalled();
   });
+
+  // ─── Bloquant 4 — Confirmation visuelle après envoi ──────────────────────────
+
+  it('Bloquant-4: désactive le bouton ENVOYER après un envoi réussi', async () => {
+    render(
+      <PanneauInstructionPage
+        tourneeId="t-001"
+        colisId="c-001"
+        livreurNom="Pierre Morel"
+        fetchFn={makeFetch(201, mockInstruction)}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('btn-envoyer'));
+
+    await waitFor(() => screen.getByTestId('toast-succes'));
+    // Après succès, le bouton est désactivé
+    expect(screen.getByTestId('btn-envoyer')).toBeDisabled();
+  });
+
+  it('Bloquant-4: le toast succès affiche "Le livreur a été notifié"', async () => {
+    render(
+      <PanneauInstructionPage
+        tourneeId="t-001"
+        colisId="c-001"
+        livreurNom="Pierre Morel"
+        fetchFn={makeFetch(201, mockInstruction)}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('btn-envoyer'));
+
+    await waitFor(() => screen.getByTestId('toast-succes'));
+    expect(screen.getByTestId('toast-succes').textContent).toContain('Le livreur a été notifié');
+    expect(screen.getByTestId('toast-succes').textContent).toContain('Pierre Morel');
+  });
 });

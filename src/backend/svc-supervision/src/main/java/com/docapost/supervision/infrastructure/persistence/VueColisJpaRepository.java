@@ -10,4 +10,6 @@ import java.util.List;
 public interface VueColisJpaRepository extends JpaRepository<VueColisEntity, Long> {
 
     List<VueColisEntity> findByTourneeId(String tourneeId);
+
+    java.util.Optional<VueColisEntity> findByTourneeIdAndColisId(String tourneeId, String colisId);
 }

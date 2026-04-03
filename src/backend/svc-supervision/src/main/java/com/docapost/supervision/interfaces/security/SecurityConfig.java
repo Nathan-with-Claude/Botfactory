@@ -70,9 +70,10 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()          // WebSocket endpoint
                         // US-020 SC4 : module preuves accessible aux rôles DSI et SUPERVISEUR
                         .requestMatchers("/api/preuves/**").hasAnyRole("SUPERVISEUR", "DSI")
-                        // Routes accessibles aux LIVREURS (polling instructions + marquage exécution)
+                        // Routes accessibles aux LIVREURS (polling instructions + marquage exécution + prise en compte)
                         .requestMatchers(HttpMethod.GET, "/api/supervision/instructions/en-attente").hasAnyRole("LIVREUR", "SUPERVISEUR")
                         .requestMatchers(HttpMethod.PATCH, "/api/supervision/instructions/*/executer").hasAnyRole("LIVREUR", "SUPERVISEUR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/supervision/instructions/*/prendre-en-compte").hasAnyRole("LIVREUR", "SUPERVISEUR")
                         // US-020 SC2 : LIVREUR refusé sur toutes les autres routes supervision (403)
                         .requestMatchers("/api/supervision/**").hasAnyRole("SUPERVISEUR", "DSI")
                         .requestMatchers("/api/planification/**").hasAnyRole("SUPERVISEUR", "DSI")
@@ -113,9 +114,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8082"));
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

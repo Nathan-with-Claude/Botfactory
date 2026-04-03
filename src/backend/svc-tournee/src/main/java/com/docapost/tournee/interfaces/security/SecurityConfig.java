@@ -128,7 +128,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:8082",  // svc-supervision dev
-                "http://localhost:3000"   // frontend web supervision dev
+                "http://localhost:3000",  // frontend web supervision dev
+                "http://localhost:8083",  // expo web livreur (port alternatif)
+                "http://localhost:8084"   // expo web livreur (port nominal)
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

@@ -31,6 +31,7 @@ public class SupervisionWebSocketConfig implements WebSocketMessageBrokerConfigu
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/supervision")
                 .setAllowedOriginPatterns("*")
-                .withSockJS(); // fallback SockJS pour les clients sans WebSocket natif
+                .withSockJS()
+                .setSessionCookieNeeded(false); // stateless — pas de JSESSIONID, évite withCredentials côté client
     }
 }

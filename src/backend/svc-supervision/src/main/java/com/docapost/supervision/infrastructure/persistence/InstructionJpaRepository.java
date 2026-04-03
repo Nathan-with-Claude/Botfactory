@@ -25,4 +25,9 @@ public interface InstructionJpaRepository extends JpaRepository<InstructionEntit
      * Retourne les instructions ENVOYEE pour une tournée — utilisé pour le polling (US-016).
      */
     java.util.List<InstructionEntity> findByTourneeIdAndStatut(String tourneeId, StatutInstruction statut);
+
+    /**
+     * Retourne les instructions avec un statut parmi la liste fournie — US-015.
+     */
+    java.util.List<InstructionEntity> findByTourneeIdAndStatutIn(String tourneeId, java.util.List<StatutInstruction> statuts);
 }

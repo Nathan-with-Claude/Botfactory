@@ -2,8 +2,10 @@ package com.docapost.supervision.interfaces.planification.rest;
 
 import com.docapost.supervision.application.planification.*;
 import com.docapost.supervision.domain.planification.events.TourneeLancee;
+import com.docapost.supervision.domain.planification.model.CapaciteVehiculeDepasseeException;
 import com.docapost.supervision.domain.planification.model.StatutAffectation;
 import com.docapost.supervision.domain.planification.model.TourneePlanifiee;
+import com.docapost.supervision.domain.planification.model.Vehicule;
 import com.docapost.supervision.interfaces.planification.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,8 @@ import java.util.List;
  * POST /api/planification/tournees/{id}/affecter          → Affecter livreur+véhicule — US-023
  * POST /api/planification/tournees/{id}/lancer            → Lancer tournée — US-024
  * POST /api/planification/plans/{date}/lancer-toutes      → Lancer toutes les AFFECTEES — US-024 SC3
+ * GET  /api/planification/vehicules/compatibles?poidsMinKg={n}&date={d} → Véhicules filtrés — US-034
+ * POST /api/planification/tournees/{id}/reaffecter-vehicule → Réaffecter véhicule — US-034
  *
  * Codes HTTP :
  * - 200 OK, 201 Created, 400 Bad Request, 403 Forbidden, 404 Not Found, 409 Conflict
@@ -45,19 +49,25 @@ public class PlanificationController {
     private final ValiderCompositionHandler validerCompositionHandler;
     private final AffecterLivreurVehiculeHandler affecterHandler;
     private final LancerTourneeHandler lancerTourneeHandler;
+    private final VerifierCompatibiliteVehiculeHandler verifierCompatibiliteHandler;
+    private final ReaffecterVehiculeHandler reaffecterVehiculeHandler;
 
     public PlanificationController(
             ConsulterPlanDuJourHandler consulterPlanDuJourHandler,
             ConsulterDetailTourneePlanifieeHandler consulterDetailHandler,
             ValiderCompositionHandler validerCompositionHandler,
             AffecterLivreurVehiculeHandler affecterHandler,
-            LancerTourneeHandler lancerTourneeHandler
+            LancerTourneeHandler lancerTourneeHandler,
+            VerifierCompatibiliteVehiculeHandler verifierCompatibiliteHandler,
+            ReaffecterVehiculeHandler reaffecterVehiculeHandler
     ) {
         this.consulterPlanDuJourHandler = consulterPlanDuJourHandler;
         this.consulterDetailHandler = consulterDetailHandler;
         this.validerCompositionHandler = validerCompositionHandler;
         this.affecterHandler = affecterHandler;
         this.lancerTourneeHandler = lancerTourneeHandler;
+        this.verifierCompatibiliteHandler = verifierCompatibiliteHandler;
+        this.reaffecterVehiculeHandler = reaffecterVehiculeHandler;
     }
 
     /**
@@ -225,5 +235,106 @@ public class PlanificationController {
 
         int nbLancees = lancerTourneeHandler.lancerToutesLesTourneesAffectees(superviseurId);
         return ResponseEntity.ok(LancerToutesResponse.of(nbLancees));
+    }
+
+    /**
+     * POST /api/planification/tournees/{id}/verifier-compatibilite-vehicule
+     * Vérifie si le véhicule sélectionné peut porter la charge estimée de la tournée.
+     *
+     * US-030 (W-05 — onglet Affectation, changement de sélecteur véhicule)
+     *
+     * Codes HTTP :
+     * - 200 : compatible (ou poids absent)
+     * - 409 : dépassement de capacité sans forçage (corps avec détail)
+     * - 404 : tournée ou véhicule introuvable
+     * - 403 : accès refusé
+     */
+    @PostMapping("/tournees/{id}/verifier-compatibilite-vehicule")
+    public ResponseEntity<CompatibiliteVehiculeDTO> verifierCompatibiliteVehicule(
+            @PathVariable String id,
+            @RequestBody VerifierCompatibiliteRequest request,
+            Authentication authentication
+    ) {
+        String superviseurId = authentication != null ? authentication.getName() : "superviseur-dev";
+        try {
+            CompatibiliteVehiculeResultatDTO resultat = verifierCompatibiliteHandler.handle(
+                    new VerifierCompatibiliteVehiculeCommand(
+                            id, request.vehiculeId(), request.forcerSiDepassement(), superviseurId
+                    )
+            );
+            return ResponseEntity.ok(CompatibiliteVehiculeDTO.from(resultat));
+        } catch (TourneePlanifieeNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (VehiculeNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (CapaciteVehiculeDepasseeException e) {
+            CompatibiliteVehiculeResultatDTO depassement = CompatibiliteVehiculeResultatDTO.depassement(
+                    e.getVehiculeId(), e.getPoidsEstimeKg(), e.getCapaciteKg()
+            );
+            return ResponseEntity.status(409).body(CompatibiliteVehiculeDTO.from(depassement));
+        }
+    }
+
+    /**
+     * GET /api/planification/vehicules/compatibles?poidsMinKg={n}&date={d}
+     * Retourne les véhicules disponibles dont la capacité est >= poidsMinKg.
+     * Utilisé par le panneau de réaffectation (US-034 SC2).
+     *
+     * US-034 (W-05 — panneau de sélection de véhicule compatible)
+     *
+     * Codes HTTP :
+     * - 200 : liste (vide si aucun compatible)
+     * - 400 : poidsMinKg invalide
+     * - 403 : accès refusé
+     */
+    @GetMapping("/vehicules/compatibles")
+    public ResponseEntity<List<VehiculeCompatibleDTO>> getVehiculesCompatibles(
+            @RequestParam int poidsMinKg,
+            @RequestParam(required = false) String date
+    ) {
+        if (poidsMinKg <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        LocalDate localDate = date != null ? LocalDate.parse(date) : LocalDate.now();
+        List<Vehicule> compatibles = reaffecterVehiculeHandler.rechercherVehiculesCompatibles(poidsMinKg, localDate);
+        List<VehiculeCompatibleDTO> dtos = compatibles.stream().map(VehiculeCompatibleDTO::from).toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    /**
+     * POST /api/planification/tournees/{id}/reaffecter-vehicule
+     * Réaffecte la tournée vers un nouveau véhicule et vérifie la compatibilité.
+     * Émet CompatibiliteVehiculeVerifiee si le véhicule est compatible.
+     *
+     * US-034 (W-05 — bouton "Réaffecter" dans le panneau de sélection)
+     *
+     * Codes HTTP :
+     * - 200 : compatible, réaffectation enregistrée
+     * - 409 : nouveau véhicule encore insuffisant
+     * - 404 : tournée ou véhicule introuvable
+     * - 403 : accès refusé
+     */
+    @PostMapping("/tournees/{id}/reaffecter-vehicule")
+    public ResponseEntity<CompatibiliteVehiculeDTO> reaffecterVehicule(
+            @PathVariable String id,
+            @RequestBody ReaffecterVehiculeRequest request,
+            Authentication authentication
+    ) {
+        String superviseurId = authentication != null ? authentication.getName() : "superviseur-dev";
+        try {
+            CompatibiliteVehiculeResultatDTO resultat = reaffecterVehiculeHandler.handle(
+                    new ReaffecterVehiculeCommand(id, request.nouveauVehiculeId(), superviseurId)
+            );
+            return ResponseEntity.ok(CompatibiliteVehiculeDTO.from(resultat));
+        } catch (TourneePlanifieeNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (VehiculeNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (CapaciteVehiculeDepasseeException e) {
+            CompatibiliteVehiculeResultatDTO depassement = CompatibiliteVehiculeResultatDTO.depassement(
+                    e.getVehiculeId(), e.getPoidsEstimeKg(), e.getCapaciteKg()
+            );
+            return ResponseEntity.status(409).body(CompatibiliteVehiculeDTO.from(depassement));
+        }
     }
 }

@@ -68,6 +68,9 @@ public class TourneePlanifieeEntity {
     @Column(name = "composition_verifiee", nullable = false)
     private boolean compositionVerifiee;
 
+    @Column(name = "poids_estime_kg")
+    private Integer poidsEstimeKg;
+
     protected TourneePlanifieeEntity() {}
 
     public TourneePlanifieeEntity(
@@ -76,6 +79,19 @@ public class TourneePlanifieeEntity {
             Instant importeeLe, StatutAffectation statut,
             String livreurId, String livreurNom, String vehiculeId,
             Instant affecteeLe, Instant lancee, boolean compositionVerifiee
+    ) {
+        this(id, codeTms, date, nbColis, zonesJson, contraintesJson, anomaliesJson,
+                importeeLe, statut, livreurId, livreurNom, vehiculeId,
+                affecteeLe, lancee, compositionVerifiee, null);
+    }
+
+    public TourneePlanifieeEntity(
+            String id, String codeTms, LocalDate date, int nbColis,
+            String zonesJson, String contraintesJson, String anomaliesJson,
+            Instant importeeLe, StatutAffectation statut,
+            String livreurId, String livreurNom, String vehiculeId,
+            Instant affecteeLe, Instant lancee, boolean compositionVerifiee,
+            Integer poidsEstimeKg
     ) {
         this.id = id;
         this.codeTms = codeTms;
@@ -92,6 +108,7 @@ public class TourneePlanifieeEntity {
         this.affecteeLe = affecteeLe;
         this.lancee = lancee;
         this.compositionVerifiee = compositionVerifiee;
+        this.poidsEstimeKg = poidsEstimeKg;
     }
 
     // Getters et Setters
@@ -117,4 +134,6 @@ public class TourneePlanifieeEntity {
     public void setLancee(Instant lancee) { this.lancee = lancee; }
     public boolean isCompositionVerifiee() { return compositionVerifiee; }
     public void setCompositionVerifiee(boolean compositionVerifiee) { this.compositionVerifiee = compositionVerifiee; }
+    public Integer getPoidsEstimeKg() { return poidsEstimeKg; }
+    public void setPoidsEstimeKg(Integer poidsEstimeKg) { this.poidsEstimeKg = poidsEstimeKg; }
 }

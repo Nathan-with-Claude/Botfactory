@@ -101,10 +101,11 @@ describe('DeclarerEchecScreen — US-005', () => {
 
   it('SC1 — appelle declarerEchecLivraison avec le motif et la disposition sélectionnés', async () => {
     mockDeclarerEchecLivraison.mockResolvedValueOnce({ statut: 'ECHEC' });
+    jest.useFakeTimers();
 
     const onEchecEnregistre = jest.fn();
     const { getByTestId } = render(
-      <DeclarerEchecScreen {...DEFAULT_PROPS} onEchecEnregistre={onEchecEnregistre} />
+      <DeclarerEchecScreen {...DEFAULT_PROPS} onEchecEnregistre={onEchecEnregistre} toastDureeMs={100} />
     );
 
     fireEvent.press(getByTestId('motif-ABSENT'));
@@ -122,7 +123,13 @@ describe('DeclarerEchecScreen — US-005', () => {
         disposition: 'A_REPRESENTER',
       })
     );
+
+    // onEchecEnregistre est appelé après le toast (délai toastDureeMs)
+    await act(async () => {
+      jest.advanceTimersByTime(200);
+    });
     expect(onEchecEnregistre).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   // ─── Scénario 3 : note optionnelle ───────────────────────────────────────
@@ -223,5 +230,69 @@ describe('DeclarerEchecScreen — US-005', () => {
     // children est un tableau [longueur, '/', 250]
     const children = compteur.props.children;
     expect(Array.isArray(children) ? children[0] : children).toBe(9);
+  });
+
+  // ─── Feedback terrain 2026-03-30 ─────────────────────────────────────────
+
+  it('L4 — affiche le toast de confirmation apres soumission reussie', async () => {
+    mockDeclarerEchecLivraison.mockResolvedValueOnce({ statut: 'ECHEC' });
+    jest.useFakeTimers();
+
+    const { getByTestId } = render(
+      <DeclarerEchecScreen {...DEFAULT_PROPS} toastDureeMs={500} />
+    );
+
+    fireEvent.press(getByTestId('motif-ABSENT'));
+    fireEvent.press(getByTestId('disposition-A_REPRESENTER'));
+
+    await act(async () => {
+      fireEvent.press(getByTestId('bouton-enregistrer-echec'));
+    });
+
+    // Le toast doit etre visible immediatemment apres soumission
+    await waitFor(() => {
+      expect(getByTestId('toast-echec-enregistre')).toBeTruthy();
+    });
+
+    jest.useRealTimers();
+  });
+
+  it('L4 — appelle onEchecEnregistre apres la duree du toast', async () => {
+    mockDeclarerEchecLivraison.mockResolvedValueOnce({ statut: 'ECHEC' });
+    jest.useFakeTimers();
+
+    const onEchecEnregistre = jest.fn();
+    const { getByTestId } = render(
+      <DeclarerEchecScreen {...DEFAULT_PROPS} onEchecEnregistre={onEchecEnregistre} toastDureeMs={500} />
+    );
+
+    fireEvent.press(getByTestId('motif-ABSENT'));
+    fireEvent.press(getByTestId('disposition-A_REPRESENTER'));
+
+    await act(async () => {
+      fireEvent.press(getByTestId('bouton-enregistrer-echec'));
+    });
+
+    // Avant expiration du toast
+    expect(onEchecEnregistre).not.toHaveBeenCalled();
+
+    // Avancer le temps
+    await act(async () => {
+      jest.advanceTimersByTime(600);
+    });
+
+    expect(onEchecEnregistre).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
+  });
+
+  it('L8 — affiche le texte d aide disposition si aucun motif selectionne', () => {
+    const { getByTestId } = render(<DeclarerEchecScreen {...DEFAULT_PROPS} />);
+    expect(getByTestId('aide-disposition')).toBeTruthy();
+  });
+
+  it('L8 — masque le texte d aide disposition apres selection d un motif', () => {
+    const { getByTestId, queryByTestId } = render(<DeclarerEchecScreen {...DEFAULT_PROPS} />);
+    fireEvent.press(getByTestId('motif-ABSENT'));
+    expect(queryByTestId('aide-disposition')).toBeNull();
   });
 });

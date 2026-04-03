@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Read Model — VueTournee (BC-03 Supervision — US-011)
+ * Read Model — VueTournee (BC-03 Supervision — US-011, US-035)
  *
  * Représente la vue agrégée d'une tournée pour le tableau de bord superviseur.
  * Pas un Aggregate : c'est un Read Model (CQRS) mis à jour par des projections
@@ -18,8 +18,10 @@ import java.util.Objects;
  * - pourcentage     : avancement en % (0-100)
  * - statut          : EN_COURS | A_RISQUE | CLOTUREE
  * - derniereActivite : horodatage de la dernière action sur la tournée
+ * - codeTMS         : code identifiant de la tournée dans le TMS (ex: "T-205") — US-035
+ * - zone            : zone géographique principale de la tournée (ex: "Villeurbanne") — US-035
  *
- * Source : US-011, US-013 — "Tableau de bord des tournées en temps réel"
+ * Source : US-011, US-013, US-035 — "Tableau de bord des tournées en temps réel"
  */
 public class VueTournee {
 
@@ -30,7 +32,13 @@ public class VueTournee {
     private int pourcentage;
     private StatutTourneeVue statut;
     private Instant derniereActivite;
+    // US-035 — Champs pour la recherche multi-critères
+    private String codeTMS;
+    private String zone;
 
+    /**
+     * Constructeur minimal (rétrocompatibilité US-011/013) — codeTMS et zone null.
+     */
     public VueTournee(
             String tourneeId,
             String livreurNom,
@@ -39,6 +47,22 @@ public class VueTournee {
             StatutTourneeVue statut,
             Instant derniereActivite
     ) {
+        this(tourneeId, livreurNom, colisTraites, colisTotal, statut, derniereActivite, null, null);
+    }
+
+    /**
+     * Constructeur complet avec codeTMS et zone (US-035).
+     */
+    public VueTournee(
+            String tourneeId,
+            String livreurNom,
+            int colisTraites,
+            int colisTotal,
+            StatutTourneeVue statut,
+            Instant derniereActivite,
+            String codeTMS,
+            String zone
+    ) {
         this.tourneeId = Objects.requireNonNull(tourneeId, "TourneeId est obligatoire");
         this.livreurNom = Objects.requireNonNull(livreurNom, "LivreurNom est obligatoire");
         this.colisTraites = colisTraites;
@@ -46,6 +70,8 @@ public class VueTournee {
         this.pourcentage = colisTotal > 0 ? (colisTraites * 100 / colisTotal) : 0;
         this.statut = Objects.requireNonNull(statut, "Statut est obligatoire");
         this.derniereActivite = derniereActivite;
+        this.codeTMS = codeTMS;
+        this.zone = zone;
     }
 
     /**
@@ -96,6 +122,8 @@ public class VueTournee {
     public int getPourcentage() { return pourcentage; }
     public StatutTourneeVue getStatut() { return statut; }
     public Instant getDerniereActivite() { return derniereActivite; }
+    public String getCodeTMS() { return codeTMS; }
+    public String getZone() { return zone; }
 
     @Override
     public boolean equals(Object o) {

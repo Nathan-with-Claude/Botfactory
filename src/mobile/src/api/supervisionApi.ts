@@ -21,6 +21,12 @@ export interface InstructionMobileDTO {
   typeInstruction: string;
   statut: string;
   creneauCible?: string;
+  /**
+   * Texte libre de la consigne rédigé par le superviseur (US-037 v1.3).
+   * Exemple : "Prioriser le colis COLIS-042 — client urgent"
+   * Optionnel : peut être absent pour les types structurés (MODIFIER_CRENEAU, etc.)
+   */
+  texteConsigne?: string;
   horodatage: string;
 }
 
@@ -83,5 +89,37 @@ export async function marquerInstructionExecutee(
   if (!response.ok && response.status !== 409) {
     // 409 = déjà exécutée — idempotent, on ignore
     throw new Error(`Erreur lors de la mise à jour de l'instruction : ${response.status}`);
+  }
+}
+
+/**
+ * Marque une instruction comme prise en compte par le livreur (US-037 delta Sprint 5).
+ * Appelé automatiquement à l'ouverture de MesConsignesScreen pour chaque instruction
+ * au statut ENVOYEE. Transition : ENVOYEE → PRISE_EN_COMPTE.
+ *
+ * Si offline (réseau indisponible), l'erreur est propagée à l'appelant qui
+ * choisit de la gérer silencieusement (réessai à la prochaine ouverture).
+ *
+ * @param instructionId identifiant de l'instruction à marquer prise en compte
+ * @throws Error si l'appel échoue (réseau, 404) — géré silencieusement par useConsignesLocales
+ */
+export async function prendreEnCompteInstruction(
+  instructionId: string
+): Promise<void> {
+  const response = await fetch(
+    `${SUPERVISION_BASE_URL}/api/supervision/instructions/${encodeURIComponent(instructionId)}/prendre-en-compte`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        // TODO (US-019) : ajouter Authorization: `Bearer ${token}`
+      },
+    }
+  );
+
+  if (!response.ok && response.status !== 409) {
+    // 409 = déjà PRISE_EN_COMPTE — idempotent, on ignore
+    throw new Error(`Erreur prendre en compte instruction : ${response.status}`);
   }
 }

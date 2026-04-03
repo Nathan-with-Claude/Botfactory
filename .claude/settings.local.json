@@ -4,22 +4,21 @@
       "mcp__filesystem__list_directory",
       "mcp__filesystem__read_file",
       "mcp__filesystem__write_file",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__filesystem__create_directory",
+      "mcp__filesystem__move_file",
+      "mcp__filesystem__delete_file",
+      "mcp__filesystem__get_file_info",
+      "mcp__filesystem__search_files",
       "Read",
       "Write",
       "Edit",
       "Glob",
       "Grep",
-      "Bash(npm:*)",
-      "Bash(npx:*)",
-      "Bash(node:*)",
-      "Bash(mkdir:*)",
-      "Bash(rm:*)",
-      "Bash(cp:*)",
-      "Bash(mv:*)",
-      "Bash(touch:*)",
-      "Bash(git:*)",
-      "mcp__filesystem__read_multiple_files",
-      "mcp__filesystem__create_directory"
+      "Bash(*)",
+      "Agent(*)",
+      "WebFetch(*)",
+      "WebSearch(*)"
     ]
   }
 }

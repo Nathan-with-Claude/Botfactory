@@ -37,10 +37,13 @@ test.describe('US-014 — Backend : Envoi d\'instruction a un livreur', () => {
   });
 
   test('TC-014-02 : POST /api/supervision/instructions REPROGRAMMER sans creneau retourne HTTP 422', async ({ request }) => {
+    // OBS-014-01 corrigé : colisId distinct de TC-014-01 ('colis-s-003') pour éviter
+    // que l'invariant d'unicité PENDING déclenche un 409 avant la validation du corps.
+    // 'colis-s-014-02' est un colis isolé sans instruction préexistante.
     const response = await request.post(`${SUPERVISION_URL}/api/supervision/instructions`, {
       data: {
         tourneeId: 'tournee-sup-001',
-        colisId: 'colis-s-003',
+        colisId: 'colis-s-014-02',
         typeInstruction: 'REPROGRAMMER'
         // Pas de creneauCible — doit etre rejete
       }

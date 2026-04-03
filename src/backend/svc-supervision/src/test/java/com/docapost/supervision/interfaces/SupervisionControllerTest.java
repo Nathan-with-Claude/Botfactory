@@ -133,13 +133,54 @@ class SupervisionControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    // ─── Tests US-035 ──────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("US-035 — GET /api/supervision/tableau-de-bord expose codeTMS et zone dans chaque tournée")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void getTableauDeBord_expose_codeTMS_et_zone() throws Exception {
+        TableauDeBord tableau = TableauDeBord.of(List.of(
+                new VueTournee("t-001", "Pierre", 3, 10, StatutTourneeVue.EN_COURS,
+                        Instant.now(), "T-201", "Lyon 3e"),
+                new VueTournee("t-002", "Marie", 7, 10, StatutTourneeVue.EN_COURS,
+                        Instant.now(), "T-202", "Villeurbanne")
+        ));
+        when(consulterTableauDeBordHandler.handle(any())).thenReturn(tableau);
+
+        mockMvc.perform(get("/api/supervision/tableau-de-bord")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tournees[0].codeTMS").value("T-201"))
+                .andExpect(jsonPath("$.tournees[0].zone").value("Lyon 3e"))
+                .andExpect(jsonPath("$.tournees[1].codeTMS").value("T-202"))
+                .andExpect(jsonPath("$.tournees[1].zone").value("Villeurbanne"));
+    }
+
+    @Test
+    @DisplayName("US-035 — codeTMS et zone null si non renseignés (rétrocompatibilité)")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void getTableauDeBord_codeTMS_zone_nullable() throws Exception {
+        TableauDeBord tableau = TableauDeBord.of(List.of(
+                new VueTournee("t-001", "Pierre", 3, 10, StatutTourneeVue.EN_COURS, Instant.now())
+        ));
+        when(consulterTableauDeBordHandler.handle(any())).thenReturn(tableau);
+
+        mockMvc.perform(get("/api/supervision/tableau-de-bord")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tournees[0].codeTMS").doesNotExist());
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private TableauDeBord tableauAvecTroisTournees() {
         return TableauDeBord.of(List.of(
-                new VueTournee("t-001", "Pierre", 3, 10, StatutTourneeVue.EN_COURS, Instant.now()),
-                new VueTournee("t-002", "Marie", 7, 10, StatutTourneeVue.EN_COURS, Instant.now()),
-                new VueTournee("t-003", "Jean", 2, 12, StatutTourneeVue.A_RISQUE, Instant.now())
+                new VueTournee("t-001", "Pierre", 3, 10, StatutTourneeVue.EN_COURS,
+                        Instant.now(), "T-201", "Lyon 3e"),
+                new VueTournee("t-002", "Marie", 7, 10, StatutTourneeVue.EN_COURS,
+                        Instant.now(), "T-202", "Villeurbanne"),
+                new VueTournee("t-003", "Jean", 2, 12, StatutTourneeVue.A_RISQUE,
+                        Instant.now(), "T-203", "Lyon 3e")
         ));
     }
 }

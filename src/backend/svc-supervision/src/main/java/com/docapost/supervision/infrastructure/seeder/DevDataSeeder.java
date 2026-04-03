@@ -31,6 +31,7 @@ import java.time.LocalDate;
 public class DevDataSeeder implements CommandLineRunner {
 
     private final VueTourneeRepository vueTourneeRepository;
+    private final VueTourneeJpaRepository vueTourneeJpaRepository;
     private final VueColisJpaRepository vueColisJpaRepository;
     private final IncidentVueJpaRepository incidentVueJpaRepository;
     private final InstructionJpaRepository instructionJpaRepository;
@@ -38,12 +39,14 @@ public class DevDataSeeder implements CommandLineRunner {
 
     public DevDataSeeder(
             VueTourneeRepository vueTourneeRepository,
+            VueTourneeJpaRepository vueTourneeJpaRepository,
             VueColisJpaRepository vueColisJpaRepository,
             IncidentVueJpaRepository incidentVueJpaRepository,
             InstructionJpaRepository instructionJpaRepository,
             TourneePlanifieeJpaRepository tourneePlanifieeJpaRepository
     ) {
         this.vueTourneeRepository = vueTourneeRepository;
+        this.vueTourneeJpaRepository = vueTourneeJpaRepository;
         this.vueColisJpaRepository = vueColisJpaRepository;
         this.incidentVueJpaRepository = incidentVueJpaRepository;
         this.instructionJpaRepository = instructionJpaRepository;
@@ -52,33 +55,43 @@ public class DevDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Tournée 1 : EN_COURS, avancement normal
+        seed();
+    }
+
+    private void seed() {
+        // Tournée 1 : EN_COURS, avancement normal — US-035 : codeTMS=T-201, zone=Lyon 3e
         VueTournee tournee1 = new VueTournee(
                 "tournee-sup-001",
                 "Pierre Martin",
                 3, 10,
                 StatutTourneeVue.EN_COURS,
-                Instant.now().minusSeconds(1800)
+                Instant.now().minusSeconds(1800),
+                "T-201",
+                "Lyon 3e"
         );
         vueTourneeRepository.save(tournee1);
 
-        // Tournée 2 : EN_COURS, bon avancement
+        // Tournée 2 : EN_COURS, bon avancement — US-035 : codeTMS=T-202, zone=Villeurbanne
         VueTournee tournee2 = new VueTournee(
                 "tournee-sup-002",
                 "Marie Lambert",
                 7, 10,
                 StatutTourneeVue.EN_COURS,
-                Instant.now().minusSeconds(600)
+                Instant.now().minusSeconds(600),
+                "T-202",
+                "Villeurbanne"
         );
         vueTourneeRepository.save(tournee2);
 
-        // Tournée 3 : A_RISQUE — retard détecté
+        // Tournée 3 : A_RISQUE — retard détecté — US-035 : codeTMS=T-203, zone=Lyon 3e
         VueTournee tournee3 = new VueTournee(
                 "tournee-sup-003",
                 "Jean Moreau",
                 2, 12,
                 StatutTourneeVue.A_RISQUE,
-                Instant.now().minusSeconds(3600)
+                Instant.now().minusSeconds(3600),
+                "T-203",
+                "Lyon 3e"
         );
         vueTourneeRepository.save(tournee3);
 
@@ -164,6 +177,18 @@ public class DevDataSeeder implements CommandLineRunner {
         );
         tourneePlanifieeJpaRepository.save(TourneePlanifieeMapper.toEntity(tp204));
 
+        // VueTournee correspondante à T-204 (LANCEE via seed — pas passée par DevEventBridge)
+        VueTournee tournee4 = new VueTournee(
+                "T-204",
+                "Paul Dupont",
+                0, 22,
+                StatutTourneeVue.EN_COURS,
+                importHeure.plusSeconds(900),
+                "T-204",
+                "Lyon 2e"
+        );
+        vueTourneeRepository.save(tournee4);
+
         // Instructions pour tournée 1 — US-015 (une ENVOYEE, une EXECUTEE)
         instructionJpaRepository.save(new InstructionEntity(
                 "instr-dev-001", "tournee-sup-001", "colis-s-003",
@@ -175,5 +200,16 @@ public class DevDataSeeder implements CommandLineRunner {
                 "superviseur-001", TypeInstruction.ANNULER, null,
                 StatutInstruction.EXECUTEE, Instant.now().minusSeconds(2000)
         ));
+    }
+
+    /**
+     * Réinitialise toutes les données dev (utilisé par DELETE /dev/tms/reset).
+     */
+    public void reinitialiser() {
+        instructionJpaRepository.deleteAll();
+        incidentVueJpaRepository.deleteAll();
+        vueColisJpaRepository.deleteAll();
+        vueTourneeJpaRepository.deleteAll();
+        tourneePlanifieeJpaRepository.deleteAll();
     }
 }

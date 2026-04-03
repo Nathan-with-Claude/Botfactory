@@ -33,17 +33,20 @@ public class InstructionController {
     private final MarquerInstructionExecuteeHandler marquerExecuteeHandler;
     private final ConsulterInstructionsParTourneeHandler consulterParTourneeHandler;
     private final ConsulterInstructionsEnAttenteHandler consulterEnAttenteHandler;
+    private final PrendreEnCompteInstructionHandler prendreEnCompteHandler;
 
     public InstructionController(
             EnvoyerInstructionHandler envoyerInstructionHandler,
             MarquerInstructionExecuteeHandler marquerExecuteeHandler,
             ConsulterInstructionsParTourneeHandler consulterParTourneeHandler,
-            ConsulterInstructionsEnAttenteHandler consulterEnAttenteHandler
+            ConsulterInstructionsEnAttenteHandler consulterEnAttenteHandler,
+            PrendreEnCompteInstructionHandler prendreEnCompteHandler
     ) {
         this.envoyerInstructionHandler = envoyerInstructionHandler;
         this.marquerExecuteeHandler = marquerExecuteeHandler;
         this.consulterParTourneeHandler = consulterParTourneeHandler;
         this.consulterEnAttenteHandler = consulterEnAttenteHandler;
+        this.prendreEnCompteHandler = prendreEnCompteHandler;
     }
 
     /**
@@ -119,6 +122,38 @@ public class InstructionController {
         try {
             Instruction instruction = marquerExecuteeHandler.handle(
                     new MarquerInstructionExecuteeCommand(instructionId, livreurId)
+            );
+            return ResponseEntity.ok(InstructionDTO.from(instruction));
+        } catch (InstructionNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
+
+    /**
+     * PATCH /api/supervision/instructions/{instructionId}/prendre-en-compte
+     *
+     * Marque une instruction comme prise en compte par le livreur (lecture dans M-07).
+     * Déclenchée automatiquement à l'ouverture de MesConsignesScreen pour chaque
+     * instruction au statut ENVOYEE.
+     * Transition : ENVOYEE → PRISE_EN_COMPTE (idempotent si déjà PRISE_EN_COMPTE).
+     * Accessible : LIVREUR et SUPERVISEUR.
+     *
+     * @return 200 + InstructionDTO mise à jour | 404 | 409 (transition invalide)
+     *
+     * Source : US-037 delta Sprint 5 — InstructionPriseEnCompte
+     */
+    @PatchMapping("/{instructionId}/prendre-en-compte")
+    @PreAuthorize("hasRole('LIVREUR') or hasRole('SUPERVISEUR')")
+    public ResponseEntity<InstructionDTO> prendreEnCompte(
+            @PathVariable String instructionId,
+            Authentication auth
+    ) {
+        String livreurId = auth != null ? auth.getName() : "livreur-anonyme";
+        try {
+            Instruction instruction = prendreEnCompteHandler.handle(
+                    new PrendreEnCompteInstructionCommand(instructionId, livreurId)
             );
             return ResponseEntity.ok(InstructionDTO.from(instruction));
         } catch (InstructionNotFoundException ex) {

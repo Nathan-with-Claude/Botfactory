@@ -9,7 +9,7 @@ import {
 import { InstructionMobileDTO } from '../api/supervisionApi';
 
 /**
- * Composant M-06 — Bandeau overlay notification d'instruction (US-016)
+ * Composant M-06 — Bandeau overlay notification d'instruction (US-016 / US-037)
  *
  * Affiché par-dessus l'écran courant quand une nouvelle instruction du superviseur
  * est reçue par le livreur (via polling ou FCM Sprint 3).
@@ -19,8 +19,10 @@ import { InstructionMobileDTO } from '../api/supervisionApi';
  * - Disparaît automatiquement après 10 secondes si Pierre n'interagit pas.
  * - Bouton "VOIR" : navigue vers M-03 (DetailColisScreen) pour le colis concerné.
  * - Bouton "×" : ferme le bandeau sans naviguer.
+ * - US-037 : persiste l'instruction dans AsyncStorage via onConsignePersistee
+ *   pour que l'historique "Mes consignes" survive à la fermeture du bandeau.
  *
- * Source : US-016 — "Recevoir une notification push quand le superviseur modifie ma tournée"
+ * Source : US-016 / US-037
  * Wireframe : M-06 — Notification d'instruction reçue
  */
 
@@ -34,6 +36,12 @@ interface BandeauInstructionOverlayProps {
   onFermer: () => void;
   /** Override pour les tests — permet de contrôler le timer */
   autoFermetureMs?: number;
+  /**
+   * US-037 — Callback appelé au montage pour persister l'instruction dans
+   * l'historique AsyncStorage. Optionnel pour rétrocompatibilité avec les
+   * tests US-016 existants.
+   */
+  onConsignePersistee?: (instruction: InstructionMobileDTO) => Promise<void>;
 }
 
 // ─── Composant ────────────────────────────────────────────────────────────────
@@ -43,11 +51,12 @@ const BandeauInstructionOverlay: React.FC<BandeauInstructionOverlayProps> = ({
   onVoir,
   onFermer,
   autoFermetureMs = DUREE_AUTO_FERMETURE_MS,
+  onConsignePersistee,
 }) => {
   const translateY = useRef(new Animated.Value(-120)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Animation slide-down à l'affichage
+  // Animation slide-down à l'affichage + persistance US-037
   useEffect(() => {
     Animated.spring(translateY, {
       toValue: 0,
@@ -55,6 +64,13 @@ const BandeauInstructionOverlay: React.FC<BandeauInstructionOverlayProps> = ({
       speed: 20,
       bounciness: 4,
     }).start();
+
+    // US-037 : persister l'instruction dans l'historique local dès la réception
+    if (onConsignePersistee) {
+      onConsignePersistee(instruction).catch(() => {
+        // Persistance silencieuse — l'historique n'est pas critique pour le livreur
+      });
+    }
 
     // Fermeture automatique après autoFermetureMs
     timerRef.current = setTimeout(() => {
@@ -64,7 +80,7 @@ const BandeauInstructionOverlay: React.FC<BandeauInstructionOverlayProps> = ({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [autoFermetureMs, onFermer, translateY]);
+  }, [autoFermetureMs, instruction, onConsignePersistee, onFermer, translateY]);
 
   const handleVoir = () => {
     if (timerRef.current) clearTimeout(timerRef.current);

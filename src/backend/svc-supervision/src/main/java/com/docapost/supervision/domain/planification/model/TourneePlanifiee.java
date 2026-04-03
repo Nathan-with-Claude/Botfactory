@@ -51,11 +51,14 @@ public class TourneePlanifiee {
     private boolean compositionVerifiee;
 
     // Pattern collect-and-publish
+    private Integer poidsEstimeKg;
+
+    // Pattern collect-and-publish
     private final List<Object> evenements = new ArrayList<>();
 
     /**
      * Constructeur principal — crée une TourneePlanifiee au statut NON_AFFECTEE.
-     * Utilisé lors de l'import TMS.
+     * Utilisé lors de l'import TMS sans poids estimé.
      */
     public TourneePlanifiee(
             String id,
@@ -67,6 +70,24 @@ public class TourneePlanifiee {
             List<Anomalie> anomalies,
             Instant importeeLe
     ) {
+        this(id, codeTms, date, nbColis, zones, contraintes, anomalies, importeeLe, null);
+    }
+
+    /**
+     * Constructeur principal avec poids estimé — crée une TourneePlanifiee au statut NON_AFFECTEE.
+     * Utilisé lors de l'import TMS avec poids connu.
+     */
+    public TourneePlanifiee(
+            String id,
+            String codeTms,
+            LocalDate date,
+            int nbColis,
+            List<ZoneTournee> zones,
+            List<ContrainteHoraire> contraintes,
+            List<Anomalie> anomalies,
+            Instant importeeLe,
+            Integer poidsEstimeKg
+    ) {
         this.id = Objects.requireNonNull(id, "L'id est obligatoire");
         this.codeTms = Objects.requireNonNull(codeTms, "Le code TMS est obligatoire");
         this.date = Objects.requireNonNull(date, "La date est obligatoire");
@@ -76,6 +97,7 @@ public class TourneePlanifiee {
         this.contraintes = new ArrayList<>(Objects.requireNonNull(contraintes, "Les contraintes sont obligatoires"));
         this.anomalies = new ArrayList<>(Objects.requireNonNull(anomalies, "Les anomalies sont obligatoires"));
         this.importeeLe = Objects.requireNonNull(importeeLe, "La date d'import est obligatoire");
+        this.poidsEstimeKg = poidsEstimeKg;
         this.statut = StatutAffectation.NON_AFFECTEE;
         this.compositionVerifiee = false;
     }
@@ -100,7 +122,38 @@ public class TourneePlanifiee {
             Instant lancee,
             boolean compositionVerifiee
     ) {
-        this(id, codeTms, date, nbColis, zones, contraintes, anomalies, importeeLe);
+        this(id, codeTms, date, nbColis, zones, contraintes, anomalies, importeeLe, null);
+        this.statut = Objects.requireNonNull(statut, "Le statut est obligatoire");
+        this.livreurId = livreurId;
+        this.livreurNom = livreurNom;
+        this.vehiculeId = vehiculeId;
+        this.affecteeLe = affecteeLe;
+        this.lancee = lancee;
+        this.compositionVerifiee = compositionVerifiee;
+    }
+
+    /**
+     * Constructeur de reconstruction depuis la persistance avec poids estimé.
+     */
+    public TourneePlanifiee(
+            String id,
+            String codeTms,
+            LocalDate date,
+            int nbColis,
+            List<ZoneTournee> zones,
+            List<ContrainteHoraire> contraintes,
+            List<Anomalie> anomalies,
+            Instant importeeLe,
+            StatutAffectation statut,
+            String livreurId,
+            String livreurNom,
+            String vehiculeId,
+            Instant affecteeLe,
+            Instant lancee,
+            boolean compositionVerifiee,
+            Integer poidsEstimeKg
+    ) {
+        this(id, codeTms, date, nbColis, zones, contraintes, anomalies, importeeLe, poidsEstimeKg);
         this.statut = Objects.requireNonNull(statut, "Le statut est obligatoire");
         this.livreurId = livreurId;
         this.livreurNom = livreurNom;
@@ -170,7 +223,83 @@ public class TourneePlanifiee {
         this.statut = StatutAffectation.LANCEE;
 
         evenements.add(new TourneeLancee(
-                this.id, this.codeTms, this.livreurId, this.livreurNom, superviseurId, this.lancee
+                this.id, this.codeTms, this.livreurId, this.livreurNom, superviseurId, this.lancee, this.nbColis
+        ));
+    }
+
+    /**
+     * US-028 — Tracer l'export CSV de la composition.
+     * Émet CompositionExportee (traçabilité uniquement, aucun changement d'état).
+     */
+    public void tracerExportComposition(String superviseurId) {
+        Objects.requireNonNull(superviseurId, "Le superviseurId est obligatoire");
+        evenements.add(new com.docapost.supervision.domain.planification.events.CompositionExportee(
+                this.id, this.codeTms, superviseurId, Instant.now()
+        ));
+    }
+
+    /**
+     * US-030 — Évaluer la compatibilité sans side-effect.
+     * Retourne POIDS_ABSENT si poidsEstimeKg est null, COMPATIBLE ou DEPASSEMENT sinon.
+     */
+    public ResultatCompatibilite evaluerCompatibiliteVehicule(Vehicule vehicule) {
+        Objects.requireNonNull(vehicule, "Le véhicule est obligatoire");
+        if (this.poidsEstimeKg == null) {
+            return ResultatCompatibilite.POIDS_ABSENT;
+        }
+        return vehicule.peutPorter(this.poidsEstimeKg)
+                ? ResultatCompatibilite.COMPATIBLE
+                : ResultatCompatibilite.DEPASSEMENT;
+    }
+
+    /**
+     * US-030 SC1 — Vérifier la compatibilité et émettre CompatibiliteVehiculeVerifiee.
+     * Lève CapaciteVehiculeDepasseeException si dépassement.
+     * No-op si poids absent (SC4).
+     */
+    public void verifierCompatibiliteVehicule(Vehicule vehicule, String superviseurId) {
+        Objects.requireNonNull(vehicule, "Le véhicule est obligatoire");
+        Objects.requireNonNull(superviseurId, "Le superviseurId est obligatoire");
+        ResultatCompatibilite resultat = evaluerCompatibiliteVehicule(vehicule);
+        if (resultat == ResultatCompatibilite.POIDS_ABSENT) {
+            return; // SC4 : aucune vérification possible
+        }
+        if (resultat == ResultatCompatibilite.DEPASSEMENT) {
+            throw new CapaciteVehiculeDepasseeException(
+                    vehicule.getVehiculeId().getValeur(),
+                    vehicule.getCapaciteKg(),
+                    this.poidsEstimeKg
+            );
+        }
+        // COMPATIBLE : émettre l'event
+        evenements.add(new com.docapost.supervision.domain.planification.events.CompatibiliteVehiculeVerifiee(
+                this.id, this.codeTms, vehicule.getVehiculeId().getValeur(),
+                this.poidsEstimeKg, vehicule.getCapaciteKg(),
+                vehicule.getCapaciteKg() - this.poidsEstimeKg,
+                superviseurId, Instant.now()
+        ));
+    }
+
+    /**
+     * US-030 SC3 — Forcer l'affectation malgré le dépassement de capacité.
+     * Émet CompatibiliteVehiculeEchouee.
+     * Lève PlanificationInvariantException si le véhicule est en réalité compatible.
+     */
+    public void forcerAffectationMalgreDepassement(Vehicule vehicule, String superviseurId) {
+        Objects.requireNonNull(vehicule, "Le véhicule est obligatoire");
+        Objects.requireNonNull(superviseurId, "Le superviseurId est obligatoire");
+        ResultatCompatibilite resultat = evaluerCompatibiliteVehicule(vehicule);
+        if (resultat == ResultatCompatibilite.COMPATIBLE) {
+            throw new PlanificationInvariantException(
+                    "Le véhicule " + vehicule.getVehiculeId() + " est compatible — le forçage est incohérent."
+            );
+        }
+        int poids = this.poidsEstimeKg != null ? this.poidsEstimeKg : 0;
+        evenements.add(new com.docapost.supervision.domain.planification.events.CompatibiliteVehiculeEchouee(
+                this.id, this.codeTms, vehicule.getVehiculeId().getValeur(),
+                poids, vehicule.getCapaciteKg(),
+                poids - vehicule.getCapaciteKg(),
+                superviseurId, Instant.now()
         ));
     }
 
@@ -215,6 +344,7 @@ public class TourneePlanifiee {
     public Instant getAffecteeLe() { return affecteeLe; }
     public Instant getLancee() { return lancee; }
     public boolean isCompositionVerifiee() { return compositionVerifiee; }
+    public Integer getPoidsEstimeKg() { return poidsEstimeKg; }
 
     @Override
     public boolean equals(Object o) {

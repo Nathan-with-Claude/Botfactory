@@ -31,7 +31,7 @@ class LancerTourneeHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new LancerTourneeHandler(repository);
+        handler = new LancerTourneeHandler(repository, java.util.Optional.empty());
     }
 
     @Test

@@ -13,8 +13,8 @@ import { ConnexionScreen } from '../screens/ConnexionScreen';
 
 describe('ConnexionScreen M-01 — US-019', () => {
 
-  it('SC1 — affiche le bouton "Se connecter via compte Docaposte"', () => {
-    const { getByTestId } = render(
+  it('SC1 — affiche le bouton "Connexion Docaposte" (L2 : libellé raccourci)', () => {
+    const { getByTestId, getByText } = render(
       <ConnexionScreen
         onLoginSuccess={jest.fn()}
         loginFn={jest.fn()}
@@ -23,6 +23,8 @@ describe('ConnexionScreen M-01 — US-019', () => {
       />
     );
     expect(getByTestId('btn-connexion-sso')).toBeTruthy();
+    // L2 — libellé raccourci
+    expect(getByText('Connexion Docaposte')).toBeTruthy();
   });
 
   it('SC1 — appelle loginFn au clic sur le bouton de connexion', () => {

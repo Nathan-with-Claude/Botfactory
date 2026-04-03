@@ -52,6 +52,9 @@ class SecurityConfigTest {
     @MockBean
     private CloturerTourneeHandler cloturerTourneeHandler;
 
+    @MockBean
+    private com.docapost.tournee.infrastructure.supervision.SupervisionNotifier supervisionNotifier;
+
     // ─── Helpers ────────────────────────────────────────────────────────────────
 
     private Tournee creerTourneeTest() {
