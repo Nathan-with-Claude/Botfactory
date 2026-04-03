@@ -12,9 +12,14 @@
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
-    "react": "18.3.1",
-    "react-native": "0.76.0",
-    "expo": "~51.0.0"
+    "@expo/metro-runtime": "~3.2.3",
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "expo": "~51.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-signature-canvas": "^4.7.2",
+    "react-native-web": "~0.19.10"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
@@ -35,6 +40,10 @@
     "setupFilesAfterEnv": [
       "@testing-library/jest-native/extend-expect"
     ],
+    "moduleNameMapper": {
+      "@react-native-async-storage/async-storage": "<rootDir>/src/__mocks__/asyncStorageMock.ts",
+      "react-native-signature-canvas": "<rootDir>/src/__mocks__/react-native-signature-canvas.tsx"
+    },
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
     ]

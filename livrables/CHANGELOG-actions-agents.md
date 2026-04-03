@@ -3,6 +3,99 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-04-02T16:00Z @po UPDATE → /livrables/05-backlog/user-stories/US-037-historique-consignes-livreur.md
+  Enrichissement suite wireframes v1.3 : référence wireframe ajoutée, invariants badges statut colores, scenarios 5b/5c/5d/5e (navigation M-07→M-03, badge disparu au retour, liste vide, offline), scenario 7b (badge M-02 mis à jour), DoD complété.
+
+- 2026-04-02T16:01Z @po UPDATE → /livrables/05-backlog/user-stories/US-043-card-sso-retractable-avant-connexion.md
+  Enrichissement suite wireframes v1.3 : référence wireframe ajoutée, specs visuelles chevron [^]/[v] détaillées, scénarios 1/2/5 précisés avec texte exact et comportement des chevrons, scenario 6 (bouton connexion toujours accessible), DoD complété.
+
+- 2026-04-02T16:02Z @po UPDATE → /livrables/05-backlog/user-stories/US-045-hint-visuel-swipe-onboarding.md
+  Enrichissement suite wireframes v1.3 : référence wireframe ajoutée, texte exact du hint ("← Glissez vers la gauche pour déclarer un problème"), position sous la carte, micro-animation frémissement 8px documentée, DoD complété.
+
+- 2026-04-02T16:03Z @po UPDATE → /livrables/05-backlog/features.md
+  Résolution conflit git (marqueurs upstream/stashed supprimés), version 1.1, descriptions F-013/F-028/F-029 enrichies avec références wireframes v1.3 et précisions visuelles.
+
+- 2026-04-02T16:04Z @po CREATE → /livrables/00-contexte/journaux/archives/journal-po-2026-04.md
+  Archivage journal @po (seuil 150 lignes atteint) : interventions 2026-03-19 à 2026-04-02 et décisions structurantes archivées.
+
+- 2026-04-02T16:05Z @po UPDATE → /livrables/00-contexte/journaux/journal-po.md
+  Mise à jour journal de bord : nouvelles décisions session 2026-04-02, intervention 1.4 documentée, archive référencée.
+
+- 2026-04-02T14:00Z @developpeur IMPLEMENT → src/mobile/src/screens/MesConsignesScreen.tsx, src/mobile/src/__tests__/MesConsignesScreen.test.tsx
+  US-042 : formaterHorodatage() exportée (HH:mm / JJ/MM HH:mm) + testID horodatage-{id}. TDD : 5 tests FH1→FH5. 315/315 suite mobile verts.
+
+- 2026-04-02T14:01Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-042-impl.md
+  Vertical slice US-042 : horodatage adaptatif consignes M-07.
+
+- 2026-04-02T14:10Z @developpeur IMPLEMENT → src/mobile/src/screens/ConnexionScreen.tsx, src/mobile/src/__tests__/ConnexionScreen.US036.test.tsx
+  US-043 : state dejaConnecte + toggleCard conditionnel (pas de setItem avant connexion). Mise à jour SC5 US-036.
+
+- 2026-04-02T14:11Z @developpeur CREATE → src/mobile/src/__tests__/ConnexionScreen.US043.test.tsx, /livrables/06-dev/vertical-slices/US-043-impl.md
+  US-043 : 10 tests TDD (SC1→SC5). 325/325 suite mobile verts.
+
+- 2026-04-02T14:20Z @developpeur IMPLEMENT → src/web/supervision/src/pages/TableauDeBordPage.tsx
+  US-044 : formaterDureeDeconnexion() exportée + setInterval 1s + affichage dès 0s. Validé 7/7 via node.js.
+
+- 2026-04-02T14:21Z @developpeur CREATE → src/web/supervision/src/__tests__/TableauDeBordPage.US044.test.tsx, /livrables/06-dev/vertical-slices/US-044-impl.md
+  US-044 : tests créés (non exécutables — bug Babel/TS pré-existant svc-supervision documenté).
+
+- 2026-04-02T14:25Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Session 2026-04-02 : ajout US-042/043/044 (Suivi US + Interventions réalisées).
+
+- 2026-04-02T16:00Z @developpeur IMPLEMENT → src/mobile/src/components/ColisItem.tsx, src/mobile/src/screens/MesConsignesScreen.tsx, src/web/supervision/src/pages/DetailTourneePlanifieePage.tsx, src/web/supervision/src/pages/TableauDeBordPage.tsx
+  US-038 : Harmonisation libellés UX — "Repassage", "Traitée", "Chargement trop lourd", "Télécharger la liste", "numéro de tournée". TDD : 4 tests mobiles. 329/329 suite mobile verts.
+
+- 2026-04-02T16:01Z @developpeur CREATE → src/mobile/src/__tests__/US038.libelles.test.tsx, /livrables/06-dev/vertical-slices/US-038-impl.md
+  US-038 : vertical slice et tests TDD libellés UX.
+
+- 2026-04-02T16:15Z @developpeur IMPLEMENT → src/mobile/src/hooks/useSwipeHint.ts, src/mobile/src/screens/ListeColisScreen.tsx
+  US-045 : hook useSwipeHint (SEUIL=3, fail-safe=true, incrément sur swipe réussi). Remplacement logique sessions Bloquant 6. 342/342 suite mobile verts.
+
+- 2026-04-02T16:16Z @developpeur CREATE → src/mobile/src/__tests__/US045.hintSwipe.test.tsx, /livrables/06-dev/vertical-slices/US-045-impl.md
+  US-045 : 13 tests TDD hook useSwipeHint + vertical slice.
+
+- 2026-04-02T16:17Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Session 2026-04-02 : ajout US-038/045 (Suivi US + Interventions réalisées).
+
+- 2026-04-02T18:00Z @developpeur FIX → src/web/supervision/src/pages/TableauDeBordPage.tsx
+  OBS-SUP-001 : Math.max(0, maintenant - deconnecteDepuisMs) — empêche le compteur d'afficher "-1 s" au premier rendu.
+
+- 2026-04-02T18:01Z @developpeur FIX → src/web/supervision/src/__tests__/TableauDeBordPage.US044.test.tsx
+  OBS-SUP-002 : clarification commentaire SC2 — creerMockWsFactory(true) = OFFLINE requis pour que dureeDeconnexionMs soit calculé.
+
+- 2026-04-02T18:02Z @developpeur FIX → /livrables/06-dev/vertical-slices/US-035-impl.md
+  OBS-SUP-003 : placeholder documentation mis à jour "code TMS" → "numéro de tournée" (alignement avec US-038).
+
+- 2026-04-02T18:03Z @developpeur FIX → src/web/supervision/e2e/US-supervision-campagne.spec.ts
+  OBS-SUP-004 : ajout waitForSelector('[data-testid="ligne-tournee"]', timeout 10000ms) dans TC1 et TC2 pour attendre les données de tournées.
+
+- 2026-04-02T18:04Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Session 2026-04-02 : ajout section "Corrections post-QA OBS-SUP-001 à OBS-SUP-004".
+
+- 2026-04-02T09:00Z @po CREATE → /livrables/05-backlog/user-stories/US-046-signature-numerique-pad-reel.md
+  US-046 Must Have — bloquant légal : intégration react-native-signature-canvas pour pad de tracé réel dans M-04 (CapturePreuveScreen). Remplace la dette technique TouchableOpacity simulé de US-008-impl.md signalée 3x par Pierre Morel.
+
+- 2026-04-02T09:01Z @po UPDATE → /livrables/05-backlog/features.md
+  Rattachement de US-046 à F-007 (Capture de la preuve de livraison, EPIC-002).
+
+- 2026-04-02T09:02Z @po UPDATE → /livrables/00-contexte/journaux/journal-po.md
+  Session 2026-04-02 : ajout US-046, mise à jour prochaine US libre (US-047), décisions structurantes.
+
+- 2026-04-02T19:00Z @developpeur IMPLEMENT → src/mobile/src/components/ColisItem.tsx
+  US-045 delta v1.3 : texte exact hint wireframe ("← Glissez vers la gauche pour déclarer un problème") + position sous la carte (hors header) + accessibilityLabel/role. Correction accessibilityElementsHidden → accessible.
+
+- 2026-04-02T19:01Z @developpeur CREATE → src/mobile/src/__tests__/US045.colisItem.hint.test.tsx
+  US-045 delta v1.3 : 4 tests TDD rendu ColisItem (SC-RENDER-1 à SC-RENDER-4). 352/352 suite totale mobile verts.
+
+- 2026-04-02T19:02Z @developpeur UPDATE → /livrables/06-dev/vertical-slices/US-045-impl.md
+  Ajout section "Delta v1.3" : corrections rendu ColisItem + résultats 352/352 tests.
+
+- 2026-04-02T19:03Z @developpeur CREATE → /livrables/00-contexte/journaux/archives/journal-developpeur-2026-04.md
+  Archivage sections feedback terrain 2026-04-02/2026-04-01/2026-03-30 (journal > 150 lignes).
+
+- 2026-04-02T19:04Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Session US-045 delta : nouvelles entrées Suivi US/Interventions/Décisions + référence archive 2026-04.
+
 - 2026-04-01T15:00Z @developpeur CREATE → /livrables/06-dev/processus-metiers-bout-en-bout.drawio
   Diagramme draw.io 4 pages (swimlane) : Parcours 0 Préparation Tournées, Parcours 1 Exécution Livreur, Parcours 2 Supervision Temps Réel, Parcours 3 Gestion Incidents. Tous les events domaine, décisions et acteurs représentés.
 
@@ -1043,3 +1136,48 @@
 
 - 2026-03-25T11:25Z @qa UPDATE → livrables/00-contexte/journaux/journal-qa.md
   Mise a jour journal QA : suivi US-006 a US-024 avec resultats reels, decisions structurantes, anomalies detectees.
+
+- 2026-04-02T10:30Z @qa CREATE → livrables/07-tests/scenarios/US-supervision-scenarios.md
+  Rédaction des scénarios de tests campagne supervision : L1 (144 Java, 223 Jest), L2 (11 curl), L3 (3 Playwright). Couverture US-011/030/034/035/038/044.
+
+- 2026-04-02T10:30Z @qa CREATE → livrables/07-tests/scenarios/US-supervision-rapport-test.md
+  Rapport d'exécution campagne supervision. Bilan 379/381 tests (99.5%). 4 anomalies non bloquantes. Bloquants B3/B5 confirmés résolus.
+
+- 2026-04-02T10:30Z @qa CREATE → src/web/supervision/e2e/US-supervision-campagne.spec.ts
+  Spec Playwright L3 supervision : TC1 (tableau de bord bypass SSO), TC2 (placeholder US-038), TC3 (bouton ENVOYER). 2/3 PASS.
+
+- 2026-04-02T10:30Z @qa UPDATE → livrables/00-contexte/journaux/journal-qa.md
+  Mise à jour journal : interventions session 02/04, décisions 8-11, points d'attention OBS-SUP-001 à 004.
+
+- 2026-04-02T14:00Z @ux UPDATE → livrables/02-ux/wireframes.md (v1.2 → v1.3)
+  M-01 : card SSO rétractable avant connexion (US-043). M-02 : hint visuel swipe onboarding (US-045). M-04 : pad signature réel react-native-signature-canvas avec invariants légaux (US-046). M-07 NOUVEAU : écran "Mes consignes" avec statuts et horodatage réception (US-037, US-042). W-01 : compteur durée déconnexion WebSocket (US-044). Récapitulatif écrans MVP mis à jour (12 écrans).
+
+- 2026-04-02T14:00Z @ux UPDATE → livrables/00-contexte/journaux/journal-ux.md
+  Ajout intervention v1.3, 3 décisions structurantes (US-043, US-042, US-044), mise à jour points d'attention.
+
+- 2026-04-03T10:00Z @developpeur IMPLEMENT → src/mobile/src/screens/CapturePreuveScreen.tsx, src/mobile/src/__mocks__/react-native-signature-canvas.tsx, src/mobile/package.json
+  US-046 : remplacement TouchableOpacity simulé par react-native-signature-canvas réel. onOK→base64, clearSignature(). Mock SignatureCanvas créé. TDD : 13 tests. 365/365 suite mobile verts.
+
+- 2026-04-03T10:01Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-046-impl.md
+  Vertical slice US-046 : pad signature réel M-04 (bloquant légal résolu).
+
+- 2026-04-03T10:30Z @developpeur IMPLEMENT → src/web/supervision/src/utils/exporterCSVBilan.ts, src/web/supervision/src/pages/TableauDeBordPage.tsx
+  US-039 : export CSV bilan du jour W-01. Bouton btn-telecharger-bilan + genererCSVBilanTournees. TDD : 13 tests. 264/265 web.
+
+- 2026-04-03T10:31Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-039-impl.md
+  Vertical slice US-039 : export CSV bilan tournées du jour W-01.
+
+- 2026-04-03T11:00Z @developpeur IMPLEMENT → src/web/supervision/src/utils/exporterCSV.ts
+  US-040 : enrichissement CSV W-05 avec Destinataire et Statut (6 colonnes). Nouvelles fonctions construireColisCSVRowsEnrichis + serialiserEnCSVEnrichi. TDD : 15 tests. Rétrocompatibilité US-028 OK.
+
+- 2026-04-03T11:01Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-040-impl.md
+  Vertical slice US-040 : enrichissement CSV composition W-05.
+
+- 2026-04-03T11:30Z @developpeur IMPLEMENT → src/web/supervision/src/utils/alerteSurcharge.ts, src/web/supervision/src/pages/PreparationPage.tsx
+  US-041 : poids estimé + alerte surcharge W-04. calculerNiveauAlerte (AUCUNE/APPROCHE/CRITIQUE), seuil 95% cohérent US-030. TDD : 14 tests.
+
+- 2026-04-03T11:31Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-041-impl.md
+  Vertical slice US-041 : poids estimé et alerte surcharge W-04.
+
+- 2026-04-03T11:32Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Journal @developpeur : US-046, US-039, US-040, US-041 ajoutées au suivi. 4 décisions techniques documentées.

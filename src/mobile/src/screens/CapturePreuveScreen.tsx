@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SignatureCanvas, { SignatureViewRef } from 'react-native-signature-canvas';
 import {
   TYPE_PREUVE_LABELS,
   TypePreuve,
@@ -72,13 +73,17 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
   onRetour,
   onLivraisonConfirmee,
 }) => {
-  const [typeSelectionne, setTypeSelectionne] = useState<TypePreuve | null>(null);
+  // L6 — Signature pré-sélectionnée par défaut (cas d'usage le plus fréquent)
+  const [typeSelectionne, setTypeSelectionne] = useState<TypePreuve | null>('SIGNATURE');
 
   // Données de preuve selon le type
-  const [donneesSignature, setDonneesSignature] = useState<string | null>(null); // SIGNATURE
+  const [donneesSignature, setDonneesSignature] = useState<string | null>(null); // SIGNATURE (base64 PNG)
   const [urlPhotoCapturee, setUrlPhotoCapturee] = useState<string | null>(null);  // PHOTO
   const [nomTiers, setNomTiers] = useState('');                                   // TIERS_IDENTIFIE
   const [descriptionDepot, setDescriptionDepot] = useState('');                   // DEPOT_SECURISE
+
+  // US-046 — Ref vers le composant SignatureCanvas pour clearSignature() et readSignature()
+  const signatureRef = useRef<SignatureViewRef>(null);
 
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -119,9 +124,10 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
     setErreur(null);
   };
 
-  // ─── Effacer la signature ─────────────────────────────────────────────────
+  // ─── Effacer la signature (US-046) ────────────────────────────────────────
 
   const handleEffacerSignature = () => {
+    signatureRef.current?.clearSignature();
     setDonneesSignature(null);
   };
 
@@ -235,32 +241,41 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
         {typeSelectionne === 'SIGNATURE' && (
           <View style={styles.section} testID="section-capture-signature">
             <Text style={styles.sectionTitre}>Signature du destinataire</Text>
-            {/* Pad de signature — MVP : zone tactile simulée */}
-            {/* L'événement 'signatureCapturee' est déclenché par les tests Jest via fireEvent */}
-            <TouchableOpacity
-              testID="pad-signature"
+            {/* US-046 — Pad de tracé réel via react-native-signature-canvas */}
+            <View
+              testID="pad-signature-canvas"
               style={[
                 styles.padSignature,
                 donneesSignature !== null && styles.padSignatureRempli,
               ]}
-              accessibilityLabel="Zone de signature"
-              onPress={() => {
-                // En production : intégrer react-native-signature-canvas
-                // MVP : capture au press pour la testabilité
-                if (donneesSignature === null) {
-                  setDonneesSignature('signature_data_' + Date.now());
-                }
-              }}
-              // Prop custom pour les tests Jest (fireEvent(pad, 'signatureCapturee', data))
-              onSignatureCapturee={(data: string) => setDonneesSignature(data)}
-              accessible
+              // Callbacks pour les tests Jest (fireEvent sur le View)
+              onOK={(base64: string) => setDonneesSignature(base64)}
+              onEmpty={() => setDonneesSignature(null)}
+              onBegin={() => { /* trace en cours — pas encore capturé */ }}
             >
+              <SignatureCanvas
+                ref={signatureRef}
+                onOK={(base64: string) => setDonneesSignature(base64)}
+                onEmpty={() => setDonneesSignature(null)}
+                onBegin={() => { /* trace en cours */ }}
+                style={styles.signatureCanvasInner}
+                webStyle={`
+                  .m-signature-pad { box-shadow: none; border: none; }
+                  .m-signature-pad--body { border: none; }
+                  body, html { width: 100%; height: 100%; margin: 0; padding: 0; }
+                `}
+                descriptionText=""
+                clearText="Effacer"
+                confirmText="Valider"
+                autoClear={false}
+                imageType="image/png"
+              />
+            </View>
+            {donneesSignature !== null && (
               <Text style={styles.padSignatureTexte} testID="pad-signature-texte">
-                {donneesSignature !== null
-                  ? 'Signature capturée'
-                  : 'Signez ici'}
+                Signature capturée
               </Text>
-            </TouchableOpacity>
+            )}
             <TouchableOpacity
               testID="bouton-effacer-signature"
               onPress={handleEffacerSignature}
@@ -501,9 +516,17 @@ const styles = StyleSheet.create({
     borderColor: '#2E7D32',
     backgroundColor: '#F1F8E9',
   },
+  signatureCanvasInner: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   padSignatureTexte: {
-    color: '#9E9E9E',
-    fontSize: 16,
+    color: '#2E7D32',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 4,
+    fontWeight: '500',
   },
   boutonEffacer: {
     alignSelf: 'flex-start',

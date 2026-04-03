@@ -50,7 +50,13 @@ describe('CapturePreuveScreen (US-008 + US-009)', () => {
     expect(getByTestId('type-preuve-DEPOT_SECURISE')).toBeTruthy();
   });
 
-  it('désactive le bouton CONFIRMER si aucun type sélectionné', () => {
+  it('L6 — SIGNATURE pré-sélectionné par défaut au rendu initial', () => {
+    const { getByTestId } = render(<CapturePreuveScreen {...DEFAULT_PROPS} />);
+    // US-046 : le pad de signature est désormais pad-signature-canvas (SignatureCanvas réel)
+    expect(getByTestId('pad-signature-canvas')).toBeTruthy();
+  });
+
+  it('désactive le bouton CONFIRMER si la signature n\'a pas encore été capturée (rendu initial)', () => {
     const { getByTestId } = render(<CapturePreuveScreen {...DEFAULT_PROPS} />);
     const bouton = getByTestId('bouton-confirmer-livraison');
     expect(bouton.props.accessibilityState?.disabled).toBe(true);
@@ -58,10 +64,11 @@ describe('CapturePreuveScreen (US-008 + US-009)', () => {
 
   // ─── US-008 : SIGNATURE ────────────────────────────────────────────────────
 
-  it('US-008 SC1 : affiche le pad de signature après sélection SIGNATURE', () => {
+  it('US-008 SC1 : affiche le pad de signature (pad-signature-canvas) après sélection SIGNATURE', () => {
     const { getByTestId } = render(<CapturePreuveScreen {...DEFAULT_PROPS} />);
     fireEvent.press(getByTestId('type-preuve-SIGNATURE'));
-    expect(getByTestId('pad-signature')).toBeTruthy();
+    // US-046 : le pad de signature est désormais pad-signature-canvas (SignatureCanvas réel)
+    expect(getByTestId('pad-signature-canvas')).toBeTruthy();
     expect(getByTestId('bouton-effacer-signature')).toBeTruthy();
   });
 
@@ -72,12 +79,14 @@ describe('CapturePreuveScreen (US-008 + US-009)', () => {
     expect(bouton.props.accessibilityState?.disabled).toBe(true);
   });
 
-  it('US-008 SC3 : effacer remet le pad à vide et désactive le bouton', () => {
+  it('US-008 SC3 : effacer remet le pad à vide et désactive le bouton', async () => {
     const { getByTestId } = render(<CapturePreuveScreen {...DEFAULT_PROPS} />);
     fireEvent.press(getByTestId('type-preuve-SIGNATURE'));
-    // Simuler une signature
-    const pad = getByTestId('pad-signature');
-    fireEvent(pad, 'signatureCapturee', 'données_signature_base64');
+    // US-046 : simuler la réception d'une signature via l'événement onOK du conteneur
+    const padCanvas = getByTestId('pad-signature-canvas');
+    await act(async () => {
+      fireEvent(padCanvas, 'onOK', 'data:image/png;base64,SIGNATURE_BASE64');
+    });
     // Le bouton doit être actif
     let bouton = getByTestId('bouton-confirmer-livraison');
     expect(bouton.props.accessibilityState?.disabled).toBe(false);
@@ -98,8 +107,11 @@ describe('CapturePreuveScreen (US-008 + US-009)', () => {
 
     const { getByTestId } = render(<CapturePreuveScreen {...DEFAULT_PROPS} />);
     fireEvent.press(getByTestId('type-preuve-SIGNATURE'));
-    const pad = getByTestId('pad-signature');
-    fireEvent(pad, 'signatureCapturee', 'données_signature_base64');
+    // US-046 : simuler la réception de la signature base64 via onOK
+    const padCanvas = getByTestId('pad-signature-canvas');
+    await act(async () => {
+      fireEvent(padCanvas, 'onOK', 'data:image/png;base64,SIGNATURE_BASE64');
+    });
 
     await act(async () => {
       fireEvent.press(getByTestId('bouton-confirmer-livraison'));
@@ -198,10 +210,13 @@ describe('CapturePreuveScreen (US-008 + US-009)', () => {
       new tourneeApi.LivraisonDejaConfirmeeError('Livraison déjà confirmée')
     );
 
-    const { getByTestId, getByText } = render(<CapturePreuveScreen {...DEFAULT_PROPS} />);
+    const { getByTestId } = render(<CapturePreuveScreen {...DEFAULT_PROPS} />);
     fireEvent.press(getByTestId('type-preuve-SIGNATURE'));
-    const pad = getByTestId('pad-signature');
-    fireEvent(pad, 'signatureCapturee', 'sig');
+    // US-046 : simuler la réception de la signature base64 via onOK
+    const padCanvas = getByTestId('pad-signature-canvas');
+    await act(async () => {
+      fireEvent(padCanvas, 'onOK', 'data:image/png;base64,sig');
+    });
 
     await act(async () => {
       fireEvent.press(getByTestId('bouton-confirmer-livraison'));

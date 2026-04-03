@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { calculerNiveauAlerte, genererTooltipPoids } from '../utils/alerteSurcharge';
 
 // ─── Types BC-07 Planification ────────────────────────────────────────────────
 
@@ -24,6 +25,9 @@ export interface TourneePlanifieeDTO {
   lancee: string | null;
   compositionVerifiee: boolean;
   aDesAnomalies: boolean;
+  // US-041 — Poids estimé et capacité véhicule pour alerte surcharge W-04
+  poidsEstimeKg?: number;
+  capaciteVehiculeKg?: number;
 }
 
 export interface PlanDuJourDTO {
@@ -57,6 +61,8 @@ interface PreparationPageProps {
   fetchFn?: (url: string, options?: RequestInit) => Promise<Response>;
   onVoirDetail?: (id: string) => void;
   onAffecter?: (id: string) => void;
+  /** S3 — Rappelée après un lancement de tournée réussi pour rediriger vers le tableau de bord */
+  onTourneeeLancee?: () => void;
 }
 
 /**
@@ -69,9 +75,10 @@ interface PreparationPageProps {
  */
 export default function PreparationPage({
   apiBaseUrl = 'http://localhost:8082',
-  fetchFn = fetch.bind(window),
+  fetchFn = fetch,
   onVoirDetail,
   onAffecter,
+  onTourneeeLancee,
 }: PreparationPageProps) {
 
   const today = new Date().toISOString().slice(0, 10);
@@ -82,6 +89,7 @@ export default function PreparationPage({
   const [erreur, setErreur] = useState<string | null>(null);
   const [messageSucces, setMessageSucces] = useState<string | null>(null);
   const [lancementEnCours, setLancementEnCours] = useState<string | null>(null);
+  const [importEnCours, setImportEnCours] = useState(false);
 
   const chargerPlan = useCallback(async () => {
     setLoading(true);
@@ -103,14 +111,37 @@ export default function PreparationPage({
     chargerPlan();
   }, [chargerPlan]);
 
+  const forcerImportTms = async () => {
+    setImportEnCours(true);
+    setErreur(null);
+    try {
+      const res = await fetchFn(`${apiBaseUrl}/dev/tms/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: 4 }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await chargerPlan();
+    } catch (e) {
+      setErreur('Impossible de déclencher l\'import TMS simulé. Vérifiez que le backend tourne en profil dev.');
+    } finally {
+      setImportEnCours(false);
+    }
+  };
+
   const lancerTournee = async (id: string, codeTms: string) => {
     setLancementEnCours(id);
     try {
       const res = await fetchFn(`${apiBaseUrl}/api/planification/tournees/${id}/lancer`, { method: 'POST' });
       if (res.ok) {
         setMessageSucces(`Tournée ${codeTms} lancée avec succès.`);
-        setTimeout(() => setMessageSucces(null), 3000);
-        chargerPlan();
+        // S3 — Redirection automatique vers le tableau de bord après lancement
+        if (onTourneeeLancee) {
+          setTimeout(() => onTourneeeLancee(), 800);
+        } else {
+          setTimeout(() => setMessageSucces(null), 3000);
+          chargerPlan();
+        }
       } else if (res.status === 409) {
         setErreur(`Impossible de lancer la tournée ${codeTms} : affectation incomplète ou tournée déjà lancée.`);
       }
@@ -218,8 +249,16 @@ export default function PreparationPage({
       {loading ? (
         <div data-testid="chargement">Chargement du plan du jour...</div>
       ) : !plan || plan.tournees.length === 0 ? (
-        <div data-testid="aucune-tournee" style={{ color: '#6c757d', padding: 16 }}>
-          Aucune tournée importée pour aujourd'hui. Import TMS en attente ou à déclencher manuellement.
+        <div data-testid="aucune-tournee" style={{ color: '#6c757d', padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span>Aucune tournée importée pour aujourd'hui.</span>
+          <button
+            data-testid="bouton-forcer-import"
+            onClick={forcerImportTms}
+            disabled={importEnCours}
+            style={{ padding: '6px 14px', borderRadius: 4, border: 'none', background: '#0d6efd', color: '#fff', cursor: importEnCours ? 'not-allowed' : 'pointer', opacity: importEnCours ? 0.7 : 1 }}
+          >
+            {importEnCours ? 'Import en cours…' : 'Forcer l\'import TMS'}
+          </button>
         </div>
       ) : (
         <table data-testid="tableau-tournees" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
@@ -228,6 +267,8 @@ export default function PreparationPage({
               <th style={th}>Tournée</th>
               <th style={th}>Nb colis</th>
               <th style={th}>Zone(s)</th>
+              {/* US-041 — Colonne Poids */}
+              <th style={th} data-testid="colonne-poids-entete">Poids</th>
               <th style={th}>Statut</th>
               <th style={th}>Actions</th>
             </tr>
@@ -256,6 +297,36 @@ export default function PreparationPage({
                     {tournee.zones.slice(0, 2).map(z => (
                       <div key={z.nom} style={{ fontSize: 12 }}>{z.nom}</div>
                     ))}
+                  </td>
+                  {/* US-041 — Cellule Poids avec alerte surcharge */}
+                  <td style={td} data-testid={`poids-${tournee.id}`}>
+                    {tournee.poidsEstimeKg != null ? (
+                      <>
+                        <span>{tournee.poidsEstimeKg} kg</span>
+                        {(() => {
+                          const niveau = calculerNiveauAlerte(tournee.poidsEstimeKg!, tournee.capaciteVehiculeKg);
+                          const tooltip = genererTooltipPoids(tournee.poidsEstimeKg!, tournee.capaciteVehiculeKg, niveau);
+                          if (niveau === 'AUCUNE') return null;
+                          return (
+                            <span
+                              data-testid={`alerte-surcharge-${tournee.id}`}
+                              data-niveau={niveau}
+                              title={tooltip ?? undefined}
+                              style={{
+                                marginLeft: 6,
+                                color: niveau === 'CRITIQUE' ? '#c62828' : '#e65100',
+                                fontWeight: 'bold',
+                                cursor: 'help',
+                              }}
+                            >
+                              {niveau === 'CRITIQUE' ? '⛔' : '⚠'}
+                            </span>
+                          );
+                        })()}
+                      </>
+                    ) : (
+                      <span style={{ color: '#9e9e9e', fontSize: 12 }}>—</span>
+                    )}
                   </td>
                   <td style={td}>
                     <span
