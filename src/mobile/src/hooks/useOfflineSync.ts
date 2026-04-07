@@ -65,6 +65,13 @@ export function useOfflineSync({
     }
   }, [queue, syncFn, refreshPendingCount]);
 
+  // US-056 — Charger la file persistée depuis AsyncStorage au montage
+  useEffect(() => {
+    void queue.initialize();
+    refreshPendingCount();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     // Écoute les changements de connectivité
     const unsubscribe = NetInfo.addEventListener(state => {

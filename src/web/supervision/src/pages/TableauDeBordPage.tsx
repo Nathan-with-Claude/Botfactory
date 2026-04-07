@@ -325,13 +325,13 @@ export const LigneTournee: React.FC<LigneTourneeProps> = ({ tournee, onVoir }) =
         </div>
       </td>
 
-      {/* Tournée — S1 : ID TMS */}
+      {/* Tournée — S1 : Code TMS (ex: T-201) */}
       <td className="px-6 py-5">
         <span
           data-testid={`id-tms-${tournee.tourneeId}`}
           className="text-xs font-bold px-2 py-1 bg-surface-container-high rounded text-on-surface-variant"
         >
-          {tournee.tourneeId}
+          {tournee.codeTMS ?? tournee.tourneeId}
         </span>
       </td>
 

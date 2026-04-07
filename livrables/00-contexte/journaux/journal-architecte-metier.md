@@ -67,6 +67,10 @@ BC-06 ──[Shared Kernel]──> tous BCs
 | 2026-03-19 | BC-06 = Generic Subdomain off-the-shelf | SSO OAuth2 imposé par DSI |
 | 2026-03-20 | BC-07 = second Core Domain | Prérequis bloquant au Parcours 1 — oublié du cadrage initial |
 | 2026-03-20 | TournéeLancée = seul point de couplage BC-07 → BC-01 | Isolation maximale entre planification et exécution |
+| 2026-04-06 | BC-07 = source authoritative unique des états journaliers livreurs | BC-03 (VueTournee) est un Read Model dérivé d'events BC-01 (exécution), pas de la planification. Croiser BC-03 créerait une ambiguïté "LANCEE planification" vs "premier event exécution reçu". |
+| 2026-04-06 | EtatJournalierLivreur = Value Object calculé, jamais stocké au MVP | Agrégation à la volée depuis TourneePlanifieeRepository + RéférentielLivreur. Post-MVP : projection CQRS dédiée. |
+| 2026-04-06 | Pas de nouveau Bounded Context pour la gestion des livreurs | Le concept VueLivreur est une extension de BC-07 (Read Model exposé). Un BC "Gestion des livreurs" serait prématuré et sans masse critique de logique métier. |
+| 2026-04-06 | LivreurId reste un Value Object, pas une Entité Livreur au MVP | Le référentiel livreurs est stable sur la journée et géré hors DocuPost (SSO). Un RéférentielLivreur statique suffit pour US-066. |
 
 ---
 
@@ -76,6 +80,7 @@ BC-06 ──[Shared Kernel]──> tous BCs
 |------|---------|-------|----------|
 | 2026-03-19 | 1.0 | Création — ubiquitous language, BC-01→06, context map, modèles détaillés, 7 modules, capability map 8 domaines | domain-model.md, capability-map.md, modules-fonctionnels.md |
 | 2026-03-20 | 1.1 | Ajout BC-07 Planification de Tournée : 6 nouveaux termes, modèle PlanDuJour/TournéeTMS/Affectation/Véhicule, 5 invariants, 4 domain events, context map mise à jour, Module 8, capability Planification | domain-model.md, capability-map.md, modules-fonctionnels.md |
+| 2026-04-06 | 1.2 | US-066 : validation modélisation métier état journalier livreurs — ajout EtatJournalierLivreur (VO), VueLivreur (Read Model), RéférentielLivreur, règle de dérivation des états, source de vérité BC-07 confirmée, section BC-07 complète dans domain-model, capability 3.4 dans capability-map | domain-model.md, capability-map.md |
 
 ---
 
@@ -85,3 +90,6 @@ BC-06 ──[Shared Kernel]──> tous BCs
 - Le **module véhicule** est actuellement minimal (référentiel simple) — pas d'optimisation de capacité au MVP
 - Le **couplage BC-07 → BC-01** se fait uniquement via l'event `TournéeLancée` — ne pas créer d'appel direct
 - Si un nouveau Bounded Context est nécessaire, vérifier sa classification (Core / Supporting / Generic) et mettre à jour la Context Map
+- **US-066** : l'architecte technique doit confirmer la stratégie d'implémentation VueLivreur (Option A agrégation à la volée ou Option B projection CQRS) et l'endpoint `GET /api/supervision/livreurs/etat-du-jour`
+- **RéférentielLivreur** : la source des données nomComplet livreur doit être confirmée — actuellement les 6 livreurs dev canoniques (US-049) ; en production, le référentiel viendra de BC-06 (SSO). L'architecte technique doit trancher le mécanisme d'alimentation.
+- **TourneeCloturee → SANS_TOURNEE** : vérifier que ce comportement (livreur "disponible" après clôture) est bien le comportement attendu par M. Renaud en fin de journée — c'est la modélisation retenue mais mérite validation métier explicite.

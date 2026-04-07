@@ -1,11 +1,13 @@
 # Wireframes textuels DocuPost
 
-> Document de référence — Version 1.3 — 2026-04-02
+> Document de référence — Version 1.4 — 2026-04-06
 > Produit à partir des personas (/livrables/02-ux/personas.md), des user journeys
 > (/livrables/02-ux/user-journeys.md) et du périmètre MVP (/livrables/01-vision/perimetre-mvp.md).
 > Mis à jour le 2026-04-02 (v1.3) : ajout M-07 (Mes consignes), mise à jour M-01 (card SSO
 > rétractable avant connexion — US-043), M-02 (hint swipe — US-045), M-04 (pad signature réel —
 > US-046), W-01 (compteur déconnexion WebSocket — US-044), horodatage M-07 (US-042).
+> Mis à jour le 2026-04-06 (v1.4) : ajout W-08 (État des livreurs — US-066), entrée SideNavBar
+> "Livreurs", tableau VueLivreur temps réel avec badges SANS_TOURNEE / AFFECTÉ / EN COURS.
 >
 > Conventions :
 > - Les wireframes sont textuels et décrivent le layout, les zones, les composants et les
@@ -1173,3 +1175,198 @@ de bord : mode matin = préparation, mode journée = supervision).
 Chaque écran doit avoir un état explicite pour : chargement, liste vide, erreur réseau,
 mode offline. Ces états ne doivent jamais bloquer l'utilisateur sans lui indiquer ce qui
 se passe et ce qu'il peut faire.
+
+---
+
+### Écran W-08 : État des livreurs
+
+**Persona** : Laurent Renaud (Responsable Exploitation Logistique — mode journée)
+**Objectif** : Visualiser en un coup d'oeil l'état du jour de tous les livreurs
+(SANS_TOURNEE, AFFECTE_NON_LANCE, EN_COURS) sans croiser deux écrans, et identifier
+rapidement les livreurs disponibles à affecter à une nouvelle *tournée*
+**URL/Route** : /supervision/livreurs
+**Domain Events affichés** : AffectationEnregistree, DesaffectationEnregistree,
+TourneeLancee, TourneeClôturee (via Read Model VueLivreur)
+**Domain Events déclenchés** : (aucun — écran lecture seule)
+**US liées** : US-066 (page état livreurs)
+
+#### Layout
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ DocuPost | [● LIVE il y a 5s]              [sync][notif]| L. Renaud │  TopAppBar
+├──────────┬───────────────────────────────────────────────────────────┤
+│          │  DocuPost > Supervision > État des livreurs               │  Fil d'Ariane
+│  [ ] Pré │                                                           │
+│  paration│  État des livreurs — Lundi 06/04/2026                    │  Titre page (Work Sans 700)
+│  [■] Sup │                                                           │
+│  ervision│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────┐│  Bandeau 3 tuiles
+│  [►] Liv │  │ Sans tournée    │ │ Affectés        │ │ En cours    ││
+│    reurs │  │       1   (gris)│ │       4   (bleu)│ │       1     ││
+│          │  │ (fond surface-  │ │ (fond primary-  │ │ (fond emera ││  (fond emerald-50,
+│  ────────│  │  container-low) │ │  container)     │ │  ld-50)     ││   bordure emerald)
+│  [?] Aide│  └─────────────────┘ └─────────────────┘ └─────────────┘│
+│  [⏻] Déco│                                                           │
+│          │  [Tous (6)] [Sans tournée] [Affectés] [En cours]         │  Filtres rapides
+│          │                              [Rafraîchir ↺]              │  (chip segmenté, même style W-01)
+│          ├───────────────────────────────────────────────────────────┤
+│          │  ┌─────────────────────────────────────────────────────┐ │
+│          │  │ Livreur          │ État              │ Action        │ │  Tableau livreurs
+│          │  ├──────────────────┼───────────────────┼───────────────┤ │
+│          │  │ [PM] Pierre      │ [● EN COURS]      │ [Voir tournée]│ │  Ligne EN COURS
+│          │  │      Martin      │  T-201            │               │ │  fond emerald-50/40
+│          │  │                  │  (fond vert #1B5E │               │ │  bordure gauche emerald-600
+│          │  │                  │   20, texte blanc)│               │ │
+│          │  ├──────────────────┼───────────────────┼───────────────┤ │
+│          │  │ [PD] Paul        │ [● EN COURS]      │ [Voir tournée]│ │
+│          │  │      Dupont      │  T-204 [🔗 mobile]│               │ │  Indicateur mobile connecté
+│          │  ├──────────────────┼───────────────────┼───────────────┤ │
+│          │  │ [JM] Jean        │ [AFFECTÉ]         │ [Voir prépa]  │ │  Ligne AFFECTÉ
+│          │  │      Moreau      │  T-202            │               │ │  fond primary-container/20
+│          │  │                  │  (fond #E8F0FE,   │               │ │  bordure gauche #0037B0
+│          │  │                  │   texte #0037B0)  │               │ │
+│          │  ├──────────────────┼───────────────────┼───────────────┤ │
+│          │  │ [SB] Sophie      │ [AFFECTÉ]         │ [Voir prépa]  │ │
+│          │  │      Bernard     │  T-205            │               │ │
+│          │  ├──────────────────┼───────────────────┼───────────────┤ │
+│          │  │ [LP] Lucas       │ [AFFECTÉ]         │ [Voir prépa]  │ │
+│          │  │      Petit       │  T-206            │               │ │
+│          │  ├──────────────────┼───────────────────┼───────────────┤ │
+│          │  │ [ML] Marie       │ [SANS TOURNÉE]    │ [Affecter]    │ │  Ligne SANS_TOURNEE
+│          │  │      Lambert     │  —                │               │ │  fond surface-container-low
+│          │  │                  │  (fond #EEEEEE,   │               │ │  pas de bordure colorée
+│          │  │                  │   texte #616161)  │               │ │
+│          │  └─────────────────────────────────────────────────────┘ │
+│          │  [● WebSocket Connecté — Flux Temps Réel]  (pill bas-droit)│
+└──────────┴───────────────────────────────────────────────────────────┘
+```
+
+#### Composants
+
+##### SideNavBar — entrée "Livreurs"
+
+Une troisième entrée est ajoutée dans la SideNavBar sous "Supervision" :
+- Icône : `group` (Material Symbols).
+- Libellé : "Livreurs".
+- Route active : fond blanc, texte bleu primaire, shadow-sm (même règle que les autres
+  entrées actives).
+- Accessible depuis W-01 et W-04 via ce lien de navigation.
+
+##### Bandeau 3 tuiles (KPI synthèse)
+
+Grille 3 colonnes identique aux cartes KPI de W-01 :
+- Tuile "Sans tournée" : fond surface-container-low (#ECEEF0), bordure gauche gris-600
+  (#757575), icône `person_off`, nombre en gris-700 (Work Sans bold 4xl).
+- Tuile "Affectés" : fond primary-container (#E8F0FE), bordure gauche primary (#0037B0),
+  icône `assignment_ind`, nombre en primary (Work Sans bold 4xl).
+- Tuile "En cours" : fond emerald-50, bordure gauche emerald-600 (#16A34A), icône
+  `directions_run`, nombre en emerald-700 (Work Sans bold 4xl).
+
+Chaque tuile est cliquable et active le filtre correspondant dans la liste.
+
+##### Filtres rapides
+
+Chips segmentés horizontaux (même composant que W-01 et W-04) :
+- "Tous (N)" : fond neutre, badge gris.
+- "Sans tournée" : fond surface-container-low, badge gris-600.
+- "Affectés" : fond primary-container, badge primary.
+- "En cours" : fond emerald-50, badge emerald-600.
+Le chip actif porte une bordure inférieure bleue (#0037B0) et texte bleu.
+
+Bouton "Rafraîchir" à droite : bouton secondaire, icône `refresh`.
+
+##### Tableau des livreurs
+
+Colonnes : Livreur (avatar initiales + nom complet), État (badge pill + codeTMS ou "—"),
+Action.
+
+- **Avatar initiales** : cercle 40px, fond primary-container, texte primary bold. Initiales
+  dérivées du nom complet (ex. "PM" pour Pierre Martin).
+
+- **Ligne EN_COURS** :
+  - Fond : emerald-50/40.
+  - Bordure gauche 3px : emerald-600 (#16A34A).
+  - Badge "EN COURS" : fond #1B5E20, texte blanc, pill arrondi. Sous le badge : codeTMS
+    (ex. "T-201") en texte sm gris.
+  - Si le livreur a son application mobile connectée : icône `smartphone` bleue après le
+    codeTMS avec tooltip "Application mobile connectée".
+  - Action : bouton "Voir tournée" (fond primary/10, hover fond primary, texte primary).
+    Redirige vers W-02 (Détail tournée superviseur).
+
+- **Ligne AFFECTE_NON_LANCE** :
+  - Fond : primary-container/20 (#E8F0FE à 20%).
+  - Bordure gauche 3px : primary (#0037B0).
+  - Badge "AFFECTÉ" : fond primary-container (#E8F0FE), texte primary (#0037B0), pill
+    arrondi. Sous le badge : codeTMS en texte sm gris.
+  - Action : bouton "Voir prépa" (fond surface-container-high, icône `open_in_new`).
+    Redirige vers W-05 (Détail tournée à préparer).
+
+- **Ligne SANS_TOURNEE** :
+  - Fond : surface-container-low (#ECEEF0), opacité normale.
+  - Pas de bordure colorée.
+  - Badge "SANS TOURNÉE" : fond #EEEEEE, texte #616161, pill arrondi. Colonne codeTMS :
+    tiret "—".
+  - Action : bouton "Affecter" (fond primary, texte blanc, icône `add`).
+    Redirige vers W-04 (/preparation) avec le filtre "Non affectées" présélectionné.
+
+- **Tri par défaut** : EN_COURS en tête, puis AFFECTE_NON_LANCE, puis SANS_TOURNEE.
+  Au sein de chaque groupe : ordre alphabétique du nom.
+
+##### Mise à jour temps réel
+
+Même mécanique que W-01 : canal WebSocket STOMP `/topic/livreurs/etat`. Quand un
+Domain Event modifie l'état d'un livreur, la ligne se met à jour sans rechargement.
+Transition visuelle : flash de fond (opacity 0 → 1 en 300ms) sur la ligne modifiée.
+Indicateur WebSocket fixe (bottom-right) : pill flottante fond blanc/80 flou, point
+pulsant vert, texte "Flux Temps Réel — WebSocket Connecté".
+
+#### Interactions principales
+
+- Clic sur une tuile KPI : active le filtre correspondant et fait défiler jusqu'au tableau.
+- Clic sur un chip filtre : filtre la liste immédiatement (côté client, sans rechargement).
+- Clic "Voir tournée" (ligne EN_COURS) : navigation SPA vers W-02 avec l'id de la
+  *tournée*.
+- Clic "Voir prépa" (ligne AFFECTE_NON_LANCE) : navigation SPA vers W-05 avec l'id de la
+  *tournée planifiée*.
+- Clic "Affecter" (ligne SANS_TOURNEE) : navigation vers W-04 (/preparation) avec
+  paramètre ?filtre=NON_AFFECTEE présélectionné.
+- Clic "Rafraîchir" : force un rechargement depuis l'API
+  GET /api/supervision/livreurs/etat-du-jour.
+- Retour : bouton "← Retour" dans le fil d'Ariane ramène à W-01 (/supervision).
+
+#### États spéciaux
+
+- **Chargement initial** : squelette (skeleton loader) pour chaque ligne du tableau,
+  3 tuiles KPI affichent "—". Spinner sur le bouton Rafraîchir.
+- **Liste vide** (aucun livreur inscrit) : illustration neutre centrée +
+  "Aucun livreur enregistré pour cette date."
+- **Filtre actif sans résultat** (ex. filtre "En cours" et aucune tournée lancée) :
+  "Aucun livreur dans cet état pour aujourd'hui."
+  Lien "Voir tous les livreurs" pour effacer le filtre.
+- **Erreur réseau** : bannière rouge en haut de zone principale :
+  "Impossible de charger l'état des livreurs. Dernière mise à jour : HH:MM. [Réessayer]"
+- **Perte WebSocket** : même comportement que W-01 — badge LIVE passe rouge, bandeau
+  "Connexion temps réel indisponible — Déconnecté depuis X s". Les données restent
+  affichées (dernier état connu) mais un avertissement signale qu'elles peuvent être
+  obsolètes.
+- **Accès non autorisé** (rôle livreur) : redirection vers la page d'accueil mobile +
+  message "Accès non autorisé".
+
+#### Navigation entrante / sortante
+
+| Depuis | Vers W-08 | Comment |
+|--------|-----------|---------|
+| W-01 Tableau de bord | /supervision/livreurs | Entrée "Livreurs" dans la SideNavBar |
+| W-04 Plan du jour | /supervision/livreurs | Entrée "Livreurs" dans la SideNavBar |
+| W-02 Détail tournée | /supervision/livreurs | Bouton retour ou SideNavBar |
+
+| Depuis W-08 | Vers | Déclencheur |
+|-------------|------|-------------|
+| Bouton "Voir tournée" | W-02 /supervision/tournee/:id | Ligne EN_COURS |
+| Bouton "Voir prépa" | W-05 /preparation/tournee/:id | Ligne AFFECTE_NON_LANCE |
+| Bouton "Affecter" | W-04 /preparation?filtre=NON_AFFECTEE | Ligne SANS_TOURNEE |
+| Fil d'Ariane "Supervision" | W-01 /supervision | Lien breadcrumb |
+
+**Termes du domaine annotés** : *livreur*, *état du jour*, *SANS_TOURNEE*,
+*AFFECTE_NON_LANCE*, *EN_COURS*, *VueLivreur*, *tournée planifiée*, *codeTMS*,
+*AffectationEnregistree*, *DesaffectationEnregistree*, *TourneeLancee*, *TourneeClôturee*

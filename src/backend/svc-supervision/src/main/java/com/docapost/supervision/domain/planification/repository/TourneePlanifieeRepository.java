@@ -50,4 +50,15 @@ public interface TourneePlanifieeRepository {
      * US-023 : invariant d'unicité véhicule/jour.
      */
     boolean isVehiculeDejaAffecte(String vehiculeId, LocalDate date);
+
+    /**
+     * Retourne la TourneePlanifiee d'un livreur pour une date donnée.
+     * Filtre uniquement les statuts AFFECTEE ou LANCEE — exclut NON_AFFECTEE.
+     * US-066 : dérivation de EtatJournalierLivreur.
+     *
+     * @param livreurId identifiant du livreur
+     * @param date      date de la tournée
+     * @return Optional vide si aucune tournée AFFECTEE ou LANCEE pour ce livreur à cette date
+     */
+    Optional<TourneePlanifiee> findByLivreurIdAndDate(String livreurId, LocalDate date);
 }

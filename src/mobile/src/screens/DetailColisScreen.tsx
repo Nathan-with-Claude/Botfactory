@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   Linking,
   ScrollView,
   StyleSheet,
@@ -10,7 +11,7 @@ import {
 } from 'react-native';
 import { ColisDTO, StatutColis } from '../api/tourneeTypes';
 import { ColisNonTrouveError, getDetailColis } from '../api/tourneeApi';
-import { getInstructionsEnAttente, marquerInstructionExecutee } from '../api/supervisionApi';
+import { getInstructionsEnAttente, marquerInstructionExecutee, InstructionMobileDTO } from '../api/supervisionApi';
 
 /**
  * Ecran M-03 — Detail d'un colis (US-004)
@@ -75,6 +76,7 @@ export const DetailColisScreen: React.FC<DetailColisScreenProps> = ({
   getInstructionsFn = getInstructionsEnAttente,
 }) => {
   const [etat, setEtat] = useState<EtatEcran>({ type: 'chargement' });
+  const [instructionsColis, setInstructionsColis] = useState<InstructionMobileDTO[]>([]);
 
   const chargerDetailColis = useCallback(async () => {
     setEtat({ type: 'chargement' });
@@ -82,13 +84,13 @@ export const DetailColisScreen: React.FC<DetailColisScreenProps> = ({
       const colis = await getDetailColis(tourneeId, colisId);
       setEtat({ type: 'succes', colis });
 
-      // US-015 : marquer automatiquement l'instruction ENVOYEE comme exécutée
-      // dès que Pierre consulte le détail du colis (transparent, aucun UI)
+      // US-015 : charger et afficher les instructions liées à ce colis,
+      // puis marquer automatiquement l'instruction ENVOYEE comme exécutée
       try {
         const instructions = await getInstructionsFn(tourneeId);
-        const instructionEnAttente = instructions.find(
-          (i) => i.colisId === colisId && i.statut === 'ENVOYEE'
-        );
+        const instructionsDuColis = instructions.filter((i) => i.colisId === colisId);
+        setInstructionsColis(instructionsDuColis);
+        const instructionEnAttente = instructionsDuColis.find((i) => i.statut === 'ENVOYEE');
         if (instructionEnAttente) {
           await marquerExecuteeFn(instructionEnAttente.instructionId);
         }
@@ -106,6 +108,15 @@ export const DetailColisScreen: React.FC<DetailColisScreenProps> = ({
       }
     }
   }, [tourneeId, colisId, getInstructionsFn, marquerExecuteeFn]);
+
+  // US-055 R2 — Bouton retour Android natif : intercepté pour appeler onRetour()
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      onRetour();
+      return true;
+    });
+    return () => handler.remove();
+  }, [onRetour]);
 
   useEffect(() => {
     chargerDetailColis();
@@ -250,8 +261,32 @@ export const DetailColisScreen: React.FC<DetailColisScreenProps> = ({
                     contrainte.estHoraire && styles.contrainteHoraireTexte,
                   ]}
                 >
-                  {contrainte.estHoraire ? '\u2691 ' : ''}{contrainte.valeur}
+                  {contrainte.estHoraire ? '⏰ ' : ''}{contrainte.valeur}
                 </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Section instructions superviseur — affichée uniquement si instructions présentes */}
+        {instructionsColis.length > 0 && (
+          <View style={styles.section} testID="section-instructions">
+            <Text style={styles.sectionTitre}>Instructions superviseur</Text>
+            {instructionsColis.map((instruction) => (
+              <View
+                key={instruction.instructionId}
+                style={styles.instructionRow}
+                testID={`instruction-${instruction.instructionId}`}
+              >
+                <Text style={styles.instructionType}>
+                  📋 {instruction.typeInstruction.replace(/_/g, ' ')}
+                </Text>
+                {instruction.texteConsigne != null && (
+                  <Text style={styles.instructionTexte}>{instruction.texteConsigne}</Text>
+                )}
+                {instruction.creneauCible != null && (
+                  <Text style={styles.instructionTexte}>⏰ Créneau : {instruction.creneauCible}</Text>
+                )}
               </View>
             ))}
           </View>
@@ -408,6 +443,26 @@ const styles = StyleSheet.create({
   contrainteHoraireTexte: {
     color: '#E65100',
     fontWeight: '600',
+  },
+  instructionRow: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FFA000',
+  },
+  instructionType: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#E65100',
+    marginBottom: 4,
+  },
+  instructionTexte: {
+    fontSize: 14,
+    color: '#424242',
+    lineHeight: 20,
   },
   boutonCarte: {
     backgroundColor: '#FFFFFF',

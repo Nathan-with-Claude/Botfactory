@@ -1,0 +1,110 @@
+steps:
+  # ── Build svc-tournee ──────────────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-svc-tournee
+    args:
+      - build
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-tournee:$_TAG'
+      - 'src/backend/svc-tournee'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-svc-tournee
+    waitFor: ['build-svc-tournee']
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-tournee:$_TAG']
+
+  # ── Build svc-supervision ──────────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-svc-supervision
+    args:
+      - build
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-supervision:$_TAG'
+      - 'src/backend/svc-supervision'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-svc-supervision
+    waitFor: ['build-svc-supervision']
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-supervision:$_TAG']
+
+  # ── Build frontend-supervision ─────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-frontend-supervision
+    args:
+      - build
+      - '--build-arg'
+      - 'REACT_APP_API_URL=${_SVC_SUPERVISION_URL}'
+      - '--build-arg'
+      - 'REACT_APP_AUTH_BYPASS=${_AUTH_BYPASS}'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/frontend-supervision:$_TAG'
+      - 'src/web/supervision'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-frontend-supervision
+    waitFor: ['build-frontend-supervision']
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/frontend-supervision:$_TAG']
+
+  # ── Deploy svc-tournee ─────────────────────────────────────────────────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: deploy-svc-tournee
+    waitFor: ['push-svc-tournee']
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - svc-tournee
+      - '--image=europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-tournee:$_TAG'
+      - '--region=europe-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8081'
+      - '--set-secrets=POSTGRES_PASSWORD=tournee-db-password:latest,INTERNAL_SECRET=internal-secret:latest'
+      - '--set-env-vars=^|^SPRING_PROFILES_ACTIVE=prod,recette|POSTGRES_URL=jdbc:postgresql:///docupost_tournee?cloudSqlInstance=$PROJECT_ID:europe-west1:docupost-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory|POSTGRES_USER=docupost'
+
+  # ── Deploy svc-supervision ─────────────────────────────────────────────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: deploy-svc-supervision
+    waitFor: ['push-svc-supervision']
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - svc-supervision
+      - '--image=europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-supervision:$_TAG'
+      - '--region=europe-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8082'
+      - '--set-secrets=SUPERVISION_DB_PASSWORD=supervision-db-password:latest,INTERNAL_SECRET=internal-secret:latest'
+      - '--set-env-vars=^|^SPRING_PROFILES_ACTIVE=prod,recette|SUPERVISION_DB_URL=jdbc:postgresql:///docupost_supervision?cloudSqlInstance=$PROJECT_ID:europe-west1:docupost-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory|SUPERVISION_DB_USER=docupost|ALLOWED_ORIGINS=${_FRONTEND_URLS}|DOCUPOST_DEV_SVC_TOURNEE_URL=${_SVC_TOURNEE_URL}'
+
+  # ── Deploy frontend-supervision ────────────────────────────────────────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: deploy-frontend-supervision
+    waitFor: ['push-frontend-supervision']
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - frontend-supervision
+      - '--image=europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/frontend-supervision:$_TAG'
+      - '--region=europe-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=80'
+
+substitutions:
+  _TAG: latest
+  _SVC_SUPERVISION_URL: https://svc-supervision-llb4mq4zha-ew.a.run.app
+  _SVC_TOURNEE_URL: https://svc-tournee-llb4mq4zha-ew.a.run.app
+  _FRONTEND_URLS: https://frontend-supervision-llb4mq4zha-ew.a.run.app,https://frontend-supervision-830746169662.europe-west1.run.app
+  _AUTH_BYPASS: 'true'
+
+images:
+  - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-tournee:$_TAG'
+  - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-supervision:$_TAG'
+  - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/frontend-supervision:$_TAG'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

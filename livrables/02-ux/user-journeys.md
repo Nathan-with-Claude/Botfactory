@@ -246,6 +246,66 @@ InstructionEnvoyée, InstructionReçue, TournéeModifiée, InstructionExécutée
 
 ---
 
+## Parcours 6 — Superviseur : Vérifier la disponibilité des livreurs avant d'affecter une nouvelle tournée
+
+**Persona principal** : Laurent Renaud (Responsable Exploitation Logistique)
+**Déclencheur** : Une nouvelle *tournée planifiée* arrive du TMS sans livreur assigné,
+ou une *tournée* existante se retrouve sans livreur (après *désaffectation*). Laurent
+veut savoir qui est disponible sans naviguer entre deux écrans.
+
+---
+
+### Version AS-IS (aujourd'hui)
+
+| # | Étape                        | Actions de Laurent                                                        | Émotions           | Pain points                                                                                          |
+|---|------------------------------|---------------------------------------------------------------------------|--------------------|------------------------------------------------------------------------------------------------------|
+| 1 | Identification du besoin     | Constate qu'une *tournée* n'a pas de livreur attribué                    | Légère anxiété     | L'information est éparpillée : feuilles de présence + appels téléphoniques.                         |
+| 2 | Vérification de la présence  | Consulte la feuille de présence papier ou appelle le chef d'équipe        | Perte de temps     | La feuille n'est pas toujours à jour. Certains livreurs partent tôt, d'autres pas encore arrivés.   |
+| 3 | Croisement avec les tournées | Vérifie mentalement quels livreurs sont déjà partis en *tournée*          | Charge mentale     | Aucun outil : Laurent doit mémoriser l'état de 6 livreurs en même temps.                            |
+| 4 | Appel du livreur disponible  | Appelle le livreur identifié comme libre, lui indique la *tournée*        | Interruption       | Risque d'erreur : le livreur était déjà affecté à une autre *tournée* non encore visible.           |
+| 5 | Mise à jour manuelle         | Note l'affectation sur la feuille papier                                  | Résignation        | Non tracé numériquement. Données non partagées avec les autres superviseurs.                        |
+
+**Pain points majeurs AS-IS :**
+- Aucune source centralisée de l'état des livreurs : présence + *tournées* + disponibilité
+  sont dans trois supports différents.
+- Risque de double-affectation ou d'oubli d'un livreur disponible.
+- Décision prise à l'aveugle sur la disponibilité réelle d'un livreur.
+
+---
+
+### Version TO-BE MVP
+
+| # | Étape                               | Actions de Laurent                                                               | Système DocuPost                                                                                                      | Émotions attendues     | Opportunités / Domain Events                                |
+|---|-------------------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|------------------------|-------------------------------------------------------------|
+| 1 | Détection d'une tournée non affectée | Voit dans W-04 (Plan du jour) une *tournée planifiée* au statut NON_AFFECTEE    | Bandeau d'alerte "Il reste N tournées non affectées" dans W-04. Badge rouge sur la ligne.                            | Vigilance              | —                                                           |
+| 2 | Navigation vers l'état des livreurs  | Clique sur "Livreurs" dans la SideNavBar                                         | Chargement de W-08. Appel GET /api/supervision/livreurs/etat-du-jour. Affichage du tableau *VueLivreur*.             | Clarté immédiate       | —                                                           |
+| 3 | Lecture du tableau d'état            | Consulte les 3 tuiles (Sans tournée / Affectés / En cours) et la liste           | Affiche les 6 *livreurs* avec leur *état du jour* : badge coloré + codeTMS associé.                                  | Maîtrise               | —                                                           |
+| 4 | Identification d'un livreur disponible | Repère un livreur avec le badge "SANS TOURNÉE" (ex. Marie Lambert)             | Tuile "Sans tournée" cliquable filtre la liste sur les seuls *livreurs* SANS_TOURNEE.                                 | Décision rapide        | —                                                           |
+| 5 | Lancement de l'affectation           | Clique sur le bouton "Affecter" sur la ligne de Marie Lambert                    | Redirection vers W-04 (/preparation?filtre=NON_AFFECTEE). Le contexte "livreur sans tournée" est disponible à l'oeil.| Fluidité               | —                                                           |
+| 6 | Affectation dans W-04 / W-05         | Sélectionne la *tournée planifiée* non affectée, affecte Marie Lambert           | Enregistrement de l'*affectation*. Émission de AffectationEnregistree.                                               | Satisfaction / Contrôle| **AffectationEnregistree**                                  |
+| 7 | Retour sur W-08 pour confirmation    | Revient sur W-08 via la SideNavBar                                               | Ligne de Marie Lambert porte désormais le badge "AFFECTÉE — T-202". Tuile "Affectés" incrémentée.                    | Validation             | —                                                           |
+| 8 | Surveillance en temps réel           | Reste sur W-08, attend le lancement de la *tournée*                              | Quand Laurent lance T-202 depuis W-04, le badge de Marie Lambert passe à "EN COURS" en < 30 secondes (WebSocket).   | Sérénité               | **TourneeLancee**                                           |
+
+---
+
+**Domain Events identifiés (Parcours 6) :**
+AffectationEnregistree, DesaffectationEnregistree, TourneeLancee, TourneeClôturee
+
+**Termes du domaine captés :**
+*état du jour*, *livreur*, *SANS_TOURNEE*, *AFFECTE_NON_LANCE*, *EN_COURS*,
+*VueLivreur*, *tournée planifiée*, *disponible*, *affectation*, *désaffectation*,
+*codeTMS*, *état des livreurs*
+
+**Frontières de Bounded Contexts suggérées :**
+- La dérivation de l'*état du jour* d'un *livreur* (étape 2) croise BC-07
+  (TourneePlanifiee) et BC-03 (VueTournee) : point de jonction entre planification et
+  supervision, à piloter via le Read Model VueLivreur dans BC-03.
+- L'action "Affecter" depuis W-08 ne crée pas d'événement directement : elle redirige
+  vers BC-07 (W-04/W-05) pour que l'*affectation* reste dans son Bounded Context
+  autoritatif. Frontière claire entre lecture (BC-03) et écriture (BC-07).
+
+---
+
 ## Glossaire terrain — Ubiquitous Language (brouillon)
 
 > Ces termes doivent être transmis à l'Architecte Métier pour intégration dans le modèle
@@ -273,3 +333,10 @@ InstructionEnvoyée, InstructionReçue, TournéeModifiée, InstructionExécutée
 | Alerte                   | Signal automatique notifiant le superviseur d'une tournée à risque                    | Parcours 2                  |
 | Signature numérique      | Capture de la signature du client directement sur l'écran de l'application mobile    | Parcours 4                  |
 | Notification push        | Message envoyé à l'application du livreur depuis le superviseur ou le système        | Parcours 1, 5               |
+| État du jour             | Situation d'un livreur à un instant donné : SANS_TOURNEE, AFFECTE_NON_LANCE, EN_COURS | Parcours 6               |
+| VueLivreur               | Read Model dérivé depuis BC-07 et BC-03 synthétisant l'état de chaque livreur        | Parcours 6               |
+| SANS_TOURNEE             | Livreur sans aucune tournée planifiée associée pour la date du jour                   | Parcours 6               |
+| AFFECTE_NON_LANCE        | Livreur affecté à une tournée planifiée non encore lancée                             | Parcours 6               |
+| EN_COURS                 | Livreur dont la tournée planifiée est au statut LANCEE                                | Parcours 6               |
+| Disponible               | Terme terrain utilisé par Laurent pour désigner un livreur à l'état SANS_TOURNEE     | Parcours 6               |
+| Désaffectation           | Retrait d'un livreur d'une tournée planifiée, le ramenant à l'état SANS_TOURNEE       | Parcours 6               |

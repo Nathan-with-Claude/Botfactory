@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
  * Source : US-033
  */
 @Configuration
-@Profile("dev")
+@Profile({"dev", "recette"})
 public class DevRestConfig {
 
     @Bean

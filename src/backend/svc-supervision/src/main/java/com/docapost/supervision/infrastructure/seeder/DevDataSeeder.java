@@ -4,8 +4,10 @@ import com.docapost.supervision.domain.model.StatutInstruction;
 import com.docapost.supervision.domain.model.StatutTourneeVue;
 import com.docapost.supervision.domain.model.TypeInstruction;
 import com.docapost.supervision.domain.model.VueTournee;
+import com.docapost.supervision.domain.planification.events.TourneeLancee;
 import com.docapost.supervision.domain.planification.model.*;
 import com.docapost.supervision.domain.repository.VueTourneeRepository;
+import com.docapost.supervision.infrastructure.dev.DevEventBridge;
 import com.docapost.supervision.infrastructure.persistence.*;
 import com.docapost.supervision.infrastructure.planification.TourneePlanifieeJpaRepository;
 import com.docapost.supervision.infrastructure.planification.TourneePlanifieeMapper;
@@ -27,7 +29,7 @@ import java.time.LocalDate;
  * Source : US-011 — "Tableau de bord des tournées en temps réel"
  */
 @Component
-@Profile("dev")
+@Profile({"dev", "recette"})
 public class DevDataSeeder implements CommandLineRunner {
 
     private final VueTourneeRepository vueTourneeRepository;
@@ -36,6 +38,7 @@ public class DevDataSeeder implements CommandLineRunner {
     private final IncidentVueJpaRepository incidentVueJpaRepository;
     private final InstructionJpaRepository instructionJpaRepository;
     private final TourneePlanifieeJpaRepository tourneePlanifieeJpaRepository;
+    private final DevEventBridge devEventBridge;
 
     public DevDataSeeder(
             VueTourneeRepository vueTourneeRepository,
@@ -43,7 +46,8 @@ public class DevDataSeeder implements CommandLineRunner {
             VueColisJpaRepository vueColisJpaRepository,
             IncidentVueJpaRepository incidentVueJpaRepository,
             InstructionJpaRepository instructionJpaRepository,
-            TourneePlanifieeJpaRepository tourneePlanifieeJpaRepository
+            TourneePlanifieeJpaRepository tourneePlanifieeJpaRepository,
+            DevEventBridge devEventBridge
     ) {
         this.vueTourneeRepository = vueTourneeRepository;
         this.vueTourneeJpaRepository = vueTourneeJpaRepository;
@@ -51,6 +55,7 @@ public class DevDataSeeder implements CommandLineRunner {
         this.incidentVueJpaRepository = incidentVueJpaRepository;
         this.instructionJpaRepository = instructionJpaRepository;
         this.tourneePlanifieeJpaRepository = tourneePlanifieeJpaRepository;
+        this.devEventBridge = devEventBridge;
     }
 
     @Override
@@ -142,6 +147,7 @@ public class DevDataSeeder implements CommandLineRunner {
         tourneePlanifieeJpaRepository.save(TourneePlanifieeMapper.toEntity(tp201));
 
         // Tournée T-202 : AFFECTEE, 28 colis, Villeurbanne, pas d'anomalie
+        // livreur-004 Jean Moreau — VH-04 (Pierre Martin est déjà EN_COURS sur T-201 via BC-03)
         TourneePlanifiee tp202 = new TourneePlanifiee(
                 "tp-202", "T-202", today, 28,
                 java.util.List.of(new ZoneTournee("Villeurbanne", 28)),
@@ -149,7 +155,7 @@ public class DevDataSeeder implements CommandLineRunner {
                 java.util.List.of(),
                 importHeure,
                 StatutAffectation.AFFECTEE,
-                "livreur-001", "Pierre Martin", "VH-07",
+                "livreur-004", "Jean Moreau", "VH-04",
                 importHeure.plusSeconds(600), null, true
         );
         tourneePlanifieeJpaRepository.save(TourneePlanifieeMapper.toEntity(tp202));
@@ -177,17 +183,43 @@ public class DevDataSeeder implements CommandLineRunner {
         );
         tourneePlanifieeJpaRepository.save(TourneePlanifieeMapper.toEntity(tp204));
 
-        // VueTournee correspondante à T-204 (LANCEE via seed — pas passée par DevEventBridge)
-        VueTournee tournee4 = new VueTournee(
-                "T-204",
-                "Paul Dupont",
-                0, 22,
-                StatutTourneeVue.EN_COURS,
-                importHeure.plusSeconds(900),
-                "T-204",
-                "Lyon 2e"
+        // VueTournee correspondante à T-204 : propagée via DevEventBridge (US-048)
+        // Le bridge crée la VueTournee en BC-03 (idempotence si déjà présente)
+        // et appelle svc-tournee pour aligner BC-01 (résilient si service éteint).
+        TourneeLancee eventT204 = new TourneeLancee(
+                "tp-204", "T-204", "livreur-002", "Paul Dupont",
+                "seeder-dev", Instant.now(), 22
         );
-        vueTourneeRepository.save(tournee4);
+        devEventBridge.propaguerTourneeLancee(eventT204);
+
+        // ─── US-049 : livreur-005 Sophie Bernard — TourneePlanifiee T-205 ────────
+        // Pas de VueTournee : T-205 est AFFECTEE (pas encore LANCEE). La VueTournee
+        // sera créée automatiquement via DevEventBridge quand la tournée sera lancée.
+        TourneePlanifiee tp205 = new TourneePlanifiee(
+                "tp-205", "T-205", today, 4,
+                java.util.List.of(new ZoneTournee("Lyon 4e", 4)),
+                java.util.List.of(),
+                java.util.List.of(),
+                importHeure,
+                StatutAffectation.AFFECTEE,
+                "livreur-005", "Sophie Bernard", "VH-05",
+                importHeure.plusSeconds(450), null, false
+        );
+        tourneePlanifieeJpaRepository.save(TourneePlanifieeMapper.toEntity(tp205));
+
+        // ─── US-049 : livreur-006 Lucas Petit — TourneePlanifiee T-206 ──────────
+        // Pas de VueTournee : T-206 est AFFECTEE (pas encore LANCEE).
+        TourneePlanifiee tp206 = new TourneePlanifiee(
+                "tp-206", "T-206", today, 3,
+                java.util.List.of(new ZoneTournee("Lyon 7e", 3)),
+                java.util.List.of(),
+                java.util.List.of(),
+                importHeure,
+                StatutAffectation.AFFECTEE,
+                "livreur-006", "Lucas Petit", "VH-06",
+                importHeure.plusSeconds(480), null, false
+        );
+        tourneePlanifieeJpaRepository.save(TourneePlanifieeMapper.toEntity(tp206));
 
         // Instructions pour tournée 1 — US-015 (une ENVOYEE, une EXECUTEE)
         instructionJpaRepository.save(new InstructionEntity(

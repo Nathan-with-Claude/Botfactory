@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -61,6 +62,15 @@ export const RecapitulatifTourneeScreen: React.FC<Props> = ({ tourneeId, onTermi
       }
     }
   }, [tourneeId]);
+
+  // US-055 R2 — Bouton retour Android natif : intercepté pour appeler onTerminer()
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      onTerminer();
+      return true;
+    });
+    return () => handler.remove();
+  }, [onTerminer]);
 
   useEffect(() => {
     effectuerCloture();

@@ -1,0 +1,41 @@
+# docker-compose.yml — svc-supervision PostgreSQL local (US-054)
+#
+# Fournit une instance PostgreSQL pour le profil "local-postgres" de svc-supervision.
+#
+# Démarrage :
+#   docker compose up -d
+#
+# Connexion :
+#   Host     : localhost
+#   Port     : 5432
+#   Base     : docupost_supervision
+#   User     : docupost
+#   Password : docupost
+#
+# Démarrer l'application avec ce profil :
+#   SPRING_PROFILES_ACTIVE=local-postgres mvn spring-boot:run
+#
+# Note : pour le profil "dev" (H2 en mémoire), aucune instance PostgreSQL n'est nécessaire.
+
+version: "3.9"
+
+services:
+  postgres-supervision:
+    image: postgres:16-alpine
+    container_name: docupost-supervision-db
+    environment:
+      POSTGRES_DB: docupost_supervision
+      POSTGRES_USER: docupost
+      POSTGRES_PASSWORD: docupost
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_supervision_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docupost -d docupost_supervision"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_supervision_data:

@@ -39,11 +39,11 @@ export interface BoutonCTAProps {
 type StyleMap = { fond: string; texte: string; bordure?: string };
 
 const VARIANT_STYLES: Record<BoutonVariant, StyleMap> = {
-  primaire:    { fond: Colors.primaire,    texte: Colors.texteInverse },
-  secondaire:  { fond: 'transparent',      texte: Colors.alerte,      bordure: Colors.alerte },
-  tertiaire:   { fond: 'transparent',      texte: Colors.info },
-  outline:     { fond: 'transparent',      texte: Colors.primaire,    bordure: Colors.primaire },
-  danger:      { fond: Colors.alerte,      texte: Colors.texteInverse },
+  primaire:    { fond: Colors.primary,            texte: Colors.onPrimary },
+  secondaire:  { fond: 'transparent',              texte: Colors.error,               bordure: Colors.error },
+  tertiaire:   { fond: Colors.tertiaryContainer,   texte: Colors.onTertiary },
+  outline:     { fond: 'transparent',              texte: Colors.primary,             bordure: Colors.primary },
+  danger:      { fond: Colors.error,               texte: Colors.onPrimary },
 };
 
 const SIZE_HEIGHT: Record<BoutonSize, number> = {

@@ -3,6 +3,11 @@ spring:
     name: svc-tournee
   profiles:
     active: dev
+  # US-059 : limite upload photo (base64 JSON) — augmentée pour les photos ~1 Mo
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
 
 server:
   port: 8081

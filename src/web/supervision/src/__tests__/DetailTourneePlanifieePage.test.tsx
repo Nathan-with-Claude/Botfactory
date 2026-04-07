@@ -638,3 +638,200 @@ describe('DetailTourneePlanifieePage — US-034', () => {
     });
   });
 });
+
+// ─── Tests US-049 : 6 livreurs dev alignés ────────────────────────────────────
+
+describe('DetailTourneePlanifieePage — US-049 (6 livreurs dev)', () => {
+
+  it('SC4 — le mock par défaut contient exactement 6 livreurs', async () => {
+    // Tester que le composant sans prop livreurs affiche bien les 6 options
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-201"
+          fetchFn={mockFetch(detailMock('NON_AFFECTEE'))}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    const select = screen.getByTestId('select-livreur') as HTMLSelectElement;
+    // 6 livreurs + 1 option vide = 7 options
+    expect(select.options.length).toBe(7);
+    // Vérifier les IDs canoniques
+    const ids = Array.from(select.options).map(o => o.value).filter(v => v !== '');
+    expect(ids).toEqual([
+      'livreur-001', 'livreur-002', 'livreur-003',
+      'livreur-004', 'livreur-005', 'livreur-006',
+    ]);
+  });
+
+  it('SC4 — les noms canoniques correspondent aux IDs officiels', async () => {
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-201"
+          fetchFn={mockFetch(detailMock('NON_AFFECTEE'))}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    const select = screen.getByTestId('select-livreur') as HTMLSelectElement;
+    const texteOptions = Array.from(select.options).map(o => o.text);
+    expect(texteOptions.some(t => t.includes('Pierre Martin'))).toBe(true);
+    expect(texteOptions.some(t => t.includes('Paul Dupont'))).toBe(true);
+    expect(texteOptions.some(t => t.includes('Marie Lambert'))).toBe(true);
+    expect(texteOptions.some(t => t.includes('Jean Moreau'))).toBe(true);
+    expect(texteOptions.some(t => t.includes('Sophie Bernard'))).toBe(true);
+    expect(texteOptions.some(t => t.includes('Lucas Petit'))).toBe(true);
+  });
+});
+
+// ─── Tests US-050 : Désaffecter un livreur ────────────────────────────────────
+
+describe('DetailTourneePlanifieePage — US-050 (Désaffectation)', () => {
+
+  function detailAffecte(): TourneePlanifieeDetailDTO {
+    return {
+      id: 'tp-202', codeTms: 'T-202', date: today, nbColis: 28,
+      zones: [{ nom: 'Villeurbanne', nbColis: 28 }],
+      contraintes: [], anomalies: [],
+      statut: 'AFFECTEE',
+      livreurId: 'livreur-001',
+      livreurNom: 'Pierre Martin',
+      vehiculeId: 'VH-07',
+      importeeLe: new Date().toISOString(),
+      affecteeLe: new Date().toISOString(),
+      lancee: null,
+      compositionVerifiee: true,
+    };
+  }
+
+  it('SC1 — le bouton "Désaffecter" est visible pour une tournée AFFECTEE', async () => {
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-202"
+          fetchFn={mockFetch(detailAffecte())}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    expect(screen.getByTestId('btn-desaffecter')).toBeTruthy();
+    expect(screen.getByTestId('section-desaffectation')).toBeTruthy();
+  });
+
+  it('SC4 — le bouton "Désaffecter" est absent pour une tournée NON_AFFECTEE', async () => {
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-201"
+          fetchFn={mockFetch(detailMock('NON_AFFECTEE'))}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    expect(screen.queryByTestId('btn-desaffecter')).toBeNull();
+  });
+
+  it('SC3 — une tournée LANCEE affiche le message d\'impossibilité de désaffectation', async () => {
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-204"
+          fetchFn={mockFetch(detailMock('LANCEE'))}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    expect(screen.getByTestId('msg-tournee-en-cours')).toBeTruthy();
+    expect(screen.queryByTestId('btn-desaffecter')).toBeNull();
+  });
+
+  it('SC2 — cliquer "Désaffecter" et confirmer appelle DELETE /affectation', async () => {
+    window.confirm = jest.fn().mockReturnValue(true);
+
+    const detailDesaffecte = { ...detailAffecte(), statut: 'NON_AFFECTEE', livreurId: null, livreurNom: null, vehiculeId: null };
+
+    let fetchCallCount = 0;
+    const fetchFn = jest.fn().mockImplementation((url: string, options?: RequestInit) => {
+      fetchCallCount++;
+      if (options?.method === 'DELETE') {
+        return Promise.resolve({ ok: true, status: 200, json: async () => detailDesaffecte } as unknown as Response);
+      }
+      const data = fetchCallCount === 1 ? detailAffecte() : detailDesaffecte;
+      return Promise.resolve({ ok: true, status: 200, json: async () => data } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-202"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-desaffecter'));
+    });
+
+    // Vérifier que DELETE a été appelé sur /affectation
+    const deleteCall = (fetchFn as jest.Mock).mock.calls.find(
+      (call: [string, RequestInit?]) => call[1]?.method === 'DELETE'
+    );
+    expect(deleteCall).toBeTruthy();
+    expect(deleteCall[0]).toContain('/affectation');
+  });
+
+  it('SC3 — erreur 409 lors de la désaffectation affiche un message d\'erreur', async () => {
+    window.confirm = jest.fn().mockReturnValue(true);
+
+    const fetchFn = jest.fn().mockImplementation((_url: string, options?: RequestInit) => {
+      if (options?.method === 'DELETE') {
+        return Promise.resolve({ ok: false, status: 409, json: async () => ({}) } as unknown as Response);
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => detailAffecte() } as unknown as Response);
+    });
+
+    await act(async () => {
+      render(
+        <DetailTourneePlanifieePage
+          tourneePlanifieeId="tp-202"
+          fetchFn={fetchFn}
+          livreurs={livreurs}
+          vehicules={vehicules}
+        />
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('onglet-affectation'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-desaffecter'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('message-erreur')).toBeTruthy();
+    });
+  });
+});

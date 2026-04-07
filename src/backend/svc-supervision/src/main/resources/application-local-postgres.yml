@@ -1,0 +1,37 @@
+# Profil local-postgres — svc-supervision
+#
+# Utilisé pour tester avec une vraie base PostgreSQL en développement local.
+# Le profil "dev" (H2 en mémoire) reste le défaut pour les développeurs sans PostgreSQL local.
+#
+# Démarrage avec ce profil :
+#   SPRING_PROFILES_ACTIVE=local-postgres mvn spring-boot:run
+#   ou
+#   java -jar svc-supervision.jar --spring.profiles.active=local-postgres
+#
+# Prérequis : démarrer PostgreSQL avec docker-compose :
+#   docker compose -f src/backend/svc-supervision/docker-compose.yml up -d
+#
+# Variables d'environnement (optionnelles — des valeurs par défaut dev sont fournies) :
+#   DB_USER     : utilisateur PostgreSQL (défaut : docupost)
+#   DB_PASSWORD : mot de passe PostgreSQL (défaut : docupost)
+
+spring:
+  config:
+    activate:
+      on-profile: local-postgres
+  datasource:
+    url: jdbc:postgresql://localhost:5432/docupost_supervision
+    username: ${DB_USER:docupost}
+    password: ${DB_PASSWORD:docupost}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+
+server:
+  port: 8082

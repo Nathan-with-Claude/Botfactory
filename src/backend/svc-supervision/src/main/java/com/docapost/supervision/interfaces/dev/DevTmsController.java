@@ -28,7 +28,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/dev/tms")
-@Profile("dev")
+@Profile({"dev", "recette"})
 public class DevTmsController {
 
     private static final Random RANDOM = new Random();

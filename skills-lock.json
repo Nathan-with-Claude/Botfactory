@@ -40,6 +40,11 @@
       "source": "obra/superpowers",
       "sourceType": "github",
       "computedHash": "70fe626d5970349239e939f311893389563a6338cda40eb0500606dd48aa3afa"
+    },
+    "gcp-deploy-recette": {
+      "source": "local",
+      "sourceType": "local",
+      "computedHash": "local"
     }
   }
 }

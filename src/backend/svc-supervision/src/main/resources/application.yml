@@ -3,6 +3,11 @@ spring:
     name: svc-supervision
   profiles:
     active: dev
+  # US-059 : limite upload photo (base64 JSON) — augmentée pour les photos ~1 Mo
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
 
 ---
 spring:
@@ -24,6 +29,13 @@ spring:
     show-sql: false
     database-platform: org.hibernate.dialect.H2Dialect
 
+# US-058 : CORS et secret interne — valeurs dev (permissives)
+app:
+  cors:
+    allowed-origins: "*"
+  internal:
+    secret: dev-secret-ignored
+
 server:
   port: 8082
 
@@ -36,17 +48,29 @@ spring:
     url: ${SUPERVISION_DB_URL:jdbc:postgresql://localhost:5432/supervision}
     username: ${SUPERVISION_DB_USER:supervision}
     password: ${SUPERVISION_DB_PASSWORD:supervision}
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   # OAuth2 Resource Server — SSO corporate Docaposte (US-020)
+  # jwk-set-uri (lazy) au lieu de issuer-uri : évite la connexion Keycloak au démarrage
+  # si Keycloak n'est pas encore déployé. À remplacer par issuer-uri quand Keycloak est opérationnel.
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${SSO_ISSUER_URI:https://sso.docaposte.fr/realms/docupost}
+          jwk-set-uri: ${SSO_JWK_SET_URI:${SSO_ISSUER_URI:https://sso.docaposte.fr/realms/docupost}/protocol/openid-connect/certs}
+
+# US-058 : CORS et secret interne — valeurs prod (sécurisées via variables d'environnement)
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:https://supervision.docupost.fr}
+  internal:
+    secret: ${INTERNAL_SECRET}
 
 server:
   port: 8082

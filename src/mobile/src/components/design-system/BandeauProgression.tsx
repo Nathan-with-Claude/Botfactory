@@ -32,9 +32,9 @@ export interface BandeauProgressionProps {
 }
 
 const BARRE_COLORS: Record<StatutProgression, string> = {
-  encours:  Colors.progresEncours,
-  arisque:  Colors.progresRisque,
-  cloturee: Colors.progresDone,
+  encours:  Colors.primary,
+  arisque:  Colors.avertissement,
+  cloturee: Colors.tertiaryContainer,
 };
 
 /**
@@ -86,11 +86,11 @@ export function BandeauProgression({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surfacePrimary,
+    backgroundColor: Colors.surfaceContainerLowest,
     paddingHorizontal: Spacing.s4,
-    paddingVertical: Spacing.s3,
+    paddingVertical: Spacing.s4,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.bordureNeutre,
+    borderBottomColor: Colors.outlineVariant,
     gap: Spacing.s2,
   },
   entete: {
@@ -100,16 +100,17 @@ const styles = StyleSheet.create({
   },
   compteur: {
     fontSize: 14,
-    color: Colors.texteSecondaire,
+    color: Colors.onSurfaceVariant,
   },
   compteurGras: {
-    fontWeight: '600',
-    color: Colors.textePrimaire,
+    fontWeight: '700',
+    color: Colors.primary,
+    fontSize: 20,
   },
   barreFond: {
     width: '100%',
-    height: 6,
-    backgroundColor: Colors.fondNeutre,
+    height: 12,
+    backgroundColor: Colors.surfaceContainerHigh,
     borderRadius: BorderRadius.full,
     overflow: 'hidden',
   },
@@ -123,12 +124,13 @@ const styles = StyleSheet.create({
     gap: Spacing.s4,
   },
   pourcentage: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textePrimaire,
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primary,
   },
   finEstimee: {
-    fontSize: 12,
-    color: Colors.texteSecondaire,
+    fontSize: 13,
+    color: Colors.onSurfaceVariant,
+    fontWeight: '500',
   },
 });

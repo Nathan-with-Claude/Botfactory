@@ -35,7 +35,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/internal/dev")
-@Profile("dev")
+@Profile({"dev", "recette"})
 public class DevTourneeController {
 
     private static final Logger log = LoggerFactory.getLogger(DevTourneeController.class);

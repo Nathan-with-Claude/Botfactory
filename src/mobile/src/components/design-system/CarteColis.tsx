@@ -65,9 +65,9 @@ export interface CarteColisProps {
 }
 
 const STATUT_VARIANT: Record<StatutColisVue, BadgeVariant> = {
-  A_LIVRER:      'info',
-  LIVRE:         'succes',
-  ECHEC:         'alerte',
+  A_LIVRER:      'info',       // → secondaryContainer / onSecondaryContainer
+  LIVRE:         'succes',     // → tertiaryFixed / onTertiaryFixed
+  ECHEC:         'alerte',     // → errorContainer / onErrorContainer
   A_REPRESENTER: 'avertissement',
 };
 
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: SWIPE_ACTION_WIDTH,
-    backgroundColor: Colors.alerte,
+    backgroundColor: Colors.error,
     borderRadius: BorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -349,30 +349,28 @@ const styles = StyleSheet.create({
   },
   boutonEchecIcone: {
     fontSize: 20,
-    color: Colors.texteInverse,
+    color: Colors.onPrimary,
     fontWeight: '700',
     marginBottom: 2,
   },
   boutonEchecTexte: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.texteInverse,
+    color: Colors.onPrimary,
     letterSpacing: 0.5,
   },
 
   // ─── Carte principale ───────────────────────────────────────────────────────
   container: {
-    backgroundColor: Colors.surfacePrimary,
+    backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: BorderRadius.lg,
     padding: Spacing.s3,
     paddingHorizontal: Spacing.s4,
-    // Marges externes par défaut (pas de swipe wrapper)
     marginHorizontal: Spacing.s4,
     marginVertical: 4,
     minHeight: 72,
     ...Shadows.cardSm,
   },
-  /** Quand la carte est dans le swipeWrapper, les marges externes sont portées par le wrapper */
   containerInSwipe: {
     marginHorizontal: 0,
     marginVertical: 0,
@@ -382,7 +380,7 @@ const styles = StyleSheet.create({
   },
   containerEchec: {
     borderLeftWidth: 3,
-    borderLeftColor: Colors.alerte,
+    borderLeftColor: Colors.error,
   },
   entete: {
     flexDirection: 'row',
@@ -400,32 +398,31 @@ const styles = StyleSheet.create({
     gap: 4,
     flexWrap: 'wrap',
   },
-  // L5 : micro-hint visuel "← Échec" sur les cartes swipables A_LIVRER
   hintSwipe: {
     fontSize: 10,
-    color: Colors.texteTertiaire,
+    color: Colors.outline,
     fontStyle: 'italic',
     letterSpacing: 0.2,
   },
   adresse: {
-    fontSize: 20,   // US-001 précisions design 2026-03-25 : 20px Bold pour lisibilité terrain
+    fontSize: 20,
     fontWeight: '700',
-    color: Colors.textePrimaire,
+    color: Colors.onSurface,
     marginBottom: 2,
   },
   destinataire: {
     fontSize: 13,
-    color: Colors.texteSecondaire,
+    color: Colors.onSurfaceVariant,
   },
   horodatage: {
     fontSize: 12,
-    color: Colors.texteTertiaire,
+    color: Colors.outline,
     marginTop: 2,
   },
   motif: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.alerte,
+    color: Colors.error,
     marginTop: 2,
   },
 });

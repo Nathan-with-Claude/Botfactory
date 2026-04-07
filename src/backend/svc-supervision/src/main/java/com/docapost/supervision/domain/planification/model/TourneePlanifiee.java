@@ -103,8 +103,13 @@ public class TourneePlanifiee {
     }
 
     /**
-     * Constructeur de reconstruction depuis la persistance.
+     * Constructeur de reconstruction depuis la persistance (sans poids estimé).
+     *
+     * @deprecated Utiliser le constructeur à 16 paramètres (avec poidsEstimeKg) pour la reconstruction
+     *             depuis la persistance afin d'éviter POIDS_ABSENT après rechargement.
+     *             Conservé pour la rétrocompatibilité uniquement.
      */
+    @Deprecated
     public TourneePlanifiee(
             String id,
             String codeTms,
@@ -122,14 +127,8 @@ public class TourneePlanifiee {
             Instant lancee,
             boolean compositionVerifiee
     ) {
-        this(id, codeTms, date, nbColis, zones, contraintes, anomalies, importeeLe, null);
-        this.statut = Objects.requireNonNull(statut, "Le statut est obligatoire");
-        this.livreurId = livreurId;
-        this.livreurNom = livreurNom;
-        this.vehiculeId = vehiculeId;
-        this.affecteeLe = affecteeLe;
-        this.lancee = lancee;
-        this.compositionVerifiee = compositionVerifiee;
+        this(id, codeTms, date, nbColis, zones, contraintes, anomalies, importeeLe,
+                statut, livreurId, livreurNom, vehiculeId, affecteeLe, lancee, compositionVerifiee, null);
     }
 
     /**
@@ -224,6 +223,41 @@ public class TourneePlanifiee {
 
         evenements.add(new TourneeLancee(
                 this.id, this.codeTms, this.livreurId, this.livreurNom, superviseurId, this.lancee, this.nbColis
+        ));
+    }
+
+    /**
+     * US-050 — Désaffecter le livreur d'une tournée planifiée.
+     * Remet la tournée en statut NON_AFFECTEE et efface le livreurId, livreurNom, vehiculeId.
+     * Émet DesaffectationEnregistree.
+     *
+     * @throws TourneeDejaLanceeException si la tournée est LANCEE
+     * @throws PlanificationInvariantException si la tournée est NON_AFFECTEE (rien à désaffecter)
+     */
+    public void desaffecter(String superviseurId) {
+        Objects.requireNonNull(superviseurId, "Le superviseurId est obligatoire pour la désaffectation");
+
+        if (this.statut == StatutAffectation.LANCEE) {
+            throw new TourneeDejaLanceeException(this.codeTms);
+        }
+        if (this.statut == StatutAffectation.NON_AFFECTEE) {
+            throw new PlanificationInvariantException(
+                    "La tournée " + codeTms + " est déjà NON_AFFECTEE — aucun livreur à désaffecter."
+            );
+        }
+
+        // Statut == AFFECTEE : désaffectation autorisée
+        String livreurIdRetire = this.livreurId;
+        String livreurNomRetire = this.livreurNom;
+
+        this.livreurId = null;
+        this.livreurNom = null;
+        this.vehiculeId = null;
+        this.affecteeLe = null;
+        this.statut = StatutAffectation.NON_AFFECTEE;
+
+        evenements.add(new com.docapost.supervision.domain.planification.events.DesaffectationEnregistree(
+                this.id, this.codeTms, livreurIdRetire, livreurNomRetire, superviseurId, Instant.now()
         ));
     }
 

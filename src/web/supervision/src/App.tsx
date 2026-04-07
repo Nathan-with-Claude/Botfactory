@@ -32,6 +32,7 @@ import PreparationPage from './pages/PreparationPage';
 import DetailTourneePlanifieePage from './pages/DetailTourneePlanifieePage';
 import ConsulterPreuvePage from './pages/ConsulterPreuvePage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
+import EtatLivreursPage from './pages/EtatLivreursPage';
 
 // ─── Type discriminant de la route ───────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export type AppRoute =
   | { page: 'planification' }
   | { page: 'detail-tournee-planifiee'; tourneePlanifieeId: string }
   | { page: 'preuves'; colisId?: string }
+  | { page: 'etat-livreurs' }
   | { page: 'auth-callback' };
 
 // ─── Layout shell ────────────────────────────────────────────────────────────
@@ -63,6 +65,7 @@ const CONTENT_STYLE: React.CSSProperties = {
 const NAV_PAGES: Array<{ label: string; route: AppRoute }> = [
   { label: 'Supervision', route: { page: 'tableau-de-bord' } },
   { label: 'Planification', route: { page: 'planification' } },
+  { label: 'Livreurs', route: { page: 'etat-livreurs' } },
   { label: 'Preuves', route: { page: 'preuves' } },
 ];
 
@@ -141,8 +144,11 @@ function resolveRouteInitiale(): AppRoute {
   if (typeof window !== 'undefined' && window.location.pathname.startsWith('/auth/callback')) {
     return { page: 'auth-callback' };
   }
-  // Mode dev : bypass SSO automatique — injection du token factice si absent
-  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  // Mode dev ou recette sans Keycloak : bypass SSO automatique
+  const authBypass =
+    process.env.NODE_ENV === 'development' ||
+    process.env.REACT_APP_AUTH_BYPASS === 'true';
+  if (authBypass && typeof window !== 'undefined') {
     if (!sessionStorage.getItem('docupost_access_token')) {
       sessionStorage.setItem('docupost_access_token', 'dev-token-superviseur');
     }
@@ -164,6 +170,7 @@ const TITRES_PAR_PAGE: Partial<Record<AppRoute['page'], string>> = {
   'planification':          'DocuPost — Plan du jour',
   'detail-tournee-planifiee': 'DocuPost — Détail tournée planifiée',
   'preuves':                'DocuPost — Preuves de livraison',
+  'etat-livreurs':          'DocuPost — État des livreurs',
   'connexion':              'DocuPost — Connexion',
   'auth-callback':          'DocuPost — Connexion en cours…',
 };
@@ -272,6 +279,16 @@ function App({ routeInitiale }: AppProps) {
 
         {route.page === 'preuves' && (
           <ConsulterPreuvePage apiBaseUrl={TOURNEE_BASE_URL} />
+        )}
+
+        {route.page === 'etat-livreurs' && (
+          <EtatLivreursPage
+            apiBaseUrl={API_BASE_URL}
+            onVoirTourneePlanifiee={(id) =>
+              navigate({ page: 'detail-tournee-planifiee', tourneePlanifieeId: id })
+            }
+            onAffecter={() => navigate({ page: 'planification' })}
+          />
         )}
 
       </div>

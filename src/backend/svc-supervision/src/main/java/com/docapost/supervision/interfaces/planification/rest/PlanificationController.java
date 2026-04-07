@@ -5,6 +5,7 @@ import com.docapost.supervision.domain.planification.events.TourneeLancee;
 import com.docapost.supervision.domain.planification.model.CapaciteVehiculeDepasseeException;
 import com.docapost.supervision.domain.planification.model.StatutAffectation;
 import com.docapost.supervision.domain.planification.model.TourneePlanifiee;
+import com.docapost.supervision.domain.planification.model.TourneeDejaLanceeException;
 import com.docapost.supervision.domain.planification.model.Vehicule;
 import com.docapost.supervision.interfaces.planification.dto.*;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ public class PlanificationController {
     private final LancerTourneeHandler lancerTourneeHandler;
     private final VerifierCompatibiliteVehiculeHandler verifierCompatibiliteHandler;
     private final ReaffecterVehiculeHandler reaffecterVehiculeHandler;
+    private final DesaffecterTourneeHandler desaffecterHandler;
 
     public PlanificationController(
             ConsulterPlanDuJourHandler consulterPlanDuJourHandler,
@@ -59,7 +61,8 @@ public class PlanificationController {
             AffecterLivreurVehiculeHandler affecterHandler,
             LancerTourneeHandler lancerTourneeHandler,
             VerifierCompatibiliteVehiculeHandler verifierCompatibiliteHandler,
-            ReaffecterVehiculeHandler reaffecterVehiculeHandler
+            ReaffecterVehiculeHandler reaffecterVehiculeHandler,
+            DesaffecterTourneeHandler desaffecterHandler
     ) {
         this.consulterPlanDuJourHandler = consulterPlanDuJourHandler;
         this.consulterDetailHandler = consulterDetailHandler;
@@ -68,6 +71,7 @@ public class PlanificationController {
         this.lancerTourneeHandler = lancerTourneeHandler;
         this.verifierCompatibiliteHandler = verifierCompatibiliteHandler;
         this.reaffecterVehiculeHandler = reaffecterVehiculeHandler;
+        this.desaffecterHandler = desaffecterHandler;
     }
 
     /**
@@ -299,6 +303,37 @@ public class PlanificationController {
         List<Vehicule> compatibles = reaffecterVehiculeHandler.rechercherVehiculesCompatibles(poidsMinKg, localDate);
         List<VehiculeCompatibleDTO> dtos = compatibles.stream().map(VehiculeCompatibleDTO::from).toList();
         return ResponseEntity.ok(dtos);
+    }
+
+    /**
+     * DELETE /api/planification/tournees/{id}/affectation
+     * Désaffecte le livreur d'une tournée planifiée. Remet la tournée en NON_AFFECTEE.
+     *
+     * US-050 (W-05 — onglet Affectation, bouton "Désaffecter")
+     *
+     * Codes HTTP :
+     * - 200 : désaffectation réussie (tournée mise à jour retournée)
+     * - 404 : tournée introuvable
+     * - 409 : tournée déjà lancée (LANCEE — désaffectation impossible)
+     */
+    @DeleteMapping("/tournees/{id}/affectation")
+    public ResponseEntity<TourneePlanifieeDTO> desaffecterTournee(
+            @PathVariable String id,
+            Authentication authentication
+    ) {
+        String superviseurId = authentication != null ? authentication.getName() : "superviseur-dev";
+        try {
+            TourneePlanifiee tournee = desaffecterHandler.handle(
+                    new DesaffecterTourneeCommand(id, superviseurId)
+            );
+            return ResponseEntity.ok(TourneePlanifieeDTO.from(tournee));
+        } catch (TourneePlanifieeNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (TourneeDejaLanceeException e) {
+            return ResponseEntity.status(409).build();
+        } catch (com.docapost.supervision.domain.planification.model.PlanificationInvariantException e) {
+            return ResponseEntity.status(409).build();
+        }
     }
 
     /**

@@ -74,6 +74,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Cloud SQL connector — connexion Cloud Run → Cloud SQL via Unix socket -->
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>postgres-socket-factory</artifactId>
+            <version>1.15.0</version>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

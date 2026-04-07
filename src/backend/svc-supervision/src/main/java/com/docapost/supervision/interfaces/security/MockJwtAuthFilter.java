@@ -25,7 +25,7 @@ import java.util.List;
  * TEMPORAIRE — Remplacé par le filtre JWT Keycloak lors de US-020.
  */
 @Component
-@Profile("dev")
+@Profile({"dev", "recette"})
 public class MockJwtAuthFilter extends OncePerRequestFilter {
 
     private static final String MOCK_SUPERVISEUR_ID = "superviseur-001";

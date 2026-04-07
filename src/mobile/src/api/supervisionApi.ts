@@ -6,10 +6,19 @@
  * - Marquer une instruction comme exécutée (US-015)
  *
  * Note : URL de base distincte de svc-tournee (8081 vs 8082).
+ * US-051 : Bearer token injecté via createHttpClient (même pattern que tourneeApi.ts).
  */
 
+import { createHttpClient } from './httpClient';
+import { authStore } from '../store/authStoreInstance';
+
 const SUPERVISION_BASE_URL =
-  process.env.EXPO_PUBLIC_SUPERVISION_URL ?? 'http://10.0.2.2:8082';
+  process.env.EXPO_PUBLIC_SUPERVISION_URL ?? 'http://localhost:8082';
+
+const { apiFetch } = createHttpClient({
+  authStore,
+  baseUrl: SUPERVISION_BASE_URL,
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,25 +51,23 @@ export interface InstructionMobileDTO {
 export async function getInstructionsEnAttente(
   tourneeId: string
 ): Promise<InstructionMobileDTO[]> {
-  const response = await fetch(
-    `${SUPERVISION_BASE_URL}/api/supervision/instructions/en-attente?tourneeId=${encodeURIComponent(tourneeId)}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        // TODO (US-019) : ajouter Authorization: `Bearer ${token}`
-      },
-    }
-  );
+  try {
+    const response = await apiFetch(
+      `/api/supervision/instructions/en-attente?tourneeId=${encodeURIComponent(tourneeId)}`,
+      { method: 'GET' }
+    );
 
-  if (!response.ok) {
-    // Erreur silencieuse — le polling ne doit pas bloquer le livreur
+    if (!response.ok) {
+      // Erreur silencieuse (401 géré par httpClient → logout) — le polling ne doit pas bloquer le livreur
+      return [];
+    }
+
+    const data: unknown = await response.json();
+    return Array.isArray(data) ? (data as InstructionMobileDTO[]) : [];
+  } catch {
+    // Erreur réseau — silencieuse
     return [];
   }
-
-  const data: unknown = await response.json();
-  return Array.isArray(data) ? (data as InstructionMobileDTO[]) : [];
 }
 
 /**
@@ -74,16 +81,9 @@ export async function getInstructionsEnAttente(
 export async function marquerInstructionExecutee(
   instructionId: string
 ): Promise<void> {
-  const response = await fetch(
-    `${SUPERVISION_BASE_URL}/api/supervision/instructions/${encodeURIComponent(instructionId)}/executer`,
-    {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        // TODO (US-019) : ajouter Authorization: `Bearer ${token}`
-      },
-    }
+  const response = await apiFetch(
+    `/api/supervision/instructions/${encodeURIComponent(instructionId)}/executer`,
+    { method: 'PATCH' }
   );
 
   if (!response.ok && response.status !== 409) {
@@ -106,16 +106,9 @@ export async function marquerInstructionExecutee(
 export async function prendreEnCompteInstruction(
   instructionId: string
 ): Promise<void> {
-  const response = await fetch(
-    `${SUPERVISION_BASE_URL}/api/supervision/instructions/${encodeURIComponent(instructionId)}/prendre-en-compte`,
-    {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        // TODO (US-019) : ajouter Authorization: `Bearer ${token}`
-      },
-    }
+  const response = await apiFetch(
+    `/api/supervision/instructions/${encodeURIComponent(instructionId)}/prendre-en-compte`,
+    { method: 'PATCH' }
   );
 
   if (!response.ok && response.status !== 409) {

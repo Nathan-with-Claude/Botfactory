@@ -16,12 +16,15 @@
  *  - Repliage avant connexion : state local uniquement, SANS écriture AsyncStorage.
  *  - Repliage après connexion (hasConnectedOnce=true) : persisté comme US-036.
  *
+ * Design : Material Design 3 — palette designer (/livrables/02-ux/design_mobile_designer.md)
+ *
  * Props injectables pour les tests (pattern DI via props).
  */
 
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -29,6 +32,9 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AuthStatus } from '../store/authStore';
+import type { DevLivreur } from '../constants/devLivreurs';
+import { Colors } from '../theme/colors';
+import { Theme } from '../theme/theme';
 
 // ─── Clés AsyncStorage ────────────────────────────────────────────────────────
 
@@ -46,6 +52,16 @@ export interface ConnexionScreenProps {
   status: AuthStatus;
   /** Message d'erreur à afficher (null si pas d'erreur) */
   error: string | null;
+  /**
+   * US-047 — Liste des livreurs dev à afficher en mode __DEV__.
+   * Si absent (undefined) ou vide, le bloc dev n'est pas affiché.
+   */
+  devLivreurs?: DevLivreur[];
+  /**
+   * US-047 — Callback déclenché quand l'utilisateur sélectionne un compte dev.
+   * Reçoit le livreurId choisi.
+   */
+  onDevLivreurSelected?: (livreurId: string) => void;
 }
 
 // ─── Composant ───────────────────────────────────────────────────────────────
@@ -55,12 +71,13 @@ export function ConnexionScreen({
   loginFn,
   status,
   error,
+  devLivreurs,
+  onDevLivreurSelected,
 }: ConnexionScreenProps): React.JSX.Element {
 
   // US-036 — état de la card SSO : null = non encore chargé depuis AsyncStorage
   const [cardOuverte, setCardOuverte] = useState<boolean | null>(null);
   // US-043 — indique si l'utilisateur s'est déjà connecté au moins une fois
-  // Permet de décider si le toggle doit persister en AsyncStorage ou non
   const [dejaConnecte, setDejaConnecte] = useState<boolean>(false);
 
   // US-036 — Chargement initial des préférences depuis AsyncStorage
@@ -75,10 +92,8 @@ export function ConnexionScreen({
       setDejaConnecte(estDejaConnecte);
 
       if (valeurCard !== null) {
-        // Restaurer la préférence explicite de l'utilisateur
         setCardOuverte(valeurCard === 'true');
       } else {
-        // Comportement par défaut : card ouverte à la première connexion, repliée ensuite
         setCardOuverte(!estDejaConnecte);
       }
     };
@@ -90,7 +105,6 @@ export function ConnexionScreen({
   useEffect(() => {
     if (status === 'authenticated') {
       onLoginSuccess();
-      // US-036 — Écrire hasConnectedOnce = true uniquement si pas encore positionné
       const marquerPremierConnexion = async () => {
         const valeur = await AsyncStorage.getItem(KEY_HAS_CONNECTED_ONCE);
         if (valeur !== 'true') {
@@ -102,8 +116,6 @@ export function ConnexionScreen({
   }, [status, onLoginSuccess]);
 
   // US-036/US-043 — Toggle de la card SSO
-  // - Si l'utilisateur s'est déjà connecté (dejaConnecte=true) : persist en AsyncStorage (US-036)
-  // - Sinon (avant première connexion) : state local uniquement, sans écriture AsyncStorage (US-043)
   const toggleCard = async () => {
     const nouvelEtat = !cardOuverte;
     setCardOuverte(nouvelEtat);
@@ -113,20 +125,25 @@ export function ConnexionScreen({
   };
 
   const isLoading = status === 'loading';
-
-  // Tant que les préférences ne sont pas chargées, on détermine un état par défaut
-  // (card ouverte) pour ne pas bloquer l'affichage
   const cardEstOuverte = cardOuverte !== null ? cardOuverte : true;
 
   return (
-    <View testID="screen-connexion" style={styles.container}>
-      {/* Logo / Titre */}
-      <View style={styles.header}>
+    <ScrollView
+      testID="screen-connexion"
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Zone logo + titre */}
+      <View style={styles.logoZone}>
+        {/* Logo carré gradient tactique */}
+        <View style={styles.logoBox}>
+          <Text style={styles.logoIcone}>📄</Text>
+        </View>
         <Text style={styles.titre}>DocuPost</Text>
-        <Text style={styles.sousTitre}>Application Livreur</Text>
+        <Text style={styles.sousTitre}>Votre outil de tournée</Text>
       </View>
 
-      {/* US-036 — Card SSO rétractable */}
+      {/* US-036 — Card SSO rétractable (info style designer) */}
       <View testID="card-sso-info" style={styles.cardSso}>
         {/* Header de la card : toujours visible */}
         <TouchableOpacity
@@ -136,9 +153,12 @@ export function ConnexionScreen({
           accessibilityRole="button"
           accessibilityLabel={cardEstOuverte ? 'Replier l\'aide connexion' : 'Déplier l\'aide connexion'}
         >
-          <Text testID="card-sso-header" style={styles.cardSsoTitre}>
-            Comment ça fonctionne ?
-          </Text>
+          <View style={styles.cardSsoHeaderLeft}>
+            <Text style={styles.cardSsoIconeInfo}>ℹ</Text>
+            <Text testID="card-sso-header" style={styles.cardSsoTitre}>
+              Comment ça fonctionne ?
+            </Text>
+          </View>
           <Text style={styles.cardSsoChevron}>{cardEstOuverte ? '▲' : '▼'}</Text>
         </TouchableOpacity>
 
@@ -146,14 +166,32 @@ export function ConnexionScreen({
         {cardEstOuverte && (
           <View testID="card-sso-contenu" style={styles.cardSsoContenu}>
             <Text style={styles.cardSsoTexte}>
-              Appuyez sur le bouton ci-dessous pour vous connecter avec votre compte Docaposte.
-            </Text>
-            <Text style={styles.cardSsoTexte}>
-              Vous serez redirigé vers la page de connexion sécurisée (SSO corporate).
+              Utilisez vos identifiants professionnels pour accéder à votre itinéraire et scanner vos colis en toute sécurité.
             </Text>
           </View>
         )}
       </View>
+
+      {/* US-047 — Sélecteur de compte livreur en mode développement */}
+      {devLivreurs && devLivreurs.length > 0 && (
+        <View testID="section-dev-mode" style={styles.devSection}>
+          <Text style={styles.devTitre}>MODE DEV</Text>
+          <Text style={styles.devSousTitre}>Choisir un compte livreur :</Text>
+          {devLivreurs.map((livreur) => (
+            <TouchableOpacity
+              key={livreur.id}
+              testID={`btn-dev-livreur-${livreur.id}`}
+              style={styles.btnDevLivreur}
+              onPress={() => onDevLivreurSelected?.(livreur.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`Se connecter en tant que ${livreur.prenom} ${livreur.nom}`}
+            >
+              <Text style={styles.btnDevLivreurNom}>{livreur.prenom} {livreur.nom}</Text>
+              <Text style={styles.btnDevLivreurId}>{livreur.id}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Zone principale */}
       <View style={styles.corps}>
@@ -162,7 +200,7 @@ export function ConnexionScreen({
           <ActivityIndicator
             testID="spinner-connexion"
             size="large"
-            color="#005B96"
+            color={Colors.primary}
           />
         ) : (
           <>
@@ -182,18 +220,21 @@ export function ConnexionScreen({
               </View>
             )}
 
-            {/* SC1 — Bouton principal de connexion SSO (L2 : libellé raccourci) */}
-            <TouchableOpacity
-              testID="btn-connexion-sso"
-              style={styles.btnPrincipal}
-              onPress={() => void loginFn()}
-              accessibilityRole="button"
-              accessibilityLabel="Connexion Docaposte"
-            >
-              <Text style={styles.btnPrincipalTexte}>
-                Connexion Docaposte
-              </Text>
-            </TouchableOpacity>
+            {/* SC1 — Bouton principal de connexion SSO — gradient tactique */}
+            <View style={styles.btnPrincipalWrapper}>
+              <TouchableOpacity
+                testID="btn-connexion-sso"
+                style={styles.btnPrincipal}
+                onPress={() => void loginFn()}
+                accessibilityRole="button"
+                accessibilityLabel="Connexion Docaposte"
+              >
+                <Text style={styles.btnPrincipalIcone}>🔑</Text>
+                <Text style={styles.btnPrincipalTexte}>
+                  Se connecter via compte Docaposte
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <Text style={styles.infoSecu}>
               Connexion sécurisée via le SSO corporate Docaposte
@@ -201,7 +242,10 @@ export function ConnexionScreen({
           </>
         )}
       </View>
-    </View>
+
+      {/* Footer version */}
+      <Text style={styles.footer}>v 2.0.0 — Docaposte</Text>
+    </ScrollView>
   );
 }
 
@@ -209,111 +253,216 @@ export function ConnexionScreen({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F5F7FA',
+    flexGrow: 1,
+    backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: Theme.spacing.lg,
   },
-  header: {
+  // ── Logo zone ───────────────────────────────────────────────────────────────
+  logoZone: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: Theme.spacing.lg,
+  },
+  logoBox: {
+    width: 80,
+    height: 80,
+    backgroundColor: Colors.primary,
+    borderRadius: Theme.borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Theme.spacing.md,
+    ...Theme.shadow.md,
+  },
+  logoIcone: {
+    fontSize: 40,
   },
   titre: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#005B96',
-    letterSpacing: 1,
+    fontSize: Theme.fontSize.display,
+    fontWeight: Theme.fontWeight.black,
+    color: Colors.primary,
+    letterSpacing: -1,
   },
   sousTitre: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: Theme.fontSize.lg,
+    fontWeight: Theme.fontWeight.medium,
+    color: Colors.onSurfaceVariant,
     marginTop: 4,
   },
-  // ── Card SSO ────────────────────────────────────────────────────────────────
+  // ── Card SSO (info style designer) ─────────────────────────────────────────
   cardSso: {
     width: '100%',
-    backgroundColor: '#EBF4FF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#005B96',
-    marginBottom: 24,
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: Theme.borderRadius.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary,
+    marginBottom: Theme.spacing.md,
     overflow: 'hidden',
   },
   cardSsoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    padding: Theme.spacing.md,
+  },
+  cardSsoHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  cardSsoIconeInfo: {
+    fontSize: 16,
+    color: Colors.primary,
   },
   cardSsoTitre: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#005B96',
+    fontSize: Theme.fontSize.sm,
+    fontWeight: Theme.fontWeight.semibold,
+    color: Colors.onSurface,
   },
   cardSsoChevron: {
     fontSize: 12,
-    color: '#005B96',
+    color: Colors.onSurfaceVariant,
   },
   cardSsoContenu: {
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-    gap: 8,
+    paddingHorizontal: Theme.spacing.md,
+    paddingBottom: Theme.spacing.md,
   },
   cardSsoTexte: {
-    fontSize: 13,
-    color: '#444',
-    lineHeight: 18,
+    fontSize: Theme.fontSize.sm,
+    color: Colors.onSurfaceVariant,
+    fontWeight: Theme.fontWeight.medium,
+    lineHeight: 20,
   },
   // ── Zone principale ─────────────────────────────────────────────────────────
   corps: {
     width: '100%',
     alignItems: 'center',
-    gap: 16,
+    gap: Theme.spacing.md,
   },
   erreurContainer: {
     width: '100%',
-    backgroundColor: '#FFF3CD',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 8,
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.md,
+    marginBottom: Theme.spacing.sm,
     alignItems: 'center',
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.error,
   },
   erreurTexte: {
-    color: '#856404',
-    fontSize: 14,
+    color: Colors.onErrorContainer,
+    fontSize: Theme.fontSize.sm,
     textAlign: 'center',
     marginBottom: 12,
+    fontWeight: Theme.fontWeight.medium,
+  },
+  // Wrapper outer card (outlineVariant border) + bouton gradient tactique
+  btnPrincipalWrapper: {
+    width: '100%',
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Theme.borderRadius.lg,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    ...Theme.shadow.sm,
   },
   btnPrincipal: {
     width: '100%',
-    backgroundColor: '#005B96',
-    borderRadius: 8,
-    paddingVertical: 16,
+    height: 56,
+    backgroundColor: Colors.primary,
+    borderRadius: Theme.borderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    ...Theme.shadow.md,
+  },
+  btnPrincipalIcone: {
+    fontSize: 20,
   },
   btnPrincipalTexte: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: Colors.onPrimary,
+    fontSize: Theme.fontSize.body,
+    fontWeight: Theme.fontWeight.bold,
+    letterSpacing: 0.5,
   },
   btnSecondaire: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#856404',
-    borderRadius: 8,
+    borderColor: Colors.onErrorContainer,
+    borderRadius: Theme.borderRadius.md,
     paddingVertical: 10,
     paddingHorizontal: 24,
+    minHeight: Theme.touchTarget.minHeight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnSecondaireTexte: {
-    color: '#856404',
-    fontSize: 14,
-    fontWeight: '500',
+    color: Colors.onErrorContainer,
+    fontSize: Theme.fontSize.sm,
+    fontWeight: Theme.fontWeight.medium,
   },
   infoSecu: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: Theme.fontSize.xs,
+    color: Colors.outline,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 4,
+  },
+  // ── Section dev-mode (US-047) ─────────────────────────────────────────────
+  devSection: {
+    width: '100%',
+    backgroundColor: Colors.avertissementLeger,
+    borderRadius: Theme.borderRadius.md,
+    borderWidth: 2,
+    borderColor: Colors.avertissement,
+    padding: 12,
+    marginBottom: Theme.spacing.md,
+    gap: 8,
+  },
+  devTitre: {
+    fontSize: Theme.fontSize.sm,
+    fontWeight: Theme.fontWeight.bold,
+    color: Colors.avertissementFonce,
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+  devSousTitre: {
+    fontSize: 12,
+    color: Colors.avertissementFonce,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  btnDevLivreur: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: Colors.avertissement,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: Theme.touchTarget.minHeight,
+  },
+  btnDevLivreurNom: {
+    fontSize: Theme.fontSize.sm,
+    fontWeight: Theme.fontWeight.semibold,
+    color: Colors.avertissementFonce,
+  },
+  btnDevLivreurId: {
+    fontSize: 11,
+    color: Colors.avertissement,
+    fontFamily: 'monospace',
+  },
+  // ── Footer ──────────────────────────────────────────────────────────────────
+  footer: {
+    position: 'absolute',
+    bottom: Theme.spacing.md,
+    fontSize: 12,
+    fontWeight: Theme.fontWeight.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    color: Colors.outline,
   },
 });

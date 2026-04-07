@@ -6,6 +6,135 @@
 
 ---
 
+## Corrections As-Built (US-051 à US-059) — 2026-04-04
+
+### Pré-requis communs
+
+**Backend svc-supervision** :
+```bash
+cd /home/admin/Botfactory/src/backend/svc-supervision
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# Disponible sur http://localhost:8082
+```
+
+**Backend svc-tournee** :
+```bash
+cd /home/admin/Botfactory/src/backend/svc-tournee
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# Disponible sur http://localhost:8081
+```
+
+**Mobile (Expo Web)** :
+```bash
+cd /home/admin/Botfactory/src/mobile
+npm install
+npx expo start --web --port 8090
+# Disponible sur http://localhost:8090
+```
+
+**PostgreSQL local (US-054 uniquement)** :
+```bash
+cd /home/admin/Botfactory/src/backend/svc-supervision
+docker compose up -d
+# PostgreSQL disponible sur localhost:5432
+# Puis lancer svc-supervision avec :
+SPRING_PROFILES_ACTIVE=local-postgres mvn spring-boot:run
+```
+
+---
+
+### US-051 — Bearer token dans supervisionApi
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | Polling instructions avec token | Ouvrir l'app mobile en tant que livreur-dev-001, attendre 10s | Aucune erreur 403 dans les logs svc-supervision — instructions récupérées sans erreur | ☐ | |
+| 2 | Marquer instruction exécutée | Depuis DetailColisScreen, ouvrir un colis avec instruction active | Instruction marquée sans 403, retour 200 dans les logs backend | ☐ | |
+| 3 | Prise en compte instruction | Ouvrir MesConsignesScreen | Instructions passent au statut PRISE_EN_COMPTE sans erreur réseau | ☐ | |
+| 4 | Erreur silencieuse polling | Couper svc-supervision, observer ListeColisScreen | Pas d'écran d'erreur — la liste colis reste affichée normalement | ☐ | |
+
+---
+
+### US-052 — Dépendances package.json
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | npm install propre | Supprimer `node_modules/` et relancer `npm install` dans `src/mobile/` | Pas d'erreur "package not found" — node_modules complet | ☐ | |
+| 2 | App démarre sans erreur module | `npx expo start --web --port 8090` | Aucune erreur "Cannot resolve module 'react-native-app-auth'" ni "netinfo" | ☐ | |
+| 3 | Tests Jest | `npm test` dans `src/mobile/` | Suite verte (tous les tests passants avant restent verts) | ☐ | |
+
+---
+
+### US-053 — Correction poidsEstimeKg
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | Tests unitaires TourneePlanifiee | `mvn test -pl svc-supervision` | 22 tests TourneePlanifieeTest PASS (BUILD SUCCESS) | ☐ | |
+| 2 | Vérification compatibilité après rechargement | Démarrer svc-supervision (profil dev), appeler `POST /api/planification/tournees/{id}/verifier-compatibilite-vehicule` | Résultat `COMPATIBLE` ou `DEPASSEMENT` — pas `POIDS_ABSENT` pour les tournées avec poids seed | ☐ | |
+| 3 | API curl test | `curl -s -X POST http://localhost:8082/api/planification/tournees/T-001/verifier-compatibilite-vehicule -H "Content-Type: application/json" -d '{"vehiculeId":"V-001"}'` | Réponse JSON avec `resultat != "POIDS_ABSENT"` si tournée a un poids | ☐ | |
+
+---
+
+### US-054 — PostgreSQL local
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | Démarrage Docker PostgreSQL | `docker compose up -d` dans `src/backend/svc-supervision/` | Container `docupost-supervision-db` running et `healthy` | ☐ | |
+| 2 | svc-supervision profil local-postgres | `SPRING_PROFILES_ACTIVE=local-postgres mvn spring-boot:run` | Application démarre, tables créées par Hibernate, données seed insérées | ☐ | |
+| 3 | Persistance entre redémarrages | Arrêter puis redémarrer svc-supervision (sans stopper Docker) | Les données précédemment créées sont présentes via `GET /api/planification/tournees/{date}` | ☐ | |
+| 4 | Profil dev inchangé | `mvn test` sans profil spécial | Tous les tests @WebMvcTest passent (H2 utilisé, 154 tests) | ☐ | |
+
+---
+
+### US-055 — Navigation react-navigation
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | App démarre avec NavigationContainer | Lancer l'app mobile | Aucune erreur de navigation au démarrage, ConnexionScreen affichée | ☐ | |
+| 2 | Navigation ConnexionScreen → ListeColisScreen | Se connecter en tant que livreur-dev-001 | Transition vers ListeColisScreen après login | ☐ | |
+| 3 | Migration partielle documentée | Ouvrir DetailColisScreen depuis ListeColisScreen | Le retour Android depuis les sous-écrans est géré par l'état interne (prévu R2) | ☐ | |
+
+---
+
+### US-056 — Persistance offlineQueue AsyncStorage
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | Enqueue en mode offline | Couper le réseau simulé, confirmer 2 livraisons dans l'app | Compteur "En attente" affiche 2 | ☐ | |
+| 2 | Persistance après kill app | Forcer la fermeture de l'app, la rouvrir | Le compteur "En attente" affiche toujours 2 (rechargement AsyncStorage) | ☐ | |
+| 3 | Sync automatique au retour réseau | Rétablir le réseau, observer | Les 2 commandes sont synchronisées, compteur revient à 0 | ☐ | |
+| 4 | Clôture bloquée si file non vide | Avec des commandes en attente, tenter la clôture | Bouton clôture désactivé ou message d'avertissement affiché | ☐ | |
+
+---
+
+### US-057 — WebSocket STOMP (déjà implémenté)
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | Connexion WebSocket active | Ouvrir le tableau de bord supervision http://localhost:3000 | Indicateur "En direct" affiché (US-044) | ☐ | |
+| 2 | Mise à jour temps réel | Déclencher un événement TMS via DevTmsController, observer le tableau de bord | Mise à jour visible sans rechargement de page | ☐ | |
+
+---
+
+### US-058 — CORS et sécurité endpoint interne
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | CORS dev — toutes origines | `curl -H "Origin: http://external.test" -X OPTIONS http://localhost:8082/api/supervision/tableau-de-bord` | Header `Access-Control-Allow-Origin` présent dans la réponse | ☐ | |
+| 2 | Endpoint interne sans secret (dev) | `curl -X POST http://localhost:8082/api/supervision/internal/vue-tournee/events -H "Content-Type: application/json" -d '{}'` | Réponse non-403 (filtre bypass en dev) | ☐ | |
+| 3 | Tests de sécurité | `mvn test -pl svc-supervision` | 154 tests PASS (BUILD SUCCESS) | ☐ | |
+
+---
+
+### US-059 — Upload photo multipart
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes perso |
+|---|----------|--------|-----------------|--------|-------------|
+| 1 | Photo < 5MB acceptée | Capturer une photo et confirmer la livraison via l'app mobile | Livraison confirmée sans erreur 413 | ☐ | |
+| 2 | Limite Spring configurée | `grep -r "max-file-size" src/backend/svc-supervision/src/main/resources/` | Affiche `max-file-size: 5MB` dans application.yml | ☐ | |
+| 3 | Livraison sans photo inchangée | Confirmer une livraison avec signature uniquement | Flux signature inchangé, livraison confirmée | ☐ | |
+
+---
+
 ## US-003 : Filtrer et organiser mes colis par zone géographique
 
 ### Pré-requis

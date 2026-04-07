@@ -3,6 +3,11 @@ spring:
     name: svc-tournee
   profiles:
     active: dev
+  # US-059 : limite upload photo (base64 JSON) — augmentée pour les photos ~1 Mo
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
 
 server:
   port: 8081
@@ -48,20 +53,23 @@ spring:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   # OAuth2 Resource Server — SSO corporate Docaposte (US-019/020)
-  # Le JWKS endpoint est déduit automatiquement depuis l'issuer-uri
-  # via /.well-known/openid-configuration.
+  # jwk-set-uri (lazy) au lieu de issuer-uri : évite la connexion Keycloak au démarrage
+  # si Keycloak n'est pas encore déployé. À remplacer par issuer-uri quand Keycloak est opérationnel.
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${SSO_ISSUER_URI:https://sso.docaposte.fr/realms/docupost}
+          jwk-set-uri: ${SSO_JWK_SET_URI:${SSO_ISSUER_URI:https://sso.docaposte.fr/realms/docupost}/protocol/openid-connect/certs}

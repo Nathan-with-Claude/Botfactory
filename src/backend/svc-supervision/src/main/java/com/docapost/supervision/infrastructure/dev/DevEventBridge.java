@@ -39,7 +39,7 @@ import java.util.Optional;
  * Source : US-033 — SC2, SC3, SC4, SC6
  */
 @Component
-@Profile("dev")
+@Profile({"dev", "recette"})
 public class DevEventBridge {
 
     private static final Logger log = LoggerFactory.getLogger(DevEventBridge.class);

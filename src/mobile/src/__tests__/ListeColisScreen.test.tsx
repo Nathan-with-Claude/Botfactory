@@ -157,8 +157,9 @@ describe('ListeColisScreen', () => {
       expect(screen.getByTestId('message-aucun-colis')).toBeTruthy();
     });
 
+    // US-048 : le message a été mis à jour pour être plus explicite
     expect(screen.getByTestId('message-aucun-colis')).toHaveTextContent(
-      'Aucun colis assigne pour aujourd\'hui'
+      'Aucune tournée n\'a encore été commandée pour vous'
     );
   });
 
@@ -179,8 +180,9 @@ describe('ListeColisScreen', () => {
 
     await waitFor(() => {
       const statuts = screen.getAllByTestId('colis-statut');
-      expect(statuts[0]).toHaveTextContent('A livrer');
-      expect(statuts[1]).toHaveTextContent('Livre');
+      // US-038 : libellés harmonisés — ColisItem affiche en majuscules
+      expect(statuts[0]).toHaveTextContent('A LIVRER');
+      expect(statuts[1]).toHaveTextContent('LIVRÉ');
     });
   });
 

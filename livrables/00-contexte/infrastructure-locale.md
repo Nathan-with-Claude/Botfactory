@@ -16,7 +16,7 @@
 | `svc-tournee` | Backend livreur (tournées, colis, livraisons) | **8081** | `GET /actuator/health` | `src/backend/svc-tournee` |
 | `svc-supervision` | Backend superviseur (tableau de bord, planification) | **8082** | `GET /actuator/health` | `src/backend/svc-supervision` |
 | `frontend-supervision` | Web React superviseur | **3000** | `GET /` | `src/web/supervision` |
-| `expo-web` | App mobile livreur (Expo Web) | **8084** | `GET /` | `src/mobile` |
+| `expo-web` | App mobile livreur (Expo Web) | **8083** | `GET /` | `src/mobile` |
 
 > Si un nouveau service est ajouté au projet, ajouter une ligne ici avant toute chose.
 
@@ -27,7 +27,8 @@
 | Variable | Valeur | Scope |
 |----------|--------|-------|
 | `JAVA_HOME` | `C:/Program Files/Java/jdk-20` | Tous les services Java |
-| `EXPO_PUBLIC_API_URL` | `http://localhost:8081` | App mobile (Expo) |
+| `EXPO_PUBLIC_API_URL` | `http://localhost:8081` | App mobile (Expo) — svc-tournee |
+| `EXPO_PUBLIC_SUPERVISION_URL` | `http://localhost:8082` | App mobile (Expo) — svc-supervision |
 | `REACT_APP_API_URL` | `http://localhost:8082` | Frontend supervision |
 
 ---
@@ -74,17 +75,18 @@ for i in $(seq 1 15); do
 done
 ```
 
-### Démarrer Expo Web — app mobile (port 8084)
+### Démarrer Expo Web — app mobile (port 8083)
 
 ```bash
 cd c:/Github/Botfactory/src/mobile
 EXPO_PUBLIC_API_URL=http://localhost:8081 \
-  npx expo start --web --port 8084 \
+  EXPO_PUBLIC_SUPERVISION_URL=http://localhost:8082 \
+  npx expo start --web --port 8083 \
   > /tmp/expo.log 2>&1 &
 EXPO_PID=$!
 
 for i in $(seq 1 20); do
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8084 2>/dev/null)
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8083 2>/dev/null)
   if [ "$STATUS" = "200" ]; then echo "Expo Web prêt"; break; fi
   sleep 3
 done
@@ -106,6 +108,60 @@ kill $SVC_PID $FRONT_PID $EXPO_PID 2>/dev/null || true
 > netstat -ano | findstr :[PORT]
 > taskkill //PID [PID] //F
 > ```
+
+---
+
+---
+
+## Environnement recette GCP — État provisionné
+
+> Provisionné le 2026-04-06. Projet GCP : **`docupost-recette-prod`** (europe-west1)
+
+### Ressources créées
+
+| Ressource | Nom / Identifiant | Statut |
+|-----------|-------------------|--------|
+| Projet GCP | `docupost-recette-prod` | ✓ actif |
+| Artifact Registry | `docupost` (docker, europe-west1) | ✓ créé |
+| Cloud SQL (PostgreSQL 15) | `docupost-db` (europe-west1) | ✓ créé |
+| Base de données | `docupost_tournee` | ✓ créée |
+| Base de données | `docupost_supervision` | ✓ créée |
+| Utilisateur DB | `docupost` | ✓ créé |
+| Secret Manager | `tournee-db-password` | ✓ créé |
+| Secret Manager | `supervision-db-password` | ✓ créé |
+| Secret Manager | `internal-secret` | ✓ créé |
+| IAM Cloud Build | accès Cloud Run + Cloud SQL + Secrets | ✓ configuré |
+| Dockerfiles | svc-tournee, svc-supervision, frontend-supervision | ✓ créés |
+| cloudbuild.yaml | racine du projet | ✓ créé |
+
+### Services Cloud Run (déployés le 2026-04-07)
+
+| Service | URL Cloud Run | Health check |
+|---------|---------------|-------------|
+| `svc-tournee` | https://svc-tournee-llb4mq4zha-ew.a.run.app | `/actuator/health` → `{"status":"UP"}` ✓ |
+| `svc-supervision` | https://svc-supervision-llb4mq4zha-ew.a.run.app | `/actuator/health` → `{"status":"UP"}` ✓ |
+| `frontend-supervision` | https://frontend-supervision-llb4mq4zha-ew.a.run.app | HTTP 200 ✓ |
+
+### Variables de configuration GCP
+
+```bash
+GCP_PROJECT_ID="docupost-recette-prod"
+GCP_REGION="europe-west1"
+GCP_REPO="docupost"
+DB_INSTANCE="docupost-recette-prod:europe-west1:docupost-db"
+```
+
+### Protocole de déploiement manuel (sans GitHub)
+
+```bash
+TAG=$(git rev-parse --short HEAD)
+gcloud builds submit --config=cloudbuild.yaml \
+  --substitutions=_TAG=${TAG} \
+  --project=docupost-recette-prod
+```
+
+Détail complet : `/livrables/08-devops/deploiement-manuel-gcp.md`
+As-built Cloud Run : `/livrables/08-devops/as-built-cloudrun-recette.md`
 
 ---
 

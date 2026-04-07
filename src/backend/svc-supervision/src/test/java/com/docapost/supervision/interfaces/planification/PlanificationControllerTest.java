@@ -3,6 +3,7 @@ package com.docapost.supervision.interfaces.planification;
 import com.docapost.supervision.application.planification.*;
 import com.docapost.supervision.domain.planification.events.TourneeLancee;
 import com.docapost.supervision.domain.planification.model.*;
+import com.docapost.supervision.domain.planification.model.TourneeDejaLanceeException;
 import com.docapost.supervision.interfaces.planification.rest.PlanificationController;
 import com.docapost.supervision.interfaces.security.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +47,7 @@ class PlanificationControllerTest {
     @MockBean private LancerTourneeHandler lancerTourneeHandler;
     @MockBean private VerifierCompatibiliteVehiculeHandler verifierCompatibiliteHandler;
     @MockBean private ReaffecterVehiculeHandler reaffecterVehiculeHandler;
+    @MockBean private DesaffecterTourneeHandler desaffecterHandler;
 
     // ─── US-021 : Visualiser plan du jour ─────────────────────────────────────
 
@@ -304,6 +306,44 @@ class PlanificationControllerTest {
                         .content("""
                                 {"nouveauVehiculeId":"VH-02"}
                                 """))
+                .andExpect(status().isNotFound());
+    }
+
+    // ─── US-050 : Désaffecter un livreur ─────────────────────────────────────
+
+    @Test
+    @DisplayName("DELETE /api/planification/tournees/{id}/affectation retourne 200 quand désaffectation réussie")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void desaffecterTournee_retourne_200_quand_succes() throws Exception {
+        LocalDate today = LocalDate.now();
+        TourneePlanifiee tourneeDesaffectee = tourneePlanifieeNonAffectee("tp-202", "T-202", today);
+        when(desaffecterHandler.handle(any())).thenReturn(tourneeDesaffectee);
+
+        mockMvc.perform(delete("/api/planification/tournees/tp-202/affectation"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.codeTms").value("T-202"))
+                .andExpect(jsonPath("$.statut").value("NON_AFFECTEE"));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/planification/tournees/{id}/affectation retourne 409 si tournée LANCEE")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void desaffecterTournee_retourne_409_si_lancee() throws Exception {
+        when(desaffecterHandler.handle(any()))
+                .thenThrow(new TourneeDejaLanceeException("T-204"));
+
+        mockMvc.perform(delete("/api/planification/tournees/tp-204/affectation"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/planification/tournees/{id}/affectation retourne 404 si tournée introuvable")
+    @WithMockUser(username = "superviseur-001", roles = "SUPERVISEUR")
+    void desaffecterTournee_retourne_404_si_tournee_introuvable() throws Exception {
+        when(desaffecterHandler.handle(any()))
+                .thenThrow(new TourneePlanifieeNotFoundException("tp-inconnu"));
+
+        mockMvc.perform(delete("/api/planification/tournees/tp-inconnu/affectation"))
                 .andExpect(status().isNotFound());
     }
 

@@ -1,48 +1,61 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { ColisDTO, StatutColis } from '../api/tourneeTypes';
+import { Colors } from '../theme/colors';
+import { Theme } from '../theme/theme';
 
 /**
  * Composant — ColisItem
  * Affiche un colis dans la liste de la tournee (ecran M-02).
  *
- * Affiche :
- * - Adresse complete du colis
- * - Nom du destinataire
- * - Badge statut colore (A_LIVRER = bleu, LIVRE = vert, ECHEC = rouge, A_REPRESENTER = orange)
- * - Contraintes (mise en evidence si contrainte horaire)
- *
- * Interactions :
- * - Appui sur l'item : navigue vers M-03 (Detail du colis) via la prop onPress (US-004)
+ * Design : Material Design 3 — palette designer
+ * - Card surfaceContainerLowest (blanc) + bande colorée gauche 4px
+ * - Badge statut : secondaryContainer (A LIVRER) / tertiary (LIVRÉ) / error (ECHEC)
+ * - Avatar destinataire cercle surfaceContainer
+ * - Adresse : 20px bold onSurface
  *
  * Source wireframe : M-02 — Liste des colis de la tournee.
  */
 
-/** Seuil swipe gauche pour déclarer un échec (Bloquant 6 + US-029) */
 const SWIPE_THRESHOLD = 80;
 const SWIPE_ACTION_WIDTH = 80;
 
 interface ColisItemProps {
   colis: ColisDTO;
-  onPress?: (colisId: string) => void; // US-004 : navigation vers DetailColisScreen
-  /** US-045 — Afficher le hint "← Glissez vers la gauche pour déclarer un problème" (masqué après SEUIL_HINT swipes réussis) */
+  onPress?: (colisId: string) => void;
   afficherHintSwipe?: boolean;
-  /** US-029 — Callback déclenché quand l'utilisateur tape sur le bouton "Échec" révélé par swipe */
   onSwipeEchec?: (colisId: string) => void;
 }
 
 const STATUT_LABELS: Record<StatutColis, string> = {
-  A_LIVRER: 'A livrer',
-  LIVRE: 'Livre',
-  ECHEC: 'Echec',
-  A_REPRESENTER: 'Repassage',
+  A_LIVRER: 'A LIVRER',
+  LIVRE: 'LIVRÉ',
+  ECHEC: 'ECHEC',
+  A_REPRESENTER: 'REPASSAGE',
 };
 
-const STATUT_COLORS: Record<StatutColis, string> = {
-  A_LIVRER: '#2196F3',  // bleu
-  LIVRE: '#4CAF50',     // vert
-  ECHEC: '#F44336',     // rouge
-  A_REPRESENTER: '#FF9800', // orange
+// Couleurs de la bande gauche selon statut
+const STATUT_BANDE_COLOR: Record<StatutColis, string> = {
+  A_LIVRER:      Colors.primary,
+  LIVRE:         Colors.tertiaryContainer,
+  ECHEC:         Colors.error,
+  A_REPRESENTER: Colors.avertissement,
+};
+
+// Fond du badge selon statut
+const STATUT_BADGE_BG: Record<StatutColis, string> = {
+  A_LIVRER:      Colors.secondaryContainer,
+  LIVRE:         Colors.tertiary,
+  ECHEC:         Colors.errorContainer,
+  A_REPRESENTER: Colors.avertissementLeger,
+};
+
+// Texte du badge selon statut
+const STATUT_BADGE_TEXT: Record<StatutColis, string> = {
+  A_LIVRER:      Colors.onSecondaryContainer,
+  LIVRE:         Colors.onTertiary,
+  ECHEC:         Colors.onErrorContainer,
+  A_REPRESENTER: Colors.avertissementFonce,
 };
 
 export const ColisItem: React.FC<ColisItemProps> = ({
@@ -51,12 +64,14 @@ export const ColisItem: React.FC<ColisItemProps> = ({
   afficherHintSwipe = false,
   onSwipeEchec,
 }) => {
-  const statutColor = STATUT_COLORS[colis.statut];
+  const bandeColor = STATUT_BANDE_COLOR[colis.statut];
+  const badgeBg = STATUT_BADGE_BG[colis.statut];
+  const badgeTextColor = STATUT_BADGE_TEXT[colis.statut];
   const statutLabel = STATUT_LABELS[colis.statut];
   const estTraite = colis.estTraite;
   const swipeActif = colis.statut === 'A_LIVRER' && !!onSwipeEchec;
 
-  // Animation swipe (Bloquant 6 + US-029)
+  // Animation swipe
   const translateX = useRef(new Animated.Value(0)).current;
 
   const panResponder = useRef(
@@ -86,8 +101,21 @@ export const ColisItem: React.FC<ColisItemProps> = ({
   // Contenu de la carte (partagé)
   const contenu = (
     <>
-      {/* En-tete : adresse + badge statut */}
-      <View style={styles.header}>
+      {/* Bande colorée gauche (4px) */}
+      <View style={[styles.bandeGauche, { backgroundColor: bandeColor }]} />
+
+      {/* Corps de la carte */}
+      <View style={styles.corps}>
+        {/* Ligne 1 : badge statut */}
+        <View style={styles.ligneBadges}>
+          <View style={[styles.badge, { backgroundColor: badgeBg }]}>
+            <Text style={[styles.badgeText, { color: badgeTextColor }]} testID="colis-statut">
+              {statutLabel}
+            </Text>
+          </View>
+        </View>
+
+        {/* Adresse */}
         <Text
           style={[styles.adresse, estTraite && styles.adresseTraite]}
           numberOfLines={2}
@@ -95,54 +123,52 @@ export const ColisItem: React.FC<ColisItemProps> = ({
         >
           {colis.adresseLivraison.adresseComplete}
         </Text>
-        <View style={[styles.badge, { backgroundColor: statutColor }]}>
-          <Text style={styles.badgeText} testID="colis-statut">
-            {statutLabel}
+
+        {/* Destinataire avec avatar */}
+        <View style={styles.destinataireRow}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarIcone}>👤</Text>
+          </View>
+          <Text style={[styles.destinataire, estTraite && styles.destinataireTraite]} testID="colis-destinataire">
+            {colis.destinataire.nom}
           </Text>
         </View>
-      </View>
 
-      {/* Destinataire */}
-      <Text style={styles.destinataire} testID="colis-destinataire">
-        {colis.destinataire.nom}
-      </Text>
-
-      {/* Contraintes */}
-      {colis.contraintes.length > 0 && (
-        <View style={styles.contraintesContainer} testID="colis-contraintes">
-          {colis.contraintes.map((contrainte, idx) => (
-            <View
-              key={idx}
-              style={[
-                styles.contrainte,
-                contrainte.estHoraire && styles.contrainteHoraire,
-              ]}
-              testID={`colis-contrainte-${idx}`}
-            >
-              <Text
+        {/* Toutes les contraintes (horaires et non horaires) avec testID préservés */}
+        {colis.contraintes.length > 0 && (
+          <View style={styles.contraintesContainer} testID="colis-contraintes">
+            {colis.contraintes.map((contrainte, idx) => (
+              <View
+                key={idx}
                 style={[
+                  styles.contrainte,
+                  contrainte.estHoraire && styles.contrainteHoraire,
+                ]}
+                testID={`colis-contrainte-${idx}`}
+              >
+                <Text style={[
                   styles.contrainteText,
                   contrainte.estHoraire && styles.contrainteHoraireText,
-                ]}
-              >
-                {contrainte.estHoraire ? '⚑ ' : ''}{contrainte.valeur}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
+                ]}>
+                  {contrainte.estHoraire ? `⏰ ${contrainte.valeur}` : contrainte.valeur}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-      {/* US-045 — Hint swipe : affiché sous la carte, uniquement si swipeActif et hint activé */}
-      {afficherHintSwipe && swipeActif && (
-        <Text
-          testID="hint-swipe"
-          style={styles.hintSwipe}
-          accessibilityLabel="Glissez vers la gauche pour déclarer un problème"
-          accessibilityRole="text"
-        >
-          {'← Glissez vers la gauche pour déclarer un problème'}
-        </Text>
-      )}
+        {/* US-045 — Hint swipe */}
+        {afficherHintSwipe && swipeActif && (
+          <Text
+            testID="hint-swipe"
+            style={styles.hintSwipe}
+            accessibilityLabel="Glissez vers la gauche pour déclarer un problème"
+            accessibilityRole="text"
+          >
+            {'← Glissez vers la gauche pour déclarer un problème'}
+          </Text>
+        )}
+      </View>
     </>
   );
 
@@ -185,130 +211,115 @@ export const ColisItem: React.FC<ColisItemProps> = ({
       accessibilityLabel={`Voir le detail du colis ${colis.colisId}`}
       activeOpacity={0.7}
     >
-      {/* En-tete : adresse + badge statut */}
-      <View style={styles.header}>
-        <Text
-          style={[styles.adresse, estTraite && styles.adresseTraite]}
-          numberOfLines={2}
-          testID="colis-adresse"
-        >
-          {colis.adresseLivraison.adresseComplete}
-        </Text>
-        <View style={[styles.badge, { backgroundColor: statutColor }]}>
-          <Text style={styles.badgeText} testID="colis-statut">
-            {statutLabel}
-          </Text>
-        </View>
-      </View>
-
-      {/* Destinataire */}
-      <Text style={styles.destinataire} testID="colis-destinataire">
-        {colis.destinataire.nom}
-      </Text>
-
-      {/* Contraintes */}
-      {colis.contraintes.length > 0 && (
-        <View style={styles.contraintesContainer} testID="colis-contraintes">
-          {colis.contraintes.map((contrainte, idx) => (
-            <View
-              key={idx}
-              style={[
-                styles.contrainte,
-                contrainte.estHoraire && styles.contrainteHoraire,
-              ]}
-              testID={`colis-contrainte-${idx}`}
-            >
-              <Text
-                style={[
-                  styles.contrainteText,
-                  contrainte.estHoraire && styles.contrainteHoraireText,
-                ]}
-              >
-                {contrainte.estHoraire ? '⚑ ' : ''}{contrainte.valeur}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
+      {contenu}
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Theme.borderRadius.lg,
     marginHorizontal: 16,
     marginVertical: 4,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    minHeight: 72,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    ...Theme.shadow.sm,
   },
   containerTraite: {
     opacity: 0.6,
-    borderLeftColor: '#9E9E9E',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 8,
+  // Bande colorée gauche (4px)
+  bandeGauche: {
+    width: 4,
+    borderTopLeftRadius: Theme.borderRadius.lg,
+    borderBottomLeftRadius: Theme.borderRadius.lg,
   },
-  adresse: {
+  corps: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#212121',
+    padding: 16,
+    gap: 6,
   },
-  adresseTraite: {
-    color: '#757575',
+  ligneBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   badge: {
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderRadius: Theme.borderRadius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
   },
   badgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  adresse: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.onSurface,
+    lineHeight: 24,
+  },
+  adresseTraite: {
+    color: Colors.onSurfaceVariant,
+  },
+  destinataireRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingTop: 4,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarIcone: {
+    fontSize: 16,
   },
   destinataire: {
-    fontSize: 13,
-    color: '#424242',
-    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.onSurface,
+    flex: 1,
+  },
+  destinataireTraite: {
+    color: Colors.onSurfaceVariant,
   },
   contraintesContainer: {
-    marginTop: 6,
+    marginTop: 4,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
   },
   contrainte: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.surfaceContainer,
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   contrainteHoraire: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: Colors.errorContainer,
     borderWidth: 1,
-    borderColor: '#FF9800',
+    borderColor: Colors.error,
   },
   contrainteText: {
     fontSize: 12,
-    color: '#616161',
+    color: Colors.onSurfaceVariant,
   },
   contrainteHoraireText: {
-    color: '#E65100',
+    color: Colors.onErrorContainer,
     fontWeight: '600',
   },
-  // Styles swipe (US-029 + US-045)
+  // Styles swipe
   swipeWrapper: {
     position: 'relative',
     overflow: 'hidden',
@@ -325,9 +336,10 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: SWIPE_ACTION_WIDTH,
-    backgroundColor: '#F44336',
+    backgroundColor: Colors.error,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: Theme.borderRadius.lg,
   },
   boutonEchec: {
     width: '100%',
@@ -336,14 +348,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   boutonEchecTexte: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontWeight: '700',
     fontSize: 13,
   },
-  // Hint swipe (US-045) — positionné sous la carte, typographie secondaire légère
   hintSwipe: {
     fontSize: 10,
-    color: '#9E9E9E',
+    color: Colors.outline,
     fontStyle: 'italic',
   },
 });

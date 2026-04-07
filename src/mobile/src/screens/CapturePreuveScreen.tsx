@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,6 +19,8 @@ import {
   DonneesPreuveInvalidesError,
   LivraisonDejaConfirmeeError,
 } from '../api/tourneeApi';
+import { Colors } from '../theme/colors';
+import { Theme } from '../theme/theme';
 
 /**
  * Ecran M-04 — Capture de la preuve de livraison (US-008 + US-009)
@@ -33,14 +36,12 @@ import {
  *   - DEPOT_SECURISE  : champ texte "Description du lieu"
  * - Bouton "CONFIRMER LA LIVRAISON" — désactivé tant qu'aucune preuve capturée
  *
+ * Design : Material Design 3 — palette designer
+ *
  * Invariants respectés (US-008/009) :
  * - Le bouton est désactivé tant que la preuve n'est pas capturée.
  * - Les coordonnées GPS sont capturées automatiquement (null = mode dégradé).
  * - La preuve est immuable après confirmation (pas de retour en arrière).
- *
- * Note MVP : le pad de signature est simulé par un composant tactile simple.
- * Une intégration React Native Signature Canvas sera réalisée lors de US-010.
- * La capture photo utilise un déclencheur factice (ImagePicker API sera ajoutée avec US-010).
  *
  * Source wireframe : M-04 — Capture de la preuve de livraison.
  */
@@ -88,6 +89,15 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
+  // US-055 R2 — Bouton retour Android natif : intercepté pour appeler onRetour()
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      onRetour();
+      return true;
+    });
+    return () => handler.remove();
+  }, [onRetour]);
+
   // ─── Calcul du bouton actif ───────────────────────────────────────────────
 
   const preuveCapturee = (() => {
@@ -117,8 +127,6 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
   // ─── Simulation ouverture caméra (MVP) ───────────────────────────────────
 
   const handleOuvrirCamera = () => {
-    // MVP : simulation — l'URL sera générée par ImagePicker (US-010)
-    // On utilise une URL factice pour les tests
     const urlSimulee = `photos/${tourneeId}/${colisId}-${Date.now()}.jpg`;
     setUrlPhotoCapturee(urlSimulee);
     setErreur(null);
@@ -142,12 +150,11 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
     try {
       const preuve = await confirmerLivraison(tourneeId, colisId, {
         typePreuve: typeSelectionne,
-        // GPS non disponible en MVP mobile (intégration Geolocation à faire dans US-010)
         coordonneesGps: undefined,
         ...(typeSelectionne === 'SIGNATURE' && { donneesSignature: donneesSignature! }),
         ...(typeSelectionne === 'PHOTO' && {
           urlPhoto: urlPhotoCapturee!,
-          hashIntegrite: `sha256:${urlPhotoCapturee}`, // MVP : hash factice
+          hashIntegrite: `sha256:${urlPhotoCapturee}`,
         }),
         ...(typeSelectionne === 'TIERS_IDENTIFIE' && { nomTiers: nomTiers.trim() }),
         ...(typeSelectionne === 'DEPOT_SECURISE' && { descriptionDepot: descriptionDepot.trim() }),
@@ -170,7 +177,7 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
 
   return (
     <View style={styles.fullScreen} testID="capture-preuve-screen">
-      {/* Header */}
+      {/* Header — fond primaryContainer (#1d4ed8) */}
       <View style={styles.header}>
         <TouchableOpacity
           testID="bouton-retour"
@@ -185,13 +192,19 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
       </View>
 
       <ScrollView style={styles.contenu} contentContainerStyle={styles.contenuInner}>
-        {/* Rappel du contexte */}
+        {/* Context banner : fond blanc, border-left primary */}
         <View style={styles.contexte} testID="contexte-colis">
-          <Text style={styles.contexteTitre}>
-            Colis{' '}
-            <Text style={styles.contexteColisId}>#{colisId}</Text>
-            {' — '}{destinataireNom}
-          </Text>
+          <View style={styles.contexteIconeBox}>
+            <Text style={styles.contexteIcone}>📦</Text>
+          </View>
+          <View style={styles.contexteTexteBox}>
+            <Text style={styles.contexteTitreSup}>COLIS EN COURS</Text>
+            <Text style={styles.contexteTitre}>
+              Colis{' '}
+              <Text style={styles.contexteColisId}>#{colisId}</Text>
+              {' — '}{destinataireNom}
+            </Text>
+          </View>
         </View>
 
         {/* Message d'erreur */}
@@ -201,47 +214,58 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
           </View>
         )}
 
-        {/* Section sélection du type de preuve */}
+        {/* Section sélection du type de preuve — grille 2x2 */}
         <View style={styles.section} testID="section-type-preuve">
-          <Text style={styles.sectionTitre}>Type de preuve</Text>
-          {TYPES_ORDONNES.map((type) => (
-            <TouchableOpacity
-              key={type}
-              testID={`type-preuve-${type}`}
-              onPress={() => handleSelectType(type)}
-              style={[
-                styles.optionRow,
-                typeSelectionne === type && styles.optionRowSelectionne,
-              ]}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: typeSelectionne === type }}
-              accessibilityLabel={TYPE_PREUVE_LABELS[type]}
-            >
-              <View
-                style={[
-                  styles.radioCircle,
-                  typeSelectionne === type && styles.radioCircleSelectionne,
-                ]}
-              >
-                {typeSelectionne === type && <View style={styles.radioPastille} />}
-              </View>
-              <Text
-                style={[
-                  styles.optionLabel,
-                  typeSelectionne === type && styles.optionLabelSelectionne,
-                ]}
-              >
-                {TYPE_PREUVE_LABELS[type]}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <Text style={styles.sectionTitre}>Méthode de validation</Text>
+          <View style={styles.grilleTypes}>
+            {TYPES_ORDONNES.map((type) => {
+              const estSelectionne = typeSelectionne === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  testID={`type-preuve-${type}`}
+                  onPress={() => handleSelectType(type)}
+                  style={[
+                    styles.typePreuveCard,
+                    estSelectionne && styles.typePreuveCardSelectionne,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: estSelectionne }}
+                  accessibilityLabel={TYPE_PREUVE_LABELS[type]}
+                >
+                  <Text style={[styles.typePreuveIcone, estSelectionne && styles.typePreuveIconeSelectionne]}>
+                    {type === 'SIGNATURE' ? '✍️' : type === 'PHOTO' ? '📷' : type === 'TIERS_IDENTIFIE' ? '👥' : '🚪'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.typePreuveLabel,
+                      estSelectionne && styles.typePreuveLabelSelectionne,
+                    ]}
+                  >
+                    {TYPE_PREUVE_LABELS[type]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {/* Zone dynamique selon le type sélectionné */}
         {typeSelectionne === 'SIGNATURE' && (
           <View style={styles.section} testID="section-capture-signature">
-            <Text style={styles.sectionTitre}>Signature du destinataire</Text>
-            {/* US-046 — Pad de tracé réel via react-native-signature-canvas */}
+            <View style={styles.signatureHeader}>
+              <Text style={styles.sectionTitre}>Signature client</Text>
+              <TouchableOpacity
+                testID="bouton-effacer-signature"
+                onPress={handleEffacerSignature}
+                style={styles.boutonEffacer}
+                accessibilityRole="button"
+                accessibilityLabel="Effacer la signature"
+              >
+                <Text style={styles.boutonEffacerTexte}>⌫ Effacer</Text>
+              </TouchableOpacity>
+            </View>
+            {/* US-061 — Pad de tracé réel via react-native-signature-canvas (config légale) */}
             <View
               testID="pad-signature-canvas"
               style={[
@@ -255,20 +279,19 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
             >
               <SignatureCanvas
                 ref={signatureRef}
-                onOK={(base64: string) => setDonneesSignature(base64)}
+                onOK={(sig) => setDonneesSignature(sig)}
                 onEmpty={() => setDonneesSignature(null)}
                 onBegin={() => { /* trace en cours */ }}
-                style={styles.signatureCanvasInner}
-                webStyle={`
-                  .m-signature-pad { box-shadow: none; border: none; }
-                  .m-signature-pad--body { border: none; }
-                  body, html { width: 100%; height: 100%; margin: 0; padding: 0; }
-                `}
-                descriptionText=""
+                descriptionText="Signez ici"
                 clearText="Effacer"
                 confirmText="Valider"
-                autoClear={false}
-                imageType="image/png"
+                webStyle={`
+                  .m-signature-pad { box-shadow: none; border: 2px dashed #c4c5d7; border-radius: 12px; }
+                  .m-signature-pad--body { border: none; }
+                  .m-signature-pad--footer { display: none; }
+                  body { background: transparent; }
+                `}
+                style={{ flex: 1, width: '100%', height: 240 }}
               />
             </View>
             {donneesSignature !== null && (
@@ -276,15 +299,6 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
                 Signature capturée
               </Text>
             )}
-            <TouchableOpacity
-              testID="bouton-effacer-signature"
-              onPress={handleEffacerSignature}
-              style={styles.boutonEffacer}
-              accessibilityRole="button"
-              accessibilityLabel="Effacer la signature"
-            >
-              <Text style={styles.boutonEffacerTexte}>Effacer</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -299,7 +313,7 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Prendre une photo"
               >
-                <Text style={styles.boutonCameraTexte}>Prendre une photo</Text>
+                <Text style={styles.boutonCameraTexte}>📷  Prendre une photo</Text>
               </TouchableOpacity>
             ) : (
               <View testID="photo-capturee" style={styles.photoCaptureeContainer}>
@@ -323,7 +337,7 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
               testID="champ-nom-tiers"
               style={styles.champTexte}
               placeholder="Saisissez le nom de la personne ayant réceptionné"
-              placeholderTextColor="#9E9E9E"
+              placeholderTextColor={Colors.outline}
               value={nomTiers}
               onChangeText={setNomTiers}
               accessibilityLabel="Nom du tiers"
@@ -339,7 +353,7 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
               testID="champ-description-depot"
               style={styles.champTexte}
               placeholder="Ex: Boîte aux lettres n°3, gardien, etc."
-              placeholderTextColor="#9E9E9E"
+              placeholderTextColor={Colors.outline}
               value={descriptionDepot}
               onChangeText={setDescriptionDepot}
               accessibilityLabel="Description du dépôt sécurisé"
@@ -348,7 +362,7 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
           </View>
         )}
 
-        {/* Bouton principal */}
+        {/* Bouton principal — gradient vert (tertiaryContainer → tertiary) */}
         <TouchableOpacity
           testID="bouton-confirmer-livraison"
           onPress={handleConfirmer}
@@ -362,7 +376,7 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
           accessibilityState={{ disabled: !boutonActif }}
         >
           {enCours ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={Colors.onTertiary} />
           ) : (
             <Text
               style={[
@@ -384,27 +398,31 @@ export const CapturePreuveScreen: React.FC<CapturePreuveScreenProps> = ({
 const styles = StyleSheet.create({
   fullScreen: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.surface,
   },
+  // Header — fond primaryContainer (#1d4ed8) comme le mockup M-04
   header: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: Colors.primaryContainer,
     paddingTop: 16,
     paddingBottom: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    minHeight: 64,
   },
   boutonRetour: {
     paddingVertical: 4,
     paddingRight: 8,
+    minHeight: Theme.touchTarget.minHeight,
+    justifyContent: 'center',
   },
   boutonRetourText: {
-    color: '#C8E6C9',
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 15,
   },
   headerTitre: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontSize: 17,
     fontWeight: '600',
     flex: 1,
@@ -416,105 +434,138 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  // Context banner : fond blanc, border-left primary, icône package
   contexte: {
-    backgroundColor: '#E8F5E9',
-    borderRadius: 8,
-    padding: 14,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Theme.borderRadius.lg,
+    padding: 20,
     borderLeftWidth: 4,
-    borderLeftColor: '#2E7D32',
+    borderLeftColor: Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    ...Theme.shadow.sm,
+  },
+  contexteIconeBox: {
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: Theme.borderRadius.md,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contexteIcone: {
+    fontSize: 28,
+  },
+  contexteTexteBox: {
+    flex: 1,
+  },
+  contexteTitreSup: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   contexteTitre: {
-    fontSize: 15,
-    color: '#424242',
-    fontWeight: '500',
+    fontSize: 16,
+    color: Colors.onSurface,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   contexteColisId: {
-    color: '#2E7D32',
-    fontWeight: '700',
+    color: Colors.primary,
+    fontWeight: '800',
   },
   erreurContainer: {
-    backgroundColor: '#FFCDD2',
-    borderRadius: 8,
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Theme.borderRadius.lg,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#C62828',
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.error,
   },
   erreurTexte: {
-    color: '#C62828',
+    color: Colors.onErrorContainer,
     fontSize: 14,
     fontWeight: '500',
   },
+  // Section cadre blanc
   section: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Theme.borderRadius.lg,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Theme.shadow.sm,
   },
   sectionTitre: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#616161',
+    color: Colors.onSurfaceVariant,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: 12,
   },
-  optionRow: {
+  // Grille 2x2 pour les types de preuve
+  grilleTypes: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    borderRadius: 6,
+    flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 4,
   },
-  optionRowSelectionne: {
-    backgroundColor: '#E8F5E9',
-  },
-  radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#9E9E9E',
+  typePreuveCard: {
+    width: '47%',
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: Theme.borderRadius.lg,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    minHeight: 96,
+    opacity: 0.7,
   },
-  radioCircleSelectionne: {
-    borderColor: '#2E7D32',
+  typePreuveCardSelectionne: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    opacity: 1,
   },
-  radioPastille: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#2E7D32',
+  typePreuveIcone: {
+    fontSize: 28,
+    // grayscale effect via opacity si non sélectionné
   },
-  optionLabel: {
-    fontSize: 15,
-    color: '#424242',
-    flex: 1,
+  typePreuveIconeSelectionne: {
+    // plein de couleur si sélectionné
   },
-  optionLabelSelectionne: {
-    color: '#2E7D32',
+  typePreuveLabel: {
+    fontSize: 13,
     fontWeight: '600',
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  typePreuveLabelSelectionne: {
+    color: Colors.primary,
+    fontWeight: '700',
+  },
+  // Signature pad
+  signatureHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   padSignature: {
-    height: 150,
+    height: 200,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
+    borderColor: Colors.outlineVariant,
+    borderRadius: Theme.borderRadius.lg,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.surfaceContainerLowest,
     marginBottom: 8,
+    overflow: 'hidden',
   },
   padSignatureRempli: {
-    borderColor: '#2E7D32',
-    backgroundColor: '#F1F8E9',
+    borderColor: Colors.tertiaryContainer,
+    borderStyle: 'solid',
   },
   signatureCanvasInner: {
     flex: 1,
@@ -522,36 +573,40 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   padSignatureTexte: {
-    color: '#2E7D32',
+    color: Colors.tertiary,
     fontSize: 14,
     textAlign: 'center',
     marginTop: 4,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   boutonEffacer: {
     alignSelf: 'flex-start',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    marginTop: 4,
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: Theme.borderRadius.md,
+    minHeight: Theme.touchTarget.minHeight,
+    justifyContent: 'center',
   },
   boutonEffacerTexte: {
-    color: '#616161',
-    fontSize: 13,
+    color: Colors.onSurface,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   boutonCamera: {
-    backgroundColor: '#E3F2FD',
-    borderRadius: 8,
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: Theme.borderRadius.lg,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: Colors.primaryContainer,
+    minHeight: Theme.touchTarget.minHeight,
+    justifyContent: 'center',
   },
   boutonCameraTexte: {
-    color: '#1565C0',
+    color: Colors.primaryContainer,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -560,44 +615,44 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   photoCaptureeTexte: {
-    color: '#2E7D32',
+    color: Colors.tertiary,
     fontSize: 15,
     fontWeight: '600',
   },
   champTexte: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 6,
+    borderColor: Colors.outlineVariant,
+    borderRadius: Theme.borderRadius.md,
     padding: 12,
     fontSize: 15,
-    color: '#212121',
-    backgroundColor: '#FAFAFA',
+    color: Colors.onSurface,
+    backgroundColor: Colors.surfaceContainerLowest,
+    minHeight: Theme.touchTarget.minHeight,
   },
+  // Bouton confirmer — gradient vert (tertiaryContainer → tertiary)
   boutonConfirmer: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 10,
-    paddingVertical: 18,
+    backgroundColor: Colors.tertiaryContainer,
+    borderRadius: Theme.borderRadius.lg,
+    height: 64,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    ...Theme.shadow.md,
   },
   boutonConfirmerDesactive: {
-    backgroundColor: '#E0E0E0',
-    shadowOpacity: 0,
+    backgroundColor: Colors.surfaceContainerHigh,
     elevation: 0,
+    shadowOpacity: 0,
   },
   boutonConfirmerTexte: {
-    color: '#FFFFFF',
+    color: Colors.onTertiary,
     fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   boutonConfirmerTexteDesactive: {
-    color: '#9E9E9E',
+    color: Colors.onSurfaceVariant,
   },
 });
 

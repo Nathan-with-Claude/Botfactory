@@ -3,6 +3,305 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-04-07T10:30Z @devops CREATE → /livrables/08-devops/as-built-cloudrun-recette.md
+  As-built complet Cloud Run : état réel des 3 services, env vars, secrets, IAM, 10 bugs corrigés, limitations connues.
+
+- 2026-04-07T10:30Z @devops FIX → svc-supervision (Cloud Run) ALLOWED_ORIGINS=placeholder → URL réelle
+  Bug : ALLOWED_ORIGINS pointait vers frontend-supervision-placeholder.a.run.app au lieu de l'URL réelle.
+
+- 2026-04-07T10:30Z @devops UPDATE → /livrables/00-contexte/infrastructure-locale.md
+  Correction noms des secrets (db-password → tournee-db-password + supervision-db-password) + commande deploy.
+
+- 2026-04-07T09:00Z @devops CREATE → /livrables/08-devops/deploiement-manuel-gcp.md
+  Procédure de déploiement manuel GCP sans connexion GitHub (gcloud builds submit, build local, rollback, logs).
+
+- 2026-04-07T09:00Z @devops UPDATE → /livrables/00-contexte/infrastructure-locale.md
+  Ajout section "Environnement recette GCP" : ressources provisionnées le 2026-04-06 (Artifact Registry, Cloud SQL, secrets, IAM, Dockerfiles).
+
+- 2026-04-06T12:30Z @developpeur IMPL → US-066 Page état des livreurs (W-08)
+  Backend svc-supervision : EtatJournalierLivreur, VueLivreur, LivreurReferentiel, ConsulterEtatLivreursHandler, DevLivreurReferentiel, LivreurEtatWebSocketPublisher, LivreurEtatController, LivreurEtatDTO. Frontend : EtatLivreursPage.tsx + App.tsx (route + nav). 6/6 tests Java + 17/17 tests React verts. 171/171 svc-supervision + 289/289 web.
+
+- 2026-04-06T12:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-066-impl.md
+  Livrable vertical slice US-066 : commandes, URLs, décisions d'implémentation.
+
+- 2026-04-06T20:30Z @architecte-technique CREATE → /livrables/04-architecture-technique/specs-us066-etat-livreurs.md
+  US-066 : Spécification technique complète "Page état des livreurs". Endpoint GET /api/supervision/livreurs/etat-du-jour, classes LivreurReferentiel/EtatJournalierLivreur/VueLivreur/ConsulterEtatLivreursHandler/LivreurEtatWebSocketPublisher/LivreurEtatController/LivreurEtatDTO. Stratégie agrégation à la volée (Option A MVP).
+
+- 2026-04-06T20:30Z @architecte-technique UPDATE → /livrables/04-architecture-technique/architecture-applicative.md
+  Ajout extension BC-07 dans la section BC-03 svc-supervision : EtatJournalierLivreur, VueLivreur, LivreurReferentiel, ConsulterEtatLivreursHandler, LivreurEtatWebSocketPublisher, LivreurEtatController, LivreurEtatDTO (US-066).
+
+- 2026-04-06T20:30Z @architecte-technique UPDATE → /livrables/00-contexte/journaux/journal-architecte-technique.md
+  Ajout intervention US-066, 3 nouvelles décisions structurantes, 3 nouveaux points d'attention (WebSocketConfig absent, DevDataSeeder à aligner, post-MVP CQRS).
+
+- 2026-04-06T19:30Z @ux UPDATE → /livrables/02-ux/wireframes.md
+  Ajout wireframe W-08 "Etat des livreurs" (US-066) : tableau VueLivreur temps reel, 3 tuiles KPI, filtres rapides, badges SANS_TOURNEE/AFFECTE/EN_COURS, navigation W-02/W-04/W-05, etats speciaux complets. Version 1.4.
+
+- 2026-04-06T19:30Z @ux UPDATE → /livrables/02-ux/user-journeys.md
+  Ajout Parcours 6 "Verifier la disponibilite des livreurs avant d'affecter une nouvelle tournee" (AS-IS + TO-BE, Domain Events, termes domaine, frontieres BC). Glossaire enrichi : 8 nouveaux termes UL.
+
+- 2026-04-06T19:30Z @ux UPDATE → /livrables/00-contexte/journaux/journal-ux.md
+  Mise a jour journal : intervention W-08/Parcours 6, 3 nouvelles decisions structurantes, points d'attention (SideNavBar, VueLivreur, signaux UL vers architecte-metier).
+
+- 2026-04-06T18:00Z @po CREATE → /livrables/05-backlog/user-stories/US-066-page-etat-livreurs.md
+  US-066 : Page etat des livreurs (W-08) — vue recapitulative SANS_TOURNEE / AFFECTE_NON_LANCE / EN_COURS pour superviseur. Agents a notifier : @ux, @architecte-metier, @architecte-technique, @developpeur.
+
+- 2026-04-05T14:00Z @developpeur IMPLEMENT → src/web/supervision/src/pages/DetailTourneePage.tsx, src/web/supervision/src/pages/PanneauInstructionPage.tsx, src/web/supervision/src/styles/globals.css, /livrables/06-dev/vertical-slices/US-063-impl.md
+  US-063 : Réécriture JSX Tailwind/tokens MD3 W-02+W-03. Cards radio, textarea message, glass-overlay. 272/272 tests verts.
+
+- 2026-04-05T12:00Z @infra UPDATE → /livrables/00-contexte/infrastructure-locale.md
+  Port app mobile (expo-web) changé de 8084 → 8083.
+
+- 2026-04-05T10:00Z @devops CREATE → /livrables/08-devops/strategie-deploiement-gcp-test.md
+  Livrable complet déploiement GCP : 3 environnements (integration/recette/staging), Cloud Run + Cloud SQL + Terraform + GitHub Actions, checklist, coûts estimatifs, risques.
+
+- 2026-04-05T10:00Z @devops UPDATE → /livrables/00-contexte/journaux/journal-devops.md
+  Ajout intervention GCP, décisions structurantes (Cloud Run vs GKE, Keycloak min-instances, Terraform), points d'attention enrichis.
+
+- 2026-04-05T08:00Z @end-user CREATE → /livrables/09-feedback/feedback-mobile-livreur-2026-04-05.md
+  Feedback terrain livreur (Pierre Morel) : US-046/055/056/062/038/043 — note 7/10, 1 bloquant (Retour Android R2), 4 améliorations importantes, signal Ubiquitous Language (9 termes)
+
+- 2026-04-05T08:00Z @end-user CREATE → /livrables/09-feedback/feedback-supervision-superviseur-2026-04-05.md
+  Feedback terrain superviseur (Laurent Renaud) : US-039/040/041/044 — note 7.5/10, 2 bloquants (lancement groupé tournées, reco véhicule W-04), 3 améliorations importantes, signal Ubiquitous Language (10 termes)
+
+- 2026-04-05T08:00Z @end-user UPDATE → /livrables/00-contexte/journaux/journal-end-user.md
+  Mise à jour journal : 2 feedbacks du 05/04 enregistrés, points d'attention mis à jour, nouvelles US à créer identifiées
+
+- 2026-04-05T00:00Z @developpeur FIX → src/mobile/src/screens/DetailColisScreen.tsx, CapturePreuveScreen.tsx, DeclarerEchecScreen.tsx, RecapitulatifTourneeScreen.tsx, MesConsignesScreen.tsx
+  US-055 R2 : BackHandler Android ajouté dans les 5 sous-écrans — bouton retour natif fonctionnel, 117/117 tests verts, OBS-AS-005 fermé
+- 2026-04-05T00:00Z @qa UPDATE → livrables/07-tests/scenarios/US-055-scenarios.md, US-055-rapport-playwright.md
+  TC-055-04 et TC-055-05 passés à Passé — US-055 entièrement validée
+
+- 2026-04-04T23:59Z @developpeur CREATE → /src/mobile/src/navigation/AppNavigator.tsx
+  US-055 : AppNavigator créé avec 7 routes (AppStackParamList). App.tsx référence AppStackParamList.
+
+- 2026-04-04T23:59Z @developpeur UPDATE → /src/mobile/App.tsx
+  US-055 : App.tsx migré vers RootStackParamList = AppStackParamList. Commentaires R2 ajoutés.
+
+- 2026-04-04T23:59Z @developpeur CREATE → /src/mobile/src/__mocks__/reactNavigationMock.ts
+  US-055 : mock useNavigation/useRoute pour tests Jest futurs.
+
+- 2026-04-04T23:59Z @developpeur UPDATE → /src/mobile/src/components/design-system/IndicateurSync.tsx
+  US-062 : prop pendingCount ajoutée + libellé "N envoi(s) en attente" + testID sync-pending-count.
+
+- 2026-04-04T23:59Z @developpeur UPDATE → /src/mobile/src/components/design-system/__tests__/IndicateurSync.test.tsx
+  US-062 : 7 nouveaux tests TDD couvrant les cas pendingCount (LIVE/OFFLINE, 0/1/N, singulier/pluriel).
+
+- 2026-04-04T23:59Z @developpeur CREATE → /src/mobile/src/domain/offlineQueueInstance.ts
+  US-062 : singleton offlineQueue partagé (pattern identique authStoreInstance).
+
+- 2026-04-04T23:59Z @developpeur UPDATE → /src/mobile/src/screens/ListeColisScreen.tsx
+  US-062 : import offlineQueueInstance + useState pendingCount + useEffect rafraîchissement + IndicateurSync pendingCount.
+
+- 2026-04-04T23:59Z @developpeur FIX → /src/mobile/src/__tests__/ListeColisScreen.test.tsx
+  Correction test pré-existant statut colis ("A livrer" → "A LIVRER", "Livre" → "LIVRÉ") aligné US-038.
+
+- 2026-04-04T23:59Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-055-impl.md
+  US-055 : vertical slice migration react-navigation Stack.
+
+- 2026-04-04T23:59Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-062-impl.md
+  US-062 : vertical slice compteur envois en attente IndicateurSync.
+
+- 2026-04-04T23:59Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Session US-055/062 : 2 US implémentées, 53/53 tests verts sur fichiers modifiés.
+
+- 2026-04-04T22:15Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-057-impl.md
+  US-057 : documentation vertical slice WebSocket STOMP (SupervisionWebSocketConfig + TableauDeBordBroadcaster).
+
+- 2026-04-04T22:15Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-058-impl.md
+  US-058 : documentation vertical slice CORS externalisé + InternalSecretFilter.
+
+- 2026-04-04T22:15Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/security/InternalSecretFilter.java
+  US-058 : ajout bypass secret vide (isBlank) en plus de "dev-secret-ignored".
+
+- 2026-04-04T22:15Z @developpeur UPDATE → /src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/security/SecurityConfig.java
+  US-058 : restauration CORS externalisé + InternalSecretFilter (linter avait simplifié le fichier).
+
+- 2026-04-04T22:15Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/infrastructure/websocket/SupervisionWebSocketConfigTest.java
+  US-057 : 4 tests TDD (broker /topic, préfixe /app, endpoint /ws/supervision, origines *).
+
+- 2026-04-04T22:15Z @developpeur CREATE → /src/backend/svc-supervision/src/test/java/com/docapost/supervision/interfaces/security/InternalSecretFilterTest.java
+  US-058 : 7 tests TDD (hors path, secret dev, secret vide, prod OK, 403 absent, 403 incorrect, corps JSON). 165/165 verts.
+
+- 2026-04-04T22:15Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Ajout US-057 et US-058 dans suivi + interventions + décisions techniques.
+
+- 2026-04-04T23:45Z @developpeur UPDATE → /src/mobile/src/__tests__/offlineQueue.test.ts
+  US-056 : 7 nouveaux tests TDD (enqueue persiste, initialize charge, idempotence x2, JSON corrompu, canCloseRoute post-init, FIFO préservé). 28/28 verts.
+
+- 2026-04-04T23:45Z @developpeur UPDATE → /src/mobile/src/api/syncExecutor.ts
+  US-059 : onPhotoTooLarge callback + double seuil 500Ko warn / 1Mo erreur (status 413) + TODO R2 multipart complet.
+
+- 2026-04-04T23:45Z @developpeur UPDATE → /src/backend/svc-tournee/src/main/resources/application.yml
+  US-059 : ajout config spring.servlet.multipart 5MB/10MB (manquant sur svc-tournee, déjà présent sur svc-supervision).
+
+- 2026-04-04T23:45Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-056-impl.md
+  US-056 : vertical slice persistance offlineQueue enqueue + initialize().
+
+- 2026-04-04T23:45Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-059-impl.md
+  US-059 : vertical slice upload photo — option MVP multipart Spring Boot + seuils erreur mobile.
+
+- 2026-04-04T23:45Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Session US-056/059 : 2 US P1 implémentées, 28 tests offlineQueue verts + 6 syncExecutor verts.
+
+- 2026-04-04T23:30Z @developpeur FIX → /src/mobile/src/domain/offlineQueue.ts
+  US-060 : correction persist() manquant après chaque dequeue réussi dans sync() — évite le double envoi au redémarrage post-sync partielle.
+
+- 2026-04-04T23:30Z @developpeur UPDATE → /src/mobile/src/__tests__/offlineQueue.test.ts
+  US-060 : 5 nouveaux tests TDD (persist après sync, AsyncStorage vide après sync complète, redémarrage après sync partielle, canCloseRoute depuis AsyncStorage, pas de double envoi).
+
+- 2026-04-04T23:30Z @developpeur FIX → /src/mobile/src/screens/CapturePreuveScreen.tsx
+  US-061 : finalisation config react-native-signature-canvas (webStyle enrichi border-radius 12px + footer masqué + fond transparent, descriptionText "Signez ici", height 240).
+
+- 2026-04-04T23:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-060-impl.md
+  US-060 : vertical slice — correction persist() après sync() dans offlineQueue.
+
+- 2026-04-04T23:30Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-061-impl.md
+  US-061 : vertical slice — brancher react-native-signature-canvas dans CapturePreuveScreen.
+
+- 2026-04-04T23:30Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Session US-060/061 : 2 US implémentées, 26 tests verts (21 offlineQueue + 5 nouveaux US-060 + 33 CapturePreuveScreen confirmés).
+
+- 2026-04-04T22:30Z @po CREATE → /livrables/05-backlog/user-stories/US-060-correction-persist-apres-sync-offline-queue.md
+  US-060 (P0/XS) : correction persist() manquant après sync() dans offlineQueue — risque double envoi de commandes au redémarrage (OBS-AS-006 QA).
+
+- 2026-04-04T22:30Z @po CREATE → /livrables/05-backlog/user-stories/US-061-brancher-signature-reelle-capture-preuve.md
+  US-061 (P0/S) : brancher react-native-signature-canvas dans CapturePreuveScreen — bloquant légal, 4e signal Pierre Morel. Relance US-046 non implémentée.
+
+- 2026-04-04T22:30Z @po CREATE → /livrables/05-backlog/user-stories/US-062-compteur-envois-en-attente-indicateur-sync.md
+  US-062 (P1/S) : afficher le compteur d'envois en attente dans IndicateurSync — signal terrain Pierre Morel #1 (badge OFFLINE sans quantification).
+
+- 2026-04-04T22:30Z @po UPDATE → /livrables/05-backlog/corrections-as-built-2026-04.md
+  Ajout section "Règles de libellé UX" (terminologie terrain vs jargon IT) + plan de corrections mis à jour avec US-060/061/062.
+
+- 2026-04-04T22:30Z @po UPDATE → /livrables/00-contexte/journaux/journal-po.md
+  Session 1.8 : état backlog → 62 US, archivage entrées US-048/053, décisions structurantes US-060/061/062.
+
+- 2026-04-04T22:30Z @po UPDATE → /livrables/00-contexte/journaux/archives/journal-po-2026-04.md
+  Archivage des interventions US-048, 049, 050, 051, 052, 053 (journal-po.md > 150 lignes).
+
+- 2026-04-04T21:00Z @qa CREATE → /livrables/07-tests/scenarios/corrections-as-built-scenarios.md
+  59 scénarios de test (L1/L2/L3) pour US-051 à US-059. 6 anomalies détectées dont OBS-AS-001 (mapper TourneePlanifiee non vérifié) et OBS-AS-004/005 (UX dégradée photo+navigation).
+
+- 2026-04-04T21:00Z @qa UPDATE → /livrables/06-dev/poste-de-commande-tests.md
+  Section "Corrections As-Built" ajoutée avec check-lists manuelles pour US-051 à US-059.
+
+- 2026-04-04T20:00Z @end-user CREATE → /livrables/09-feedback/feedback-corrections-as-built-2026-04-04.md
+  Feedback terrain Pierre Morel — corrections as-built du 04/04 (US-051/055/056) : 2 bloquants persistants (compteur offline invisible, signature simulée), 3 points importants, note 5.5/10.
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/mobile/src/api/supervisionApi.ts
+  US-051 : Bearer token injecté via createHttpClient sur les 3 endpoints supervision (getInstructionsEnAttente, marquerInstructionExecutee, prendreEnCompteInstruction).
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/mobile/package.json, src/mobile/src/__mocks__/react-native-app-auth.ts (CREATE), src/mobile/src/__mocks__/netInfoMock.ts (CREATE)
+  US-052 : Ajout react-native-app-auth@^7.1.0 et @react-native-community/netinfo@^11.3.1 + mocks Jest.
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/backend/svc-supervision/.../TourneePlanifiee.java, TourneePlanifieeTest.java
+  US-053 : Constructeur 15-params @Deprecated redirigé vers 16-params (correction poidsEstimeKg null). 2 nouveaux tests reconstruction. 22/22 tests verts.
+
+- 2026-04-04T18:00Z @developpeur CREATE → src/backend/svc-supervision/docker-compose.yml, application-local-postgres.yml
+  US-054 : Provisionnement PostgreSQL dev (profil local-postgres). Profil dev H2 inchangé.
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/mobile/App.tsx, src/mobile/package.json
+  US-055 : Migration partielle react-navigation — NavigationContainer+Stack au niveau App.tsx. Dépendances @react-navigation/native@^6.1.17, stack@^6.3.29, screens@~3.31.1, safe-area-context@4.10.5 ajoutées.
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/mobile/src/domain/offlineQueue.ts, src/mobile/src/hooks/useOfflineSync.ts
+  US-056 : Persistance offlineQueue via AsyncStorage. initialize() au montage + persist() après chaque enqueue(). Storage injectable pour les tests.
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/backend/svc-supervision/.../SecurityConfig.java, src/backend/svc-supervision/src/main/resources/application.yml
+  US-057 : WebSocket STOMP déjà implémenté — aucune modification nécessaire.
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/backend/svc-supervision/.../SecurityConfig.java, application.yml + CREATE InternalSecretFilter.java
+  US-058 : CORS externalisé via ${ALLOWED_ORIGINS}. InternalSecretFilter protège /api/supervision/internal/** en prod avec header X-Internal-Secret. 154/154 tests verts.
+
+- 2026-04-04T18:00Z @developpeur UPDATE → src/mobile/src/api/syncExecutor.ts, application.yml
+  US-059 : Limite multipart 5MB/10MB dans Spring Boot. Avertissement console photoData > 500 Ko. TODO R2 : react-native-image-compressor.
+
+- 2026-04-04T18:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/corrections-as-built-impl.md
+  Livrable vertical slice des corrections as-built US-051 à US-059.
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/corrections-as-built-2026-04.md
+  Plan de corrections as-built priorisé : 5 écarts P0 bloquants production, 6 écarts P1 importants, 17 écarts P2 acceptés. 9 US créées (US-051→059).
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-051-bearer-token-supervision-api.md
+  P0/XS — Injection Bearer token dans supervisionApi.ts (3 endpoints instructions livreur sans auth → 403 en prod).
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-052-dependances-package-json-manquantes.md
+  P0/XS — react-native-app-auth et @react-native-community/netinfo absents du package.json → build natif échoue.
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-053-correction-poids-estime-tournee-planifiee.md
+  P0/S — poidsEstimeKg non restitué dans constructeur de reconstruction TourneePlanifiee → compatibilité véhicule désactivée silencieusement.
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-054-provisionnement-postgresql-dev.md
+  P0/S — PostgreSQL non provisionné, H2 in-memory uniquement → aucune persistance en production.
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-055-migration-navigation-react-navigation.md
+  P1/M — Navigation useState conditionnel → bouton retour Android ferme l'app (régression UX terrain majeure).
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-056-persistance-offline-queue-async-storage.md
+  P1/S — offlineQueue en mémoire vive → perte commandes offline si app fermée en zone blanche.
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-057-websocket-stomp-tableau-de-bord-temps-reel.md
+  P1/L — WebSocket STOMP déclaré mais non implémenté → tableau de bord temps réel (US-011) non livré.
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-058-cors-securite-endpoint-interne.md
+  P1/S — CORS trop permissif + endpoint interne sans auth → risque sécurité avant prod.
+
+- 2026-04-04T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-059-upload-photo-multipart.md
+  P1/M — Photos base64 dans payload JSON (> 1 Mo possible) → erreur 413 silencieuse sur upload preuve.
+
+- 2026-04-04T14:00Z @po UPDATE → /livrables/00-contexte/journaux/journal-po.md
+  Mise à jour journal : 9 nouvelles US, décisions as-built, prochaine US libre = US-060.
+
+- 2026-04-04T12:00Z @architecte-technique CREATE → /livrables/04-architecture-technique/rapport-as-built-supervision.md, /livrables/04-architecture-technique/rapport-as-built-mobile.md
+  Rapports as-built : analyse exhaustive du code réel de svc-supervision (Java 20, Spring Boot 3.4.3, BC-03+BC-07 fusionnés, 14 endpoints REST, 23 tests) et de l'app mobile (Expo 51, React 18, 7 écrans, offline-first). 10 écarts svc-supervision et 10 écarts mobile documentés avec recommandations.
+
+- 2026-04-04T10:00Z @developpeur UPDATE → src/mobile/src/theme/colors.ts, src/mobile/src/theme/theme.ts (CRÉÉ), src/mobile/src/screens/ConnexionScreen.tsx, src/mobile/src/screens/ListeColisScreen.tsx, src/mobile/src/screens/CapturePreuveScreen.tsx, src/mobile/src/screens/DeclarerEchecScreen.tsx, src/mobile/src/components/BandeauInstructionOverlay.tsx, src/mobile/src/components/ColisItem.tsx, src/mobile/src/components/design-system/*.tsx, src/mobile/package.json
+  US-025 palette MD3 : application design system Material Design 3 designer sur 5 écrans + 6 composants. 60+ tokens couleur, theme.ts central, expo-linear-gradient ajouté.
+
+- 2026-04-03T23:00Z @developpeur FIX → src/backend/svc-tournee/.../DevDataSeeder.java, src/mobile/src/api/supervisionApi.ts, livrables/00-contexte/infrastructure-locale.md
+  BUG-T204-01 : désync compteur colis (T-204-C-022 LIVRE→A_LIVRER). BUG-INSTR-01 : instructions invisibles mobile (10.0.2.2→localhost).
+
+- 2026-04-03T22:30Z @developpeur CREATE → livrables/06-dev/vertical-slices/US-049-impl.md, livrables/06-dev/vertical-slices/US-050-impl.md
+  US-049+050 : implémentation verticale complète. 152/152 backend + 272/272 web + 371/371 mobile verts.
+
+- 2026-04-03T22:30Z @developpeur UPDATE → src/mobile/src/constants/devLivreurs.ts
+  US-049 : ajout livreur-006 Lucas Petit (6ème livreur canonique).
+
+- 2026-04-03T22:30Z @developpeur UPDATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/seeder/DevDataSeeder.java
+  US-049 : VueTournee tournee-sup-005/006 + TourneePlanifiee T-205/T-206 (livreur-005 Sophie Bernard + livreur-006 Lucas Petit).
+
+- 2026-04-03T22:30Z @developpeur UPDATE → src/web/supervision/src/pages/DetailTourneePlanifieePage.tsx
+  US-049+050 : livreursMock aligné sur 6 livreurs canoniques + bouton Désaffecter + fonction desaffecterTournee().
+
+- 2026-04-03T22:30Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/planification/model/TourneeDejaLanceeException.java, src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/planification/events/DesaffectationEnregistree.java
+  US-050 : exception domaine + event immuable pour désaffectation.
+
+- 2026-04-03T22:30Z @developpeur UPDATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/planification/model/TourneePlanifiee.java
+  US-050 : méthode desaffecter() ajoutée à l'agrégat TourneePlanifiee.
+
+- 2026-04-03T22:30Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/planification/DesaffecterTourneeHandler.java, DesaffecterTourneeCommand.java
+  US-050 : application layer handler + command pour désaffectation.
+
+- 2026-04-03T22:30Z @developpeur UPDATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/planification/rest/PlanificationController.java
+  US-050 : endpoint DELETE /api/planification/tournees/{id}/affectation ajouté.
+
+- 2026-04-03T22:30Z @developpeur UPDATE → src/web/supervision/src/pages/DetailTourneePage.tsx
+  Correctif : guard TextEncoder avant STOMP (jsdom fix, régression US-048).
+
+- 2026-04-03T21:00Z @po CREATE → livrables/05-backlog/user-stories/US-049-6-livreurs-dev-coherents.md
+  US-049 : 6 livreurs dev alignés (mobile + supervision + seeders). Must Have / S. Bloquant tests manuels.
+
+- 2026-04-03T21:00Z @po CREATE → livrables/05-backlog/user-stories/US-050-desaffecter-livreur-tournee-planifiee.md
+  US-050 : désaffectation livreur d'une TourneePlanifiee depuis W-05 supervision. Should Have / S. Complète F-020.
+
+- 2026-04-03T21:00Z @po UPDATE → livrables/00-contexte/journaux/journal-po.md
+  Ajout US-049 et US-050 dans suivi, décisions structurantes. Prochaine US libre : US-051.
+
+- 2026-04-03T20:15Z @developpeur CREATE+FIX → svc-supervision/interfaces/rest/EvenementTourneeController.java, svc-supervision/interfaces/security/SecurityConfig.java
+  US-032 bugfix : création du controller manquant POST /api/supervision/internal/vue-tournee/events + permitAll() sur /api/supervision/internal/** (appels inter-services sans JWT)
+
+- 2026-04-03T19:30Z @developpeur UPDATE → svc-supervision/DevDataSeeder.java, svc-tournee/DevDataSeeder.java, ListeColisScreen.tsx, devLivreurs.ts, livrables/06-dev/vertical-slices/US-048-impl.md
+  US-048 : injection DevEventBridge dans svc-supervision DevDataSeeder pour propager TourneeLancee T-204 vers svc-tournee. svc-tournee DevDataSeeder aligné sur T-204 avec 22 colis (IDs T-204-C-001..022). Message vide ListeColisScreen actualisé. livreur-005 Sophie Bernard ajouté.
+
 - 2026-04-03T18:30Z @developpeur UPDATE → src/web/supervision/ (tailwind.config.js, postcss.config.js, globals.css, index.tsx, PreparationPage.tsx, TableauDeBordPage.tsx, TopAppBar.tsx, SideNavBar.tsx, AppLayout.tsx)
   US-027 session 2 : intégration Tailwind CSS v3 + DaisyUI + refactorisation visuelle W-04/W-01 selon design_web_designer.md. 265/265 tests verts. Rétrocompat tests inline styles assurée.
 
@@ -1238,3 +1537,180 @@
 
 - 2026-04-03T11:32Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
   Journal @developpeur : US-046, US-039, US-040, US-041 ajoutées au suivi. 4 décisions techniques documentées.
+
+- 2026-04-03T12:00Z @developpeur CREATE → /home/admin/Botfactory/src/mobile/src/constants/devLivreurs.ts
+  US-047 : constante DEV_LIVREURS avec les 4 comptes livreurs du seed supervision.
+
+- 2026-04-03T12:00Z @developpeur CREATE → /home/admin/Botfactory/src/mobile/src/store/devAuthOptions.ts
+  US-047 : options mock authStore (faux JWT base64, expiration 8h, closure mutable setDevLivreurId).
+
+- 2026-04-03T12:00Z @developpeur UPDATE → /home/admin/Botfactory/src/mobile/src/screens/ConnexionScreen.tsx
+  US-047 : 2 props optionnelles devLivreurs/onDevLivreurSelected + bloc picker dev-mode + styles fond jaune.
+
+- 2026-04-03T12:00Z @developpeur UPDATE → /home/admin/Botfactory/src/mobile/App.tsx
+  US-047 : réécriture complète — ConnexionScreen comme écran intro, authStore.subscribe, guard __DEV__.
+
+- 2026-04-03T12:00Z @developpeur CREATE → /livrables/05-backlog/user-stories/US-047-connexion-dev-livreur-picker.md
+  US-047 : User Story complète avec 5 scénarios Gherkin.
+
+- 2026-04-03T12:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-047-impl.md
+  US-047 : vertical slice — décisions implémentation, tests 365/365 verts.
+
+- 2026-04-03T12:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Journal @developpeur : US-047 ajoutée au suivi + décision technique closure devAuthOptions.
+
+- 2026-04-03T14:00Z @po CREATE → /livrables/05-backlog/user-stories/US-048-sync-supervision-mobile.md
+  US-048 : sync données tournée supervision ↔ app mobile livreur — DevEventBridge au démarrage, correction seeders, message "sans tournée", livreur-005 dans picker dev.
+
+- 2026-04-03T14:00Z @po UPDATE → /livrables/00-contexte/journaux/journal-po.md
+  Journal @po v1.5 : US-048 ajoutée au suivi, prochaine US libre US-049.
+
+- 2026-04-05T10:00Z @qa CREATE → /livrables/07-tests/scenarios/US-034-scenarios.md
+  US-034 : 7 scénarios TCs L1/L2/L3 — ReaffecterVehiculeHandler, GET /vehicules/compatibles, POST /reaffecter-vehicule.
+
+- 2026-04-05T10:00Z @qa CREATE → /livrables/07-tests/scenarios/US-034-rapport-playwright.md
+  US-034 : rapport d'exécution — Validée 24/24. Couverture L1 domaine + L2 API + L3 panneau UI.
+
+- 2026-04-05T10:10Z @qa CREATE → /livrables/07-tests/scenarios/US-035-scenarios.md
+  US-035 : 10 scénarios TCs L1/L2 — correspondRecherche OU logic, intersection filtre statut, no bouton-rechercher.
+
+- 2026-04-05T10:10Z @qa CREATE → /livrables/07-tests/scenarios/US-035-rapport-playwright.md
+  US-035 : rapport d'exécution — Validée 13/13.
+
+- 2026-04-05T10:20Z @qa CREATE → /livrables/07-tests/scenarios/US-036-scenarios.md
+  US-036 : 7 scénarios TCs L1 RNTL — AsyncStorage hasConnectedOnce, cardSsoOuverte, priorité logique.
+
+- 2026-04-05T10:20Z @qa CREATE → /livrables/07-tests/scenarios/US-036-rapport-playwright.md
+  US-036 : rapport d'exécution — Validée 16/16.
+
+- 2026-04-05T10:30Z @qa CREATE → /livrables/07-tests/scenarios/US-037-scenarios.md
+  US-037 : 13 scénarios TCs L1 — useConsignesLocales hook, MesConsignesScreen, idempotence, offline bandeau, clé consignes_jour_YYYY-MM-DD.
+
+- 2026-04-05T10:30Z @qa CREATE → /livrables/07-tests/scenarios/US-037-rapport-playwright.md
+  US-037 : rapport d'exécution — Validée 352/352.
+
+- 2026-04-05T10:40Z @qa CREATE → /livrables/07-tests/scenarios/US-038-scenarios.md
+  US-038 : 8 scénarios TCs L1 — 6 corrections libellés UX (Repassage, Traitée, Chargement trop lourd, Télécharger la liste, numéro de tournée).
+
+- 2026-04-05T10:40Z @qa CREATE → /livrables/07-tests/scenarios/US-038-rapport-playwright.md
+  US-038 : rapport d'exécution — Validée 329/329 mobile. Bug Babel/TS pré-existant documenté non bloquant.
+
+- 2026-04-05T10:50Z @qa CREATE → /livrables/07-tests/scenarios/US-042-scenarios.md
+  US-042 : 4 scénarios TCs L1 — HH:mm pour aujourd'hui, JJ/MM HH:mm pour autres jours, ordre chronologique inverse.
+
+- 2026-04-05T10:50Z @qa CREATE → /livrables/07-tests/scenarios/US-042-rapport-playwright.md
+  US-042 : rapport d'exécution — Validée 27/27.
+
+- 2026-04-05T11:00Z @qa CREATE → /livrables/07-tests/scenarios/US-043-scenarios.md
+  US-043 : 6 scénarios TCs L1 RNTL — pas d'écriture AsyncStorage en première session, état étendu restauré à réouverture (distinct US-036).
+
+- 2026-04-05T11:00Z @qa CREATE → /livrables/07-tests/scenarios/US-043-rapport-playwright.md
+  US-043 : rapport d'exécution — Validée 10/10.
+
+- 2026-04-05T11:10Z @qa CREATE → /livrables/07-tests/scenarios/US-045-scenarios.md
+  US-045 : 7 scénarios TCs L1 — SEUIL_HINT=3, fail-safe AsyncStorage, texte exact swipe hint.
+
+- 2026-04-05T11:10Z @qa CREATE → /livrables/07-tests/scenarios/US-045-rapport-playwright.md
+  US-045 : rapport d'exécution — Validée 17/17.
+
+- 2026-04-05T11:20Z @qa CREATE → /livrables/07-tests/scenarios/US-047-scenarios.md
+  US-047 : 5 scénarios TCs L1 RNTL — section-dev-mode, devLivreurs prop, faux JWT sub/roles, accessibilityLabel.
+
+- 2026-04-05T11:20Z @qa CREATE → /livrables/07-tests/scenarios/US-047-rapport-playwright.md
+  US-047 : rapport d'exécution — Validée 365/365 non-régression.
+
+- 2026-04-05T11:30Z @qa CREATE → /livrables/07-tests/scenarios/US-048-scenarios.md
+  US-048 : 5 scénarios TCs L1/L2 — DevEventBridge T-204→22 colis, idempotence, livreur-005 message vide, @Profile("dev").
+
+- 2026-04-05T11:30Z @qa CREATE → /livrables/07-tests/scenarios/US-048-rapport-playwright.md
+  US-048 : rapport d'exécution — Validée.
+
+- 2026-04-05T11:40Z @qa CREATE → /livrables/07-tests/scenarios/US-049-scenarios.md
+  US-049 : 6 scénarios TCs L1/L2 — 6 livreurs canoniques alignés mobile picker + svc-supervision + svc-tournee seeders.
+
+- 2026-04-05T11:40Z @qa CREATE → /livrables/07-tests/scenarios/US-049-rapport-playwright.md
+  US-049 : rapport d'exécution — Validée 795/795 (371+272+152).
+
+- 2026-04-05T11:50Z @qa CREATE → /livrables/07-tests/scenarios/US-050-scenarios.md
+  US-050 : 10 scénarios TCs L1/L2 — TourneePlanifiee.desaffecter() invariants domaine, DELETE /affectation endpoints, btn-desaffecter conditionnel.
+
+- 2026-04-05T11:50Z @qa CREATE → /livrables/07-tests/scenarios/US-050-rapport-playwright.md
+  US-050 : rapport d'exécution — Validée 152/152+272/272.
+
+- 2026-04-05T12:00Z @qa CREATE → /livrables/07-tests/scenarios/US-055-scenarios.md
+  US-055 : 5 scénarios TCs L1/L3 — AppNavigator 7 routes, non-régression, bouton retour Android R1 partiel/R2 déféré.
+
+- 2026-04-05T12:00Z @qa CREATE → /livrables/07-tests/scenarios/US-055-rapport-playwright.md
+  US-055 : rapport d'exécution — Partielle (R1 L1 ok, TC-055-05 Bloqué R2).
+
+- 2026-04-05T12:10Z @qa CREATE → /livrables/07-tests/scenarios/US-056-scenarios.md
+  US-056 : 7 scénarios TCs L1 — offlineQueue enqueue→persist, initialize idempotent, résistance corruption JSON, FIFO.
+
+- 2026-04-05T12:10Z @qa CREATE → /livrables/07-tests/scenarios/US-056-rapport-playwright.md
+  US-056 : rapport d'exécution — Validée 28/28.
+
+- 2026-04-05T12:20Z @qa CREATE → /livrables/07-tests/scenarios/US-057-scenarios.md
+  US-057 : 4 scénarios TCs L1 — SupervisionWebSocketConfig: /topic broker, /app prefix, /ws/supervision endpoint, SockJS origins.
+
+- 2026-04-05T12:20Z @qa CREATE → /livrables/07-tests/scenarios/US-057-rapport-playwright.md
+  US-057 : rapport d'exécution — Validée 165/165. L3 bloqué (WebSocket headless Playwright).
+
+- 2026-04-05T12:30Z @qa CREATE → /livrables/07-tests/scenarios/US-058-scenarios.md
+  US-058 : 8 scénarios TCs L1 — InternalSecretFilter 7 scénarios, CORS * en dev.
+
+- 2026-04-05T12:30Z @qa CREATE → /livrables/07-tests/scenarios/US-058-rapport-playwright.md
+  US-058 : rapport d'exécution — Validée 165/165.
+
+- 2026-04-05T12:40Z @qa CREATE → /livrables/07-tests/scenarios/US-059-scenarios.md
+  US-059 : 6 scénarios TCs L1 — MVP alternatif Spring Boot 5MB/10MB + syncExecutor double seuil (500Ko warn, 1Mo error), onPhotoTooLarge callback.
+
+- 2026-04-05T12:40Z @qa CREATE → /livrables/07-tests/scenarios/US-059-rapport-playwright.md
+  US-059 : rapport d'exécution — Validée MVP alternatif. OBS-AS-004 ouvert (pas de message UI sur 413).
+
+- 2026-04-05T12:50Z @qa CREATE → /livrables/07-tests/scenarios/US-060-scenarios.md
+  US-060 : 5 scénarios TCs L1 TDD — persist() après chaque dequeue, AsyncStorage vide après sync complète, sync partielle préserve commandes restantes, pas de double envoi.
+
+- 2026-04-05T12:50Z @qa CREATE → /livrables/07-tests/scenarios/US-060-rapport-playwright.md
+  US-060 : rapport d'exécution — Validée 60/60. OBS-AS-006 RÉSOLU (Bug P0 persist manquant).
+
+- 2026-04-05T13:00Z @qa CREATE → /livrables/07-tests/scenarios/US-061-scenarios.md
+  US-061 : 6 scénarios TCs L1 RNTL — SignatureCanvas remplace TouchableOpacity simulé, onOK/onEmpty callbacks, clearSignature ref, transmission base64.
+
+- 2026-04-05T13:00Z @qa CREATE → /livrables/07-tests/scenarios/US-061-rapport-playwright.md
+  US-061 : rapport d'exécution — Validée 33/33. Bug P0 légal résolu (react-native-signature-canvas branché).
+
+- 2026-04-05T13:10Z @qa CREATE → /livrables/07-tests/scenarios/US-062-scenarios.md
+  US-062 : 7 scénarios TCs L1 RNTL — pendingCount prop IndicateurSync, singulier/pluriel "envoi(s) en attente", testID sync-pending-count.
+
+- 2026-04-05T13:10Z @qa CREATE → /livrables/07-tests/scenarios/US-062-rapport-playwright.md
+  US-062 : rapport d'exécution — Validée 53/53. Terminologie terrain "envois en attente" respectée.
+
+- 2026-04-05T13:20Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  Session 2026-04-05 : 20 interventions US-034 à US-062 ajoutées. Tableau suivi mis à jour (US-037, 047-062 Validées/Partielle). Archivage 2026-04-03 vers journal-qa-2026-04.md.
+
+- 2026-04-05T14:00Z @developpeur UPDATE → /home/admin/Botfactory/src/web/supervision/src/pages/DetailTourneePlanifieePage.tsx
+  US-064 : réécriture JSX Tailwind/tokens MD3. Suppression 7 variables de style statiques. 272/272 tests verts.
+
+- 2026-04-05T14:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/US-064-impl.md
+  US-064 : vertical slice — conformité design W-05 DetailTourneePlanifieePage.
+
+- 2026-04-05T14:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Ajout US-064 (Interventions + Décisions), archivage décisions 2026-04-04 vers journal-developpeur-2026-04.md.
+
+- 2026-04-05T14:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/archives/journal-developpeur-2026-04.md
+  Archivage des décisions techniques US-055 à US-062 depuis le journal principal.
+
+- 2026-04-06T10:00Z @po CREATE → /livrables/05-backlog/user-stories/US-065-correction-coherence-supervision-donnees.md
+  US-065 : traçabilité backlog des 4 anomalies de cohérence supervision (codeTMS affiché, double affectation livreur, VueTournees fantômes, blocage UI avant 409). Corrections déjà appliquées en code. 7 critères Gherkin + règles de non-régression.
+
+- 2026-04-06T10:00Z @po UPDATE → /livrables/00-contexte/journaux/journal-po.md
+  Session 2026-04-06 : création US-065, prochaine US libre = US-066, compteur total 65 US. Décision structurante ajoutée.
+
+- 2026-04-06T11:00Z @architecte-metier UPDATE → /livrables/03-architecture-metier/domain-model.md
+  US-066 : ajout section BC-07 complète (TourneePlanifiee, PlanDuJour, Affectation, Vehicule, EtatJournalierLivreur, VueLivreur), 10 nouveaux termes Ubiquitous Language, règle de dérivation états livreurs, source de vérité BC-07 confirmée. v1.0→v1.2.
+
+- 2026-04-06T11:00Z @architecte-metier UPDATE → /livrables/03-architecture-metier/capability-map.md
+  US-066 : ajout capability 3.4 "État des livreurs du jour" avec 3 sous-capacités (3.4.1, 3.4.2, 3.4.3), mise à jour arbre des domaines. v1.0→v1.2.
+
+- 2026-04-06T11:00Z @architecte-metier UPDATE → /livrables/00-contexte/journaux/journal-architecte-metier.md
+  Session 2026-04-06 : validation modélisation US-066, 4 décisions structurantes ajoutées, points d'attention mis à jour.

@@ -1,6 +1,6 @@
 # Capability Map DocuPost
 
-> Document de référence — Version 1.0 — 2026-03-19
+> Document de référence — Version 1.2 — 2026-04-06
 > Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
 > Architecte Technique, M. Renaud Responsable Exploitation Logistique), des livrables
 > de vision (/livrables/01-vision/) et du domain model (/livrables/03-architecture-metier/domain-model.md).
@@ -30,7 +30,8 @@ DocuPost
 ├── 3. Supervision et pilotage temps réel       [Core Domain]
 │   ├── 3.1 Tableau de bord des tournées
 │   ├── 3.2 Détection des tournées à risque
-│   └── 3.3 Instruction aux livreurs
+│   ├── 3.3 Instruction aux livreurs
+│   └── 3.4 État des livreurs du jour            ← [US-066]
 ├── 4. Notification et messaging                [Supporting]
 │   ├── 4.1 Notification push livreur
 │   └── 4.2 Alerte superviseur
@@ -115,6 +116,9 @@ un différenciateur central de DocuPost.
 | 3.3 Instruction aux livreurs | 3.3.1 Envoi d'instruction structurée | Envoyer au livreur une instruction normalisée : prioriser, annuler, reprogrammer un colis | MVP | M. Renaud |
 | 3.3 Instruction aux livreurs | 3.3.2 Suivi de l'exécution d'instruction | Suivre l'état d'une instruction : envoyée, prise en compte, exécutée | MVP | M. Renaud |
 | 3.3 Instruction aux livreurs | 3.3.3 Redistribution automatique de colis | Redistribuer automatiquement les colis entre livreurs en cas d'incident humain | Post-MVP R3 | M. Renaud |
+| 3.4 État des livreurs du jour | 3.4.1 Consulter état des livreurs du jour | Afficher pour chaque livreur son état journalier (SANS_TOURNEE / AFFECTE_NON_LANCE / EN_COURS) dérivé depuis BC-07, avec mise à jour temps réel via WebSocket | MVP (US-066) | M. Renaud |
+| 3.4 État des livreurs du jour | 3.4.2 Filtrer les livreurs par état | Filtrer la liste des livreurs par état pour identifier rapidement les livreurs disponibles à affecter | MVP (US-066) | M. Renaud |
+| 3.4 État des livreurs du jour | 3.4.3 Navigation contextuelle depuis état livreur | Naviguer depuis l'état d'un livreur vers l'écran approprié : W-02 (EN_COURS), W-05 (AFFECTE_NON_LANCE), W-04 (SANS_TOURNEE) | MVP (US-066) | M. Renaud |
 
 ---
 

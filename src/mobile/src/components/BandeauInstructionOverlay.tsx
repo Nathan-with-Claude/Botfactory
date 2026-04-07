@@ -7,20 +7,14 @@ import {
   View,
 } from 'react-native';
 import { InstructionMobileDTO } from '../api/supervisionApi';
+import { Colors } from '../theme/colors';
+import { Theme } from '../theme/theme';
 
 /**
  * Composant M-06 — Bandeau overlay notification d'instruction (US-016 / US-037)
  *
- * Affiché par-dessus l'écran courant quand une nouvelle instruction du superviseur
- * est reçue par le livreur (via polling ou FCM Sprint 3).
- *
- * Comportement :
- * - Apparaît par glissement depuis le haut (animation slide-down).
- * - Disparaît automatiquement après 10 secondes si Pierre n'interagit pas.
- * - Bouton "VOIR" : navigue vers M-03 (DetailColisScreen) pour le colis concerné.
- * - Bouton "×" : ferme le bandeau sans naviguer.
- * - US-037 : persiste l'instruction dans AsyncStorage via onConsignePersistee
- *   pour que l'historique "Mes consignes" survive à la fermeture du bandeau.
+ * Design : Material Design 3 — fond infoFonce (#1E3A8A) comme défini dans les tokens
+ * Overlay plein écran top, animation slide-down, compte à rebours 10s
  *
  * Source : US-016 / US-037
  * Wireframe : M-06 — Notification d'instruction reçue
@@ -68,7 +62,7 @@ const BandeauInstructionOverlay: React.FC<BandeauInstructionOverlayProps> = ({
     // US-037 : persister l'instruction dans l'historique local dès la réception
     if (onConsignePersistee) {
       onConsignePersistee(instruction).catch(() => {
-        // Persistance silencieuse — l'historique n'est pas critique pour le livreur
+        // Persistance silencieuse
       });
     }
 
@@ -147,21 +141,18 @@ const BandeauInstructionOverlay: React.FC<BandeauInstructionOverlayProps> = ({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  // Fond infoFonce (#1E3A8A) — overlay bleu foncé M-06
   bandeau: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#E65100',
+    backgroundColor: Colors.infoFonce,
     padding: 16,
     zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    ...Theme.shadow.lg,
+    borderBottomLeftRadius: Theme.borderRadius.lg,
+    borderBottomRightRadius: Theme.borderRadius.lg,
   },
   header: {
     flexDirection: 'row',
@@ -170,43 +161,49 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   titre: {
-    color: '#FFFFFF',
+    color: Colors.tertiaryFixed,
     fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 1,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   boutonFermer: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    minWidth: 32,
+    minHeight: 32,
   },
   boutonFermerTexte: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
   },
   message: {
-    color: '#FFFFFF',
-    fontSize: 15,
+    color: Colors.onPrimary,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
-    lineHeight: 22,
+    marginBottom: 14,
+    lineHeight: 24,
   },
   boutonVoir: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 6,
-    paddingVertical: 10,
+    backgroundColor: Colors.onPrimary,
+    borderRadius: Theme.borderRadius.md,
+    paddingVertical: 12,
     alignItems: 'center',
+    minHeight: Theme.touchTarget.minHeight,
+    justifyContent: 'center',
   },
   boutonVoirTexte: {
-    color: '#E65100',
+    color: Colors.infoFonce,
     fontWeight: '800',
     fontSize: 14,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });
 

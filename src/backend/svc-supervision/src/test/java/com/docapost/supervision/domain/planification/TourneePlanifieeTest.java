@@ -225,4 +225,124 @@ class TourneePlanifieeTest {
 
         assertThat(tournee.getEvenements()).isEmpty();
     }
+
+    // ─── US-053 : Reconstruction depuis persistance avec poids estimé ────────
+
+    @Test
+    @DisplayName("la reconstruction depuis la persistance avec poidsEstimeKg restitue le poids — pas POIDS_ABSENT (US-053)")
+    void reconstruction_depuis_persistance_avec_poids_restitue_le_poids() {
+        TourneePlanifiee tournee = new TourneePlanifiee(
+                "tp-010", "T-210", LocalDate.now(), 20,
+                List.of(new ZoneTournee("Lyon 3e", 20)),
+                List.of(),
+                List.of(),
+                Instant.now(),
+                StatutAffectation.AFFECTEE,
+                "livreur-001", "Pierre Martin", "VH-07",
+                Instant.now(), null, true,
+                450  // poidsEstimeKg restitué depuis la persistance
+        );
+
+        Vehicule vehicule = new Vehicule(
+                new VehiculeId("VH-07"), "AB-123-CD", 600, TypeVehicule.FOURGON
+        );
+        assertThat(tournee.getPoidsEstimeKg()).isEqualTo(450);
+        assertThat(tournee.evaluerCompatibiliteVehicule(vehicule))
+                .isEqualTo(ResultatCompatibilite.COMPATIBLE);
+    }
+
+    @Test
+    @DisplayName("la reconstruction depuis persistance sans poids retourne POIDS_ABSENT (comportement attendu)")
+    void reconstruction_depuis_persistance_sans_poids_retourne_poids_absent() {
+        TourneePlanifiee tournee = new TourneePlanifiee(
+                "tp-011", "T-211", LocalDate.now(), 20,
+                List.of(new ZoneTournee("Lyon 3e", 20)),
+                List.of(),
+                List.of(),
+                Instant.now(),
+                StatutAffectation.AFFECTEE,
+                "livreur-001", "Pierre Martin", "VH-07",
+                Instant.now(), null, true,
+                null  // poids absent — comportement SC4
+        );
+
+        Vehicule vehicule = new Vehicule(
+                new VehiculeId("VH-07"), "AB-123-CD", 600, TypeVehicule.FOURGON
+        );
+        assertThat(tournee.getPoidsEstimeKg()).isNull();
+        assertThat(tournee.evaluerCompatibiliteVehicule(vehicule))
+                .isEqualTo(ResultatCompatibilite.POIDS_ABSENT);
+    }
+
+    // ─── US-050 : Désaffecter un livreur ─────────────────────────────────────
+
+    @Test
+    @DisplayName("desaffecter une tournée AFFECTEE remet le statut à NON_AFFECTEE et efface le livreur")
+    void desaffecter_tournee_affectee_remet_a_non_affectee() {
+        TourneePlanifiee tournee = tourneeSansAnomalie();
+        tournee.affecter("livreur-001", "Pierre Martin", "VH-07", "superviseur-001");
+        tournee.clearEvenements();
+
+        tournee.desaffecter("superviseur-001");
+
+        assertThat(tournee.getStatut()).isEqualTo(StatutAffectation.NON_AFFECTEE);
+        assertThat(tournee.getLivreurId()).isNull();
+        assertThat(tournee.getLivreurNom()).isNull();
+        assertThat(tournee.getVehiculeId()).isNull();
+    }
+
+    @Test
+    @DisplayName("desaffecter une tournée AFFECTEE émet DesaffectationEnregistree")
+    void desaffecter_tournee_affectee_emet_event() {
+        TourneePlanifiee tournee = tourneeSansAnomalie();
+        tournee.affecter("livreur-001", "Pierre Martin", "VH-07", "superviseur-001");
+        tournee.clearEvenements();
+
+        tournee.desaffecter("superviseur-001");
+
+        assertThat(tournee.getEvenements()).hasSize(1);
+        assertThat(tournee.getEvenements().get(0)).isInstanceOf(
+                com.docapost.supervision.domain.planification.events.DesaffectationEnregistree.class
+        );
+        var event = (com.docapost.supervision.domain.planification.events.DesaffectationEnregistree)
+                tournee.getEvenements().get(0);
+        assertThat(event.tourneePlanifieeId()).isEqualTo("tp-001");
+        assertThat(event.codeTms()).isEqualTo("T-201");
+        assertThat(event.livreurIdRetire()).isEqualTo("livreur-001");
+        assertThat(event.superviseurId()).isEqualTo("superviseur-001");
+        assertThat(event.desaffecteeLe()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("desaffecter une tournée LANCEE lève TourneeDejaLanceeException")
+    void desaffecter_tournee_lancee_leve_exception() {
+        TourneePlanifiee tournee = tourneeSansAnomalie();
+        tournee.affecter("livreur-001", "Pierre Martin", "VH-07", "superviseur-001");
+        tournee.lancer("superviseur-001");
+
+        assertThatThrownBy(() -> tournee.desaffecter("superviseur-001"))
+                .isInstanceOf(TourneeDejaLanceeException.class)
+                .hasMessageContaining("cours");
+    }
+
+    @Test
+    @DisplayName("desaffecter une tournée NON_AFFECTEE lève PlanificationInvariantException")
+    void desaffecter_tournee_non_affectee_leve_exception() {
+        TourneePlanifiee tournee = tourneeSansAnomalie();
+
+        assertThatThrownBy(() -> tournee.desaffecter("superviseur-001"))
+                .isInstanceOf(PlanificationInvariantException.class)
+                .hasMessageContaining("AFFECTEE");
+    }
+
+    @Test
+    @DisplayName("après desaffectation, la tournée est à nouveau affectable")
+    void apres_desaffectation_tournee_est_affectable() {
+        TourneePlanifiee tournee = tourneeSansAnomalie();
+        tournee.affecter("livreur-001", "Pierre Martin", "VH-07", "superviseur-001");
+        tournee.desaffecter("superviseur-001");
+
+        assertThat(tournee.estAffectable()).isTrue();
+        assertThat(tournee.getStatut()).isEqualTo(StatutAffectation.NON_AFFECTEE);
+    }
 }

@@ -67,6 +67,23 @@
 | US-041 | Poids estimé + alerte surcharge W-04 | Oui | — | — | Validée (14/14) |
 | US-044 | Compteur durée déconnexion WebSocket | Oui | — | — | Validée (11/11 — SC2 corrigé v2.0) |
 | US-046 | Pad signature numérique réel M-04 | Oui | — | — | Validée (13/13 + 19/19 non régressions) |
+| US-037 | Consignes locales M-07 | Oui (13 TCs L1) | — | Oui | Validée (352/352) |
+| US-047 | Picker livreur dev mode | Oui (5 TCs L1) | — | Oui | Validée (365/365 non-rég) |
+| US-048 | Sync supervision↔mobile DevEventBridge | Oui (5 TCs L1/L2) | — | Oui | Validée |
+| US-049 | 6 livreurs canoniques alignés | Oui (6 TCs L1/L2) | — | Oui | Validée (795/795) |
+| US-050 | Désaffecter livreur/véhicule | Oui (10 TCs L1/L2) | — | Oui | Validée (152/152+272/272) |
+| US-051 | Bearer token supervisionApi | Oui (7 TCs) | — | — | À tester |
+| US-052 | Dépendances package.json | Oui (6 TCs) | — | — | À tester |
+| US-053 | poidsEstimeKg reconstruction | Oui (7 TCs) | — | — | À tester |
+| US-054 | PostgreSQL local dev | Oui (6 TCs) | — | — | À tester |
+| US-055 | Navigation react-navigation | Oui (5 TCs L1/L3) | — | Oui | Partielle (R1 ok, R2 déféré) |
+| US-056 | offlineQueue AsyncStorage | Oui (7 TCs L1) | — | Oui | Validée (28/28) |
+| US-057 | WebSocket STOMP | Oui (4 TCs L1) | — | Oui | Validée (165/165, L3 bloqué headless) |
+| US-058 | CORS + endpoint interne | Oui (8 TCs L1) | — | Oui | Validée (165/165) |
+| US-059 | Upload photo multipart | Oui (6 TCs L1) | — | Oui | Validée MVP alternatif |
+| US-060 | persist() après sync offlineQueue | Oui (5 TCs L1) | — | Oui | Validée (60/60, Bug P0 résolu) |
+| US-061 | react-native-signature-canvas | Oui (6 TCs L1) | — | Oui | Validée (33/33, P0 légal résolu) |
+| US-062 | Compteur envois en attente IndicateurSync | Oui (7 TCs L1) | — | Oui | Validée (53/53) |
 
 **Légende statuts** : `À faire` | `Scénarios rédigés` | `Exécutés` | `Validée` | `Partielle`
 
@@ -78,17 +95,17 @@
 
 | Date | US | Action | Fichier |
 | ---- | -- | ------ | ------- |
-> ← Entrées 2026-03-25, 2026-04-02 et début 2026-04-03 archivées dans [archives/journal-qa-2026-04.md](archives/journal-qa-2026-04.md)
-| 2026-04-03 | US-021 | Re-run L1 Jest+mvn — 29/29 + 35/35 PASS (PreparationPage + PlanificationController) | src/web/supervision + src/backend/svc-supervision |
-| 2026-04-03 | US-022 | Re-run L1 Jest+mvn — 19/19 + 21/21 PASS (DetailTourneePlanifieePage + PlanificationController) | src/web/supervision + src/backend/svc-supervision |
-| 2026-04-03 | US-023 | Re-run L1 mvn — 21/21 PASS (AffecterLivreurVehiculeHandler + PlanificationController) | src/backend/svc-supervision |
-| 2026-04-03 | US-024 | Re-run L1 Jest+mvn — 29/29 + 21/21 PASS (PreparationPage + LancerTourneeHandler) | src/web/supervision + src/backend/svc-supervision |
-| 2026-04-03 | US-025 | Re-run L1 Jest — 60/60 (web) + 101/101 (mobile) PASS (design-system) | src/web/supervision + src/mobile components/design-system |
-| 2026-04-03 | US-026 | Re-run L1 Jest — 88/88 PASS (ListeColisScreen + FiltreZone + BandeauInstructionOverlay + CapturePreuveScreen + DetailColisScreen) | src/mobile src/__tests__/ |
-| 2026-04-03 | US-027 | Re-run L1 Jest — 81/81 PASS (PreparationPage + TableauDeBordPage) | src/web/supervision src/__tests__/ |
-| 2026-04-03 | US-028 | Re-run L1 Jest+mvn — 47/47 + 21/21 PASS (exporterCSV + DetailTourneePlanifieePage + ExporterCompositionHandler) | src/web/supervision + src/backend/svc-supervision |
-| 2026-04-03 | US-029 | Re-run L1 Jest — 22/22 PASS (CarteColis swipe) | src/mobile components/design-system/__tests__/ |
-| 2026-04-03 | US-030 | Re-run L1 Jest+mvn — 19/19 + 35/35 PASS (DetailTourneePlanifieePage + TourneePlanifieeUS030Test + VerifierCompatibiliteVehiculeHandler) | src/web/supervision + src/backend/svc-supervision |
+> ← Entrées 2026-03-25, 2026-04-02, 2026-04-03, 2026-04-04 et US-034 à US-048 (2026-04-05) archivées dans [archives/journal-qa-2026-04.md](archives/journal-qa-2026-04.md)
+| 2026-04-05 | US-049 | Scénarios + rapport créés (6 TCs L1/L2) — Validée 795/795 | livrables/07-tests/scenarios/US-049-*.md |
+| 2026-04-05 | US-050 | Scénarios + rapport créés (10 TCs L1/L2) — Validée 152/152+272/272 | livrables/07-tests/scenarios/US-050-*.md |
+| 2026-04-05 | US-055 | Scénarios + rapport créés (5 TCs L1/L3) — Partielle (R1 L1 ok, R2 déféré) | livrables/07-tests/scenarios/US-055-*.md |
+| 2026-04-05 | US-056 | Scénarios + rapport créés (7 TCs L1) — Validée 28/28 offlineQueue | livrables/07-tests/scenarios/US-056-*.md |
+| 2026-04-05 | US-057 | Scénarios + rapport créés (4 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-057-*.md |
+| 2026-04-05 | US-058 | Scénarios + rapport créés (8 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-058-*.md |
+| 2026-04-05 | US-059 | Scénarios + rapport créés (6 TCs L1) — Validée MVP alternatif | livrables/07-tests/scenarios/US-059-*.md |
+| 2026-04-05 | US-060 | Scénarios + rapport créés (5 TCs L1) — Validée Bug P0 résolu | livrables/07-tests/scenarios/US-060-*.md |
+| 2026-04-05 | US-061 | Scénarios + rapport créés (6 TCs L1) — Validée Bug P0 légal résolu 33/33 | livrables/07-tests/scenarios/US-061-*.md |
+| 2026-04-05 | US-062 | Scénarios + rapport créés (7 TCs L1) — Validée 53/53 | livrables/07-tests/scenarios/US-062-*.md |
 
 ---
 
@@ -119,6 +136,10 @@
 - **OBS-014-01/02 (ouverts)** : TC-014-02 impacté par l'ordre d'exécution (409 avant 422). Solution: utiliser un `colisId` distinct dans TC-014-02.
 - **TC-270 (US-008)** : Navigation M-03 → M-04 bloquée par le SplashScreen Expo Web (timeout 5s insuffisant). Solution: augmenter timeout ou mocker SplashScreen.
 - **Expo Web port 8090** : À documenter dans le README de test pour les futurs QA.
+- **OBS-AS-001 (ouvert)** : TourneePlanifieeMapper.java non listé dans les fichiers modifiés de US-053. Si le mapper appelle encore le constructeur 15-params, le bug POIDS_ABSENT persiste après rechargement BDD. Vérifier en L2 avec profil local-postgres.
+- **OBS-AS-004 (ouvert)** : US-059 — pas de message utilisateur en cas de 413 (uniquement console.warn). UX silencieusement dégradée pour photos volumineuses.
+- **OBS-AS-005 (ouvert)** : US-055 migration partielle — bouton retour Android non fonctionnel depuis DetailColisScreen, CapturePreuveScreen, MesConsignesScreen. Prévu R2.
+- **infrastructure-locale.md** : non mis à jour avec commandes PostgreSQL (US-054) ni variables ALLOWED_ORIGINS/INTERNAL_SECRET (US-058). À traiter par @developpeur ou @devops.
 
 ### Points d'attention spécifiques US-001 à US-007 (archivés)
 

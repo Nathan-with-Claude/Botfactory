@@ -237,24 +237,44 @@ svc-supervision/
 │   │   └── VueTourneeRepository.java
 │   └── service/
 │       └── RisqueDetector.java          # Domain Service : calcul écart délai
+│
+│   # Extension BC-07 — VueLivreur (US-066) — fusionné dans svc-supervision (MVP)
+├── domain/planification/
+│   ├── model/
+│   │   ├── EtatJournalierLivreur.java  # Value Object (enum) : SANS_TOURNEE | AFFECTE_NON_LANCE | EN_COURS
+│   │   └── VueLivreur.java             # Read Model (record immuable) : livreurId, nomComplet, etat, tourneePlanifieeId, codeTms
+│   └── service/
+│       └── LivreurReferentiel.java     # Interface (port) — implémentation dev : DevLivreurReferentiel (6 livreurs hardcodés)
+│                                       # implémentation prod : Bc06LivreurReferentiel (Keycloak BC-06)
+│
 ├── application/
 │   ├── usecase/
 │   │   └── EnvoyerInstructionUseCase.java
-│   └── handler/
-│       └── TourneeEventHandler.java     # Consomme events BC-01
+│   ├── handler/
+│   │   └── TourneeEventHandler.java     # Consomme events BC-01
+│   └── planification/
+│       └── ConsulterEtatLivreursHandler.java  # US-066 : dérive EtatJournalierLivreur par livreur depuis TourneePlanifieeRepository
+│
 ├── infrastructure/
 │   ├── persistence/
 │   │   ├── InstructionRepositoryImpl.java
 │   │   └── VueTourneeRepositoryImpl.java
+│   ├── dev/
+│   │   └── DevLivreurReferentiel.java   # @Profile("dev") — 6 livreurs hardcodés (US-066, US-049)
 │   └── websocket/
-│       └── SuperviseurWebSocketPublisher.java
+│       ├── SuperviseurWebSocketPublisher.java
+│       └── LivreurEtatWebSocketPublisher.java  # US-066 : écoute AffectationEnregistree, DesaffectationEnregistree,
+│                                               #           TourneeLancee, TourneeCloturee → push /topic/livreurs/etat
 └── interface/
     ├── rest/
     │   ├── SupervisionController.java
-    │   └── InstructionController.java
+    │   ├── InstructionController.java
+    │   └── LivreurEtatController.java   # US-066 : GET /api/supervision/livreurs/etat-du-jour?date={date}
+    │                                    #           Accès : ROLE_SUPERVISEUR | ROLE_DSI
     └── dto/
         ├── TableauDeBordDto.java
-        └── InstructionRequest.java
+        ├── InstructionRequest.java
+        └── LivreurEtatDTO.java          # US-066 : { livreurId, nomComplet, etat, tourneePlanifieeId, codeTms }
 ```
 
 ### BC-04 — Notification (Supporting Subdomain)

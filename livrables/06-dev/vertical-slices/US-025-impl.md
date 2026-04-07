@@ -220,3 +220,50 @@ import { CarteColis, BandeauProgression, IndicateurSync } from './components/des
 
 - obra/test-driven-development : tests écrits avant les composants (TDD strict).
 - Approche composant-par-composant : un fichier CSS par composant, un fichier test par composant.
+
+---
+
+## Mise à jour 2026-04-04 — Application palette Material Design 3 designer (maquettes M-01 à M-06)
+
+### Contexte
+
+Application du design system complet fourni par le designer UI sur l'ensemble des écrans existants.
+Source : `/livrables/02-ux/design_mobile_designer.md` — maquettes HTML/Tailwind M-01 à M-06.
+
+### Changements appliqués
+
+#### `src/mobile/src/theme/colors.ts`
+Remplacement de l'ancienne palette par la palette MD3 complète du designer (60+ tokens).
+Tous les tokens MD3 nommés conformément au document design (`primary`, `primaryContainer`, `onSurface`, `tertiaryFixed`, etc.).
+Alias legacy préservés pour rétrocompatibilité : `primaire`, `succes`, `alerte`, `surfacePrimary`, `textePrimaire`, etc.
+
+#### `src/mobile/src/theme/theme.ts` (CRÉÉ)
+Fichier de thème central : `borderRadius`, `spacing`, `fontSize`, `fontWeight`, `touchTarget` (minHeight: 48), `shadow` (sm/md/lg).
+
+#### `src/mobile/package.json`
+Ajout `expo-linear-gradient: ~13.0.2` pour les gradients tactiques futurs.
+
+#### Écrans mis à jour
+| Fichier | Changements visuels |
+|---|---|
+| `ConnexionScreen.tsx` | Logo carré primary, titre 36px black primary, card info surfaceContainer/border-left, bouton SSO primary 56px, footer outline uppercase |
+| `ListeColisScreen.tsx` | Header primary 64px, bandeau hors-ligne error, bouton clôture tertiaryContainer |
+| `CapturePreuveScreen.tsx` | Header primaryContainer, context banner surfaceContainerLowest/border-left primary, grille 2x2 types, bouton CONFIRMER tertiaryContainer 64px |
+| `DeclarerEchecScreen.tsx` | Header error, context banner errorContainer, options radio card style, bouton ENREGISTRER error 64px |
+| `BandeauInstructionOverlay.tsx` | Fond infoFonce (#1E3A8A), titre tertiaryFixed (#7ffc97), bouton VOIR fond blanc |
+
+#### Composants design-system mis à jour
+| Composant | Tokens changés |
+|---|---|
+| `ColisItem.tsx` | Bande 4px colorée par statut, badges MD3, avatar, adresse onSurface |
+| `CarteColis.tsx` | Swipe zone `error`, texte `onPrimary`, contenu `onSurface` |
+| `BoutonCTA.tsx` | `primaire`→`primary`, `tertiaire`→`tertiaryContainer`, `danger`→`error` |
+| `BandeauProgression.tsx` | Barres `primary`/`avertissement`/`tertiaryContainer`, fond `surfaceContainerLowest` |
+| `BadgeStatut.tsx` | `succes`→tertiaryFixed, `alerte`→errorContainer, `info`→secondaryContainer |
+| `IndicateurSync.tsx` | LIVE→tertiaryContainer, OFFLINE→error, SYNC→primary |
+
+### Invariants préservés
+- Tous les `testID` inchangés (contrat avec les tests Jest)
+- Toute la logique métier inchangée (US-029/036/043/045/046/047)
+- Signatures de composants inchangées
+- Touch target 48x48 respecté sur tous les boutons interactifs

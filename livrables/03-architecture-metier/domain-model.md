@@ -1,6 +1,6 @@
 # Domain Model DocuPost
 
-> Document de référence — Version 1.0 — 2026-03-19
+> Document de référence — Version 1.2 — 2026-04-06
 > Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
 > Architecte Technique, M. Renaud Responsable Exploitation Logistique), des livrables
 > de vision (/livrables/01-vision/) et des livrables UX (/livrables/02-ux/).
@@ -42,6 +42,16 @@
 | Brique SI | Intégration SI | Composant applicatif intégré dans le SI de l'entreprise via API officielle. "L'application livreur doit devenir une brique SI à part entière." (M. Garnier) | Concept architectural | M. Garnier |
 | Notification push | Notification | Message envoyé à l'application du livreur depuis le superviseur ou le système pour signaler une instruction ou un ajout. | Domain Event | M. Renaud, Pierre |
 | Document sensible | Orchestration de Tournée | Colis contenant des documents nécessitant une preuve d'opposabilité renforcée (engagements contractuels Docaposte). | Value Object (tag) | Mme Dubois |
+| TourneePlanifiee | Planification de Tournée | Tournée importée depuis le TMS, planifiée pour une date donnée, portant un statut de planification (NON_AFFECTEE, AFFECTEE, LANCEE, CLOTUREE). Distincte de la Tournée BC-01 qui représente l'exécution terrain. | Aggregate Root | M. Renaud |
+| PlanDuJour | Planification de Tournée | Agrégat de toutes les TourneePlanifiees pour une date donnée. Point d'entrée de la supervision de planification. | Aggregate Root | M. Renaud |
+| Affectation | Planification de Tournée | Association entre une TourneePlanifiee, un livreur (LivreurId) et un véhicule pour une date. Immuable une fois enregistrée. | Entity | M. Renaud |
+| LivreurId | Tous BC | Identifiant opaque d'un livreur, propagé comme Value Object dans tous les Bounded Contexts. Correspond à l'identité technique issue de BC-06. | Value Object | M. Garnier |
+| RéférentielLivreur | Planification de Tournée | Liste des livreurs inscrits dans le système pour une journée, avec leur nomComplet et leur LivreurId. Ressource stable sur la journée, gérée par BC-07. | Domain Service (lecture) | M. Renaud |
+| EtatJournalierLivreur | Planification de Tournée | État d'un livreur pour la date du jour, dérivé exclusivement du statut de sa TourneePlanifiee dans BC-07 : SANS_TOURNEE, AFFECTE_NON_LANCE, EN_COURS. Valeur calculée, jamais stockée directement. | Value Object (calculé) | M. Renaud, US-066 |
+| SANS_TOURNEE | Planification de Tournée | Valeur de EtatJournalierLivreur : aucune TourneePlanifiee avec ce LivreurId pour la date du jour, ou la tournée associée est au statut NON_AFFECTEE. | Value Object | M. Renaud, US-066 |
+| AFFECTE_NON_LANCE | Planification de Tournée | Valeur de EtatJournalierLivreur : le livreur est affecté à une TourneePlanifiee dont le statut est AFFECTEE — tournée préparée mais non encore démarrée. | Value Object | M. Renaud, US-066 |
+| EN_COURS | Planification de Tournée | Valeur de EtatJournalierLivreur : le livreur est affecté à une TourneePlanifiee dont le statut est LANCEE — tournée en cours d'exécution terrain. | Value Object | M. Renaud, US-066 |
+| VueLivreur | Planification de Tournée (Read Model) | Projection en lecture seule agrégant LivreurId, nomComplet, EtatJournalierLivreur et TourneePlanifieeId associée. Exposée par BC-07 et consommée par BC-03 pour la page W-08. | Read Model | US-066 |
 
 ---
 
@@ -502,6 +512,169 @@ reprogrammer). Statuts et incidents strictement normalisés." (M. Renaud)
 | Événement | Déclencheur | Attributs clés | Consommateurs |
 |---|---|---|---|
 | InstructionReçue | Notification push livrée à l'app mobile | instructionId, livreurId, horodatage | BC Orchestration de Tournée |
+
+---
+
+### Bounded Context : Planification de Tournée (BC-07)
+
+> **Classification DDD** : Core Domain — deuxième différenciateur de DocuPost.
+> Responsabilité : importer les tournées depuis le TMS, planifier les affectations
+> livreur/véhicule, contrôler le lancement vers BC-01, et fournir l'état journalier
+> des livreurs à la supervision (BC-03).
+
+```mermaid
+classDiagram
+    class PlanDuJour {
+        <<Aggregate Root>>
+        Date date
+        List~TourneePlanifiee~ tournees
+        +calculerEtatLivreurs(ReferentielLivreur) List~VueLivreur~
+    }
+
+    class TourneePlanifiee {
+        <<Aggregate Root>>
+        TourneePlanifieeId id
+        String codeTms
+        Date date
+        StatutPlanification statut
+        LivreurId livreurId
+        VehiculeId vehiculeId
+        PoidsEstimeKg poidsEstime
+        +affecter(LivreurId, VehiculeId) AffectationEnregistree
+        +desaffecter() DesaffectationEnregistree
+        +lancer() TourneeLancee
+        +cloturer() TourneeCloturee
+    }
+
+    class StatutPlanification {
+        <<Value Object>>
+        NON_AFFECTEE
+        AFFECTEE
+        LANCEE
+        CLOTUREE
+    }
+
+    class Affectation {
+        <<Entity>>
+        AffectationId id
+        TourneePlanifieeId tourneePlanifieeId
+        LivreurId livreurId
+        VehiculeId vehiculeId
+        Instant horodatage
+    }
+
+    class Vehicule {
+        <<Entity>>
+        VehiculeId id
+        String immatriculation
+        CapaciteKg capaciteMaxKg
+    }
+
+    class PoidsEstime {
+        <<Value Object>>
+        Double valeurKg
+    }
+
+    class VueLivreur {
+        <<Read Model>>
+        LivreurId livreurId
+        String nomComplet
+        EtatJournalierLivreur etat
+        TourneePlanifieeId tourneePlanifieeId
+        String codeTms
+    }
+
+    class EtatJournalierLivreur {
+        <<Value Object>>
+        SANS_TOURNEE
+        AFFECTE_NON_LANCE
+        EN_COURS
+    }
+
+    PlanDuJour "1" --> "*" TourneePlanifiee : contient
+    TourneePlanifiee --> StatutPlanification : a pour statut
+    TourneePlanifiee --> Affectation : enregistre
+    TourneePlanifiee --> Vehicule : utilise
+    TourneePlanifiee --> PoidsEstime : estime
+    VueLivreur --> EtatJournalierLivreur : a pour etat
+```
+
+**Invariants de l'agrégat TourneePlanifiee** :
+1. Un livreur ne peut être affecté qu'à une seule TourneePlanifiee par jour (unicité de l'affectation livreur sur la date).
+2. Un véhicule ne peut être affecté qu'à une seule TourneePlanifiee par jour (unicité de l'affectation véhicule sur la date).
+3. Une TourneePlanifiee ne peut être lancée que si elle est au statut AFFECTEE (livreur + véhicule obligatoires).
+4. Une TourneePlanifiee au statut LANCEE ou CLOTUREE est immuable (pas de ré-affectation).
+5. Le poids estimé est recalculé par le système à chaque ajout ou retrait de colis — jamais saisi manuellement.
+
+**Règle de dérivation de EtatJournalierLivreur** :
+```
+Pour un LivreurId donné et une date donnée :
+  - Si aucune TourneePlanifiee avec ce LivreurId → SANS_TOURNEE
+  - Si TourneePlanifiee.statut == NON_AFFECTEE → SANS_TOURNEE
+    (tournée non encore attribuée à un livreur — le livreur n'est pas lié)
+  - Si TourneePlanifiee.statut == AFFECTEE → AFFECTE_NON_LANCE
+  - Si TourneePlanifiee.statut == LANCEE → EN_COURS
+  - Si TourneePlanifiee.statut == CLOTUREE → SANS_TOURNEE
+    (tournée terminée — le livreur est de nouveau disponible)
+```
+
+**SOURCE DE VÉRITÉ DES ÉTATS LIVREUR** :
+BC-07 est la seule source authoritative pour EtatJournalierLivreur.
+BC-03 (VueTournee) n'est PAS consulté pour dériver l'état des livreurs.
+Raison : VueTournee est alimentée par les events BC-01 (exécution terrain) et peut
+être en retard par rapport à la réalité de planification. Croiser BC-03 introduirait
+une ambiguïté entre "LANCEE dans la planification" et "premier event d'exécution reçu",
+ce qui violerait le principe d'Aggregate Root de TourneePlanifiee comme source d'état.
+
+**Domain Events émis** :
+- `TourneeImporteeTMS` — tournée reçue du TMS via ACL.
+- `CompositionVerifiee` — colis de la tournée vérifiés.
+- `AffectationEnregistree` — livreur + véhicule affectés à une TourneePlanifiee.
+- `DesaffectationEnregistree` — livreur désaffecté d'une TourneePlanifiee.
+- `TourneeLancee` — point de couplage unique vers BC-01 : déclenche la création de la Tournée d'exécution.
+- `TourneeCloturee` — clôture de planification après clôture terrain.
+
+**Événements consommés par BC-03 (VueLivreur)** :
+BC-03 souscrit aux events BC-07 pour maintenir la page W-08 à jour en temps réel :
+- `AffectationEnregistree` → met à jour EtatJournalierLivreur vers AFFECTE_NON_LANCE
+- `DesaffectationEnregistree` → met à jour EtatJournalierLivreur vers SANS_TOURNEE
+- `TourneeLancee` → met à jour EtatJournalierLivreur vers EN_COURS
+- `TourneeCloturee` → met à jour EtatJournalierLivreur vers SANS_TOURNEE
+
+**Stratégie d'implémentation VueLivreur (MVP vs post-MVP)** :
+- MVP (Option A — recommandée) : agrégation à la volée depuis `TourneePlanifieeRepository`
+  (BC-07) + `RéférentielLivreur`. Dérivation de l'état par la règle ci-dessus.
+  Pas de table dédiée. Mise à jour temps réel via WebSocket STOMP sur les events BC-07.
+- Post-MVP (Option B — CQRS complet) : Read Model `VueLivreur` maintenu en base
+  par projection des Domain Events BC-07. Alignement CQRS complet.
+
+---
+
+### Bounded Context : Supervision — Mise à jour pour US-066
+
+> La section ci-dessous complète le modèle BC-03 existant avec le Read Model VueLivreur.
+
+**Ajout au Read Model BC-03** :
+
+```mermaid
+classDiagram
+    class VueLivreur {
+        <<Read Model BC-07 exposé à BC-03>>
+        LivreurId livreurId
+        String nomComplet
+        EtatJournalierLivreur etat
+        TourneePlanifieeId tourneePlanifieeId
+        String codeTms
+    }
+```
+
+**Relation BC-07 → BC-03 pour VueLivreur** :
+- Relation : Customer/Supplier (BC-03 est Customer, BC-07 est Supplier).
+- Mécanisme : BC-07 expose un endpoint `GET /api/supervision/livreurs/etat-du-jour`
+  (Published Language). BC-03 consomme également les Domain Events BC-07 pour la
+  mise à jour temps réel via WebSocket STOMP.
+- BC-03 NE possède PAS la logique de dérivation des états : cette logique réside
+  exclusivement dans BC-07 (méthode `calculerEtatLivreurs` sur PlanDuJour).
 
 ---
 

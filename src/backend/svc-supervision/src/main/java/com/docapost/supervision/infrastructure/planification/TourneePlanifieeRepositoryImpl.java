@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * TourneePlanifieeRepositoryImpl — Implémentation JPA BC-07
@@ -69,5 +70,11 @@ public class TourneePlanifieeRepositoryImpl implements TourneePlanifieeRepositor
     @Override
     public boolean isVehiculeDejaAffecte(String vehiculeId, LocalDate date) {
         return jpaRepository.existsByVehiculeIdAndDate(vehiculeId, date);
+    }
+
+    @Override
+    public Optional<TourneePlanifiee> findByLivreurIdAndDate(String livreurId, LocalDate date) {
+        return jpaRepository.findAffecteeOrLanceeByLivreurIdAndDate(livreurId, date)
+                .map(TourneePlanifieeMapper::toDomain);
     }
 }

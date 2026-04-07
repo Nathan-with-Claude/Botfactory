@@ -1,6 +1,7 @@
 package com.docapost.supervision.interfaces.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -26,12 +27,20 @@ import java.util.List;
  *
  * Profil "dev" :
  *   - MockJwtAuthFilter injecte automatiquement superviseur-001 / ROLE_SUPERVISEUR.
+ *   - CORS : toutes origines autorisées (app.cors.allowed-origins=*).
+ *   - Endpoint interne : pas de contrôle du secret (app.internal.secret=dev-secret-ignored).
  *
  * Profil "prod" (US-020) :
  *   - OAuth2 Resource Server activé — validation JWT Keycloak.
  *   - Le claim "roles" est converti en GrantedAuthority Spring Security.
  *   - Invariant US-020 SC2 : le rôle LIVREUR ne peut PAS accéder aux routes supervision.
  *   - Invariant US-020 SC4 : le rôle DSI peut accéder au module preuves (journalisé).
+ *   - CORS : origines lues depuis ${app.cors.allowed-origins} (pas de wildcard hardcodé).
+ *   - Endpoint interne : header X-Internal-Secret requis via ${app.internal.secret}.
+ *
+ * US-058 :
+ *   - CORS externalisé via la propriété app.cors.allowed-origins (défaut : * en dev).
+ *   - /api/supervision/internal/** protégé par InternalSecretFilter en prod.
  *
  * Toutes les routes /api/supervision/** nécessitent ROLE_SUPERVISEUR ou ROLE_DSI.
  * Les WebSockets /ws/** sont permises (authentification gérée côté STOMP si nécessaire).
@@ -43,6 +52,20 @@ public class SecurityConfig {
 
     private final MockJwtAuthFilter mockJwtAuthFilter;
     private final Environment environment;
+
+    /**
+     * Origines CORS autorisées. Externalisées pour ne pas hardcoder "*" en prod.
+     * Défaut : "*" (dev). En prod, configurer via la variable ALLOWED_ORIGINS.
+     */
+    @Value("${app.cors.allowed-origins:*}")
+    private String allowedOriginsConfig;
+
+    /**
+     * Secret partagé pour l'endpoint interne (appels inter-services).
+     * En dev : valeur ignorée. En prod, configurer via INTERNAL_SECRET.
+     */
+    @Value("${app.internal.secret:dev-secret-ignored}")
+    private String internalSecret;
 
     public SecurityConfig(
             @Autowired(required = false) MockJwtAuthFilter mockJwtAuthFilter,
@@ -68,6 +91,9 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()          // WebSocket endpoint
+                        // US-032 : endpoint interne inter-services (SupervisionNotifier depuis svc-tournee)
+                        // Pas de JWT utilisateur — protégé par le réseau interne uniquement
+                        .requestMatchers("/api/supervision/internal/**").permitAll()
                         // US-020 SC4 : module preuves accessible aux rôles DSI et SUPERVISEUR
                         .requestMatchers("/api/preuves/**").hasAnyRole("SUPERVISEUR", "DSI")
                         // Routes accessibles aux LIVREURS (polling instructions + marquage exécution + prise en compte)
@@ -79,6 +105,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/planification/**").hasAnyRole("SUPERVISEUR", "DSI")
                         .anyRequest().authenticated()
                 );
+
+        // US-058 — Filtre secret interne (actif sur tous les profils, no-op en dev)
+        http.addFilterBefore(internalSecretFilter(), UsernamePasswordAuthenticationFilter.class);
 
         if (mockJwtAuthFilter != null) {
             http.addFilterBefore(mockJwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -114,12 +143,28 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        // US-058 : origines lues depuis la configuration, pas hardcodées
+        // Valeur par défaut "*" pour le dev, externalisée via ${ALLOWED_ORIGINS} en prod
+        List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+        // allowCredentials ne peut pas être true avec allowedOriginPatterns("*")
+        // En prod, les origines sont explicites → allowCredentials peut être activé
+        config.setAllowCredentials(!"*".equals(allowedOriginsConfig));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    /**
+     * US-058 — Filtre de protection de l'endpoint interne inter-services.
+     * En prod, le header X-Internal-Secret doit correspondre à ${app.internal.secret}.
+     * En dev (secret = "dev-secret-ignored") ou si le secret est vide/non configuré,
+     * toutes les requêtes sont acceptées (bypass).
+     */
+    @Bean
+    public InternalSecretFilter internalSecretFilter() {
+        return new InternalSecretFilter(internalSecret);
     }
 }

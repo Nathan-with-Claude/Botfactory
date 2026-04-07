@@ -327,84 +327,146 @@ export default function DetailTourneePlanifieePage({
   };
 
   const livreurNomSelectionne = () => livreurs.find(l => l.id === livreurSelectionne)?.nom ?? livreurSelectionne;
-  const peutValider = livreurSelectionne && vehiculeSelectionne;
+  // Un livreur est valide si : disponible OU déjà affecté à cette tournée (réaffectation)
+  const livreurSelectionneValide = !livreurSelectionne ||
+    (livreurs.find(l => l.id === livreurSelectionne)?.disponible !== false) ||
+    livreurSelectionne === detail?.livreurId;
+  const peutValider = !!livreurSelectionne && !!vehiculeSelectionne && livreurSelectionneValide;
   const tourneeVerrouillee = detail?.statut === 'LANCEE';
+
+  // ─── Désaffectation (US-050) ─────────────────────────────────────────────────
+
+  const desaffecterTournee = async () => {
+    if (!detail) return;
+    const msg = `Désaffecter ${detail.livreurNom} de la tournée ${detail.codeTms} ?`;
+    if (!window.confirm(msg)) return;
+    setActionEnCours(true);
+    setErreur(null);
+    try {
+      const res = await fetchFn(
+        `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/affectation`,
+        { method: 'DELETE' }
+      );
+      if (res.status === 409) {
+        setErreur('Impossible de désaffecter un livreur d\'une tournée en cours. Clôturez d\'abord la tournée depuis l\'application mobile.');
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setMessageSucces(`Livreur désaffecté de la tournée ${detail.codeTms}.`);
+      setTimeout(() => setMessageSucces(null), 3000);
+      setLivreurSelectionne('');
+      setVehiculeSelectionne('');
+      chargerDetail();
+    } catch (err) {
+      if (!erreur) {
+        setErreur('Erreur réseau lors de la désaffectation.');
+      }
+    } finally {
+      setActionEnCours(false);
+    }
+  };
 
   // Dépassement non accepté = dépassement détecté ET pas encore forcé ET panneau pas ouvert
   const depassementNonForce = compatibilite?.resultat === 'DEPASSEMENT' && !depassementForce;
   const peutLancer = peutValider && !depassementNonForce;
 
+  // ─── Helpers couleur statut ───────────────────────────────────────────────
+
+  const statutLabel = (statut: string) => {
+    if (statut === 'NON_AFFECTEE') return 'Non affectée';
+    if (statut === 'AFFECTEE') return 'Affectée';
+    return 'Lancée';
+  };
+
+  const statutColorClass = (statut: string) => {
+    if (statut === 'NON_AFFECTEE') return 'text-error';
+    if (statut === 'AFFECTEE') return 'text-emerald-600';
+    return 'text-primary';
+  };
+
   // ─── Rendu ──────────────────────────────────────────────────────────────────
 
   if (loading) return <div data-testid="chargement-detail">Chargement...</div>;
-  if (erreur && !detail) return <div data-testid="erreur-detail" style={{ color: '#842029' }}>{erreur}</div>;
+  if (erreur && !detail) return <div data-testid="erreur-detail" className="text-error">{erreur}</div>;
   if (!detail) return null;
 
   return (
-    <div data-testid="detail-tournee-planifiee-page" style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 900 }}>
+    <div data-testid="detail-tournee-planifiee-page" className="font-body p-4 max-w-3xl mx-auto">
 
       {/* Header */}
-      <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <button onClick={onRetour} data-testid="btn-retour" style={btnSecondaire}>
-          {'< Plan du jour'}
+      <header className="flex items-center gap-3 mb-3">
+        <button
+          onClick={onRetour}
+          data-testid="btn-retour"
+          className="flex items-center gap-1 px-3 py-1.5 bg-surface-container text-on-surface-variant border border-outline-variant/30 rounded-md text-sm font-medium hover:bg-surface-container-high transition-colors"
+        >
+          <span className="material-symbols-outlined text-base leading-none">arrow_back</span>
+          Plan du jour
         </button>
-        <h2 style={{ margin: 0, fontSize: 18 }}>
-          Tournée {detail.codeTms} —{' '}
-          <span style={{ color: detail.statut === 'NON_AFFECTEE' ? '#dc3545' : detail.statut === 'AFFECTEE' ? '#198754' : '#0d6efd' }}>
-            {detail.statut === 'NON_AFFECTEE' ? 'Non affectée' : detail.statut === 'AFFECTEE' ? 'Affectée' : 'Lancée'}
+        <h2 className="m-0 text-lg font-bold text-on-surface">
+          Tournée {detail.codeTms}{' '}
+          <span className={`font-semibold ${statutColorClass(detail.statut)}`}>
+            — {statutLabel(detail.statut)}
           </span>
           {detail.anomalies.length > 0 && (
-            <span data-testid="indicateur-anomalie" style={{ marginLeft: 10, color: '#856404' }}>⚠ Surcharge</span>
+            <span
+              data-testid="indicateur-anomalie"
+              className="ml-2 text-sm font-medium text-amber-700"
+            >
+              ⚠ Surcharge
+            </span>
           )}
         </h2>
       </header>
 
       {/* Méta */}
-      <div style={{ background: '#f8f9fa', borderRadius: 4, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#495057' }}>
+      <div className="bg-surface-container-low rounded-xl px-4 py-2.5 mb-3 text-sm text-on-surface-variant border border-outline-variant/10">
         Import TMS du {detail.date} à {new Date(detail.importeeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
         &nbsp;|&nbsp;{detail.nbColis} colis&nbsp;|&nbsp;{detail.zones.length} zone(s)
         {detail.poidsEstimeKg != null && (
-          <>&nbsp;|&nbsp;<strong>Poids estimé : {detail.poidsEstimeKg} kg</strong></>
+          <>&nbsp;|&nbsp;<strong className="font-semibold text-on-surface">Poids estimé : {detail.poidsEstimeKg} kg</strong></>
         )}
       </div>
 
       {/* Messages */}
       {messageSucces && (
-        <div data-testid="message-succes" style={{ background: '#d1e7dd', borderRadius: 4, padding: '8px 12px', marginBottom: 8, color: '#0f5132' }}>
+        <div data-testid="message-succes" className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-2.5 mb-2 text-sm">
           {messageSucces}
         </div>
       )}
       {erreur && (
-        <div data-testid="message-erreur" style={{ background: '#f8d7da', borderRadius: 4, padding: '8px 12px', marginBottom: 8, color: '#842029' }}>
+        <div data-testid="message-erreur" className="bg-error-container/40 border border-error/10 text-on-error-container rounded-xl px-4 py-2.5 mb-2 text-sm">
           {erreur}
         </div>
       )}
 
       {/* Onglets */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #dee2e6', marginBottom: 16 }}>
+      <div className="flex items-center gap-8 border-b border-outline-variant/15 mb-6">
         <button
           data-testid="onglet-composition"
           onClick={() => setOngletActif('composition')}
-          style={{
-            ...ongletStyle,
-            borderBottom: ongletActif === 'composition' ? '2px solid #0d6efd' : '2px solid transparent',
-            color: ongletActif === 'composition' ? '#0d6efd' : '#6c757d',
-          }}
+          className={`px-4 py-4 text-sm flex items-center gap-2 border-b-2 transition-colors ${
+            ongletActif === 'composition'
+              ? 'font-bold text-primary border-primary'
+              : 'font-medium text-on-surface-variant hover:text-primary border-transparent'
+          }`}
         >
+          <span className="material-symbols-outlined text-base leading-none">inventory_2</span>
           Composition
           {detail.compositionVerifiee && (
-            <span data-testid="badge-composition-verifiee" style={{ marginLeft: 6, color: '#198754', fontSize: 11 }}>✓</span>
+            <span data-testid="badge-composition-verifiee" className="ml-1 text-emerald-600 text-xs font-bold">✓</span>
           )}
         </button>
         <button
           data-testid="onglet-affectation"
           onClick={() => setOngletActif('affectation')}
-          style={{
-            ...ongletStyle,
-            borderBottom: ongletActif === 'affectation' ? '2px solid #0d6efd' : '2px solid transparent',
-            color: ongletActif === 'affectation' ? '#0d6efd' : '#6c757d',
-          }}
+          className={`px-4 py-4 text-sm flex items-center gap-2 border-b-2 transition-colors ${
+            ongletActif === 'affectation'
+              ? 'font-bold text-primary border-primary'
+              : 'font-medium text-on-surface-variant hover:text-primary border-transparent'
+          }`}
         >
+          <span className="material-symbols-outlined text-base leading-none">person_pin</span>
           Affectation
         </button>
       </div>
@@ -413,21 +475,26 @@ export default function DetailTourneePlanifieePage({
       {ongletActif === 'composition' && (
         <div data-testid="contenu-composition">
           {/* Zones */}
-          <section style={{ marginBottom: 16 }}>
-            <h3 style={h3Style}>Zones couvertes</h3>
-            {detail.zones.map(z => (
-              <span key={z.nom} style={{ marginRight: 12, background: '#e9ecef', borderRadius: 4, padding: '3px 8px', fontSize: 13 }}>
-                {z.nom} — {z.nbColis} colis
-              </span>
-            ))}
+          <section className="mb-4">
+            <h3 className="text-sm font-bold text-on-surface-variant mb-2">Zones couvertes</h3>
+            <div className="flex flex-wrap gap-2">
+              {detail.zones.map(z => (
+                <span
+                  key={z.nom}
+                  className="bg-surface-container rounded-md px-3 py-1 text-sm text-on-surface border border-outline-variant/20"
+                >
+                  {z.nom} — {z.nbColis} colis
+                </span>
+              ))}
+            </div>
           </section>
 
           {/* Contraintes */}
           {detail.contraintes.length > 0 && (
-            <section style={{ marginBottom: 16 }}>
-              <h3 style={h3Style}>Contraintes horaires</h3>
+            <section className="mb-4">
+              <h3 className="text-sm font-bold text-on-surface-variant mb-2">Contraintes horaires</h3>
               {detail.contraintes.map(c => (
-                <div key={c.libelle} style={{ fontSize: 13, marginBottom: 4 }}>
+                <div key={c.libelle} className="text-sm text-on-surface mb-1">
                   ⚑ {c.libelle} — {c.nbColisAffectes} colis
                 </div>
               ))}
@@ -435,10 +502,10 @@ export default function DetailTourneePlanifieePage({
           )}
 
           {/* Anomalies */}
-          <section data-testid="section-anomalies" style={{ marginBottom: 16 }}>
-            <h3 style={h3Style}>Anomalies</h3>
+          <section data-testid="section-anomalies" className="mb-4">
+            <h3 className="text-sm font-bold text-on-surface-variant mb-2">Anomalies</h3>
             {detail.anomalies.length === 0 ? (
-              <div data-testid="aucune-anomalie" style={{ color: '#198754', fontSize: 13 }}>
+              <div data-testid="aucune-anomalie" className="text-emerald-600 text-sm">
                 Aucune anomalie détectée ✓
               </div>
             ) : (
@@ -446,12 +513,14 @@ export default function DetailTourneePlanifieePage({
                 <div
                   key={a.code}
                   data-testid={`anomalie-${a.code}`}
-                  style={{
-                    background: '#fff3cd', border: '1px solid #ffc107',
-                    borderRadius: 4, padding: '10px 12px', marginBottom: 8, fontSize: 13
-                  }}
+                  className="bg-tertiary-fixed/20 border border-tertiary/10 rounded-xl p-5 mb-2 flex gap-4 items-start"
                 >
-                  <strong>⚠ {a.code}</strong> — {a.description}
+                  <div className="bg-tertiary/10 p-2 rounded-lg text-tertiary flex-shrink-0">
+                    <span className="material-symbols-outlined text-base leading-none">error</span>
+                  </div>
+                  <div className="text-sm text-on-surface">
+                    <strong className="font-semibold">⚠ {a.code}</strong> — {a.description}
+                  </div>
                 </div>
               ))
             )}
@@ -463,11 +532,11 @@ export default function DetailTourneePlanifieePage({
               data-testid="btn-valider-composition"
               onClick={validerComposition}
               disabled={actionEnCours || detail.compositionVerifiee}
-              style={{
-                ...btnPrimaire,
-                opacity: detail.compositionVerifiee ? 0.6 : 1,
-              }}
+              className={`px-5 py-2.5 bg-primary text-on-primary rounded-md font-semibold text-sm shadow-sm flex items-center gap-2 hover:opacity-90 ${
+                detail.compositionVerifiee ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
+              <span className="material-symbols-outlined text-base leading-none">check_circle</span>
               {detail.compositionVerifiee ? 'Composition déjà vérifiée ✓' : 'Valider la vérification'}
             </button>
           )}
@@ -476,8 +545,9 @@ export default function DetailTourneePlanifieePage({
           <button
             data-testid="btn-telecharger-liste"
             onClick={telechargerListeCSV}
-            style={{ ...btnSecondaire, marginTop: 12 }}
+            className="mt-3 px-5 py-2 bg-surface-container text-on-surface border border-outline-variant/30 rounded-md font-medium text-sm hover:bg-surface-container-high transition-colors flex items-center gap-2"
           >
+            <span className="material-symbols-outlined text-base leading-none">download</span>
             Télécharger la liste
           </button>
         </div>
@@ -487,63 +557,101 @@ export default function DetailTourneePlanifieePage({
       {ongletActif === 'affectation' && (
         <div data-testid="contenu-affectation">
           {tourneeVerrouillee ? (
-            <div data-testid="tournee-lancee-readonly" style={{ color: '#6c757d', fontSize: 14 }}>
-              Tournée lancée à {detail.lancee ? new Date(detail.lancee).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--'}
-              &nbsp;— {detail.livreurNom} / {detail.vehiculeId}
+            <div data-testid="tournee-lancee-readonly" className="text-on-surface-variant text-sm">
+              <p className="mb-2">
+                Tournée lancée à {detail.lancee ? new Date(detail.lancee).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--'}
+                &nbsp;— {detail.livreurNom} / {detail.vehiculeId}
+              </p>
+              <p data-testid="msg-tournee-en-cours" className="text-error text-sm">
+                Impossible de désaffecter un livreur d&apos;une tournée en cours. Clôturez d&apos;abord la tournée depuis l&apos;application mobile.
+              </p>
             </div>
           ) : (
             <>
-              {/* Sélecteur Livreur */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6, fontSize: 14 }}>
-                  Livreur
-                </label>
-                <select
-                  data-testid="select-livreur"
-                  value={livreurSelectionne}
-                  onChange={e => setLivreurSelectionne(e.target.value)}
-                  style={selectStyle}
+              {/* Bouton Désaffecter — US-050 (visible si AFFECTEE) */}
+              {detail.statut === 'AFFECTEE' && (
+                <div
+                  data-testid="section-desaffectation"
+                  className="mb-4 px-4 py-3 bg-[#fff3e0] border border-orange-200 rounded-xl flex items-center gap-4"
                 >
-                  <option value="">Sélectionner un livreur disponible...</option>
-                  {livreurs.map(l => (
-                    <option key={l.id} value={l.id} disabled={!l.disponible}>
-                      {l.nom}{!l.disponible ? ` — Indisponible (${l.tourneeAffectee ?? 'déjà affecté'})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <div style={{ fontSize: 12, color: '#6c757d', marginTop: 4 }}>
-                  Livreurs disponibles : {livreurs.filter(l => l.disponible).map(l => l.nom).join(', ') || 'Aucun'}
-                  &nbsp;({livreurs.filter(l => l.disponible).length}/{livreurs.length})
+                  <span className="text-sm text-amber-900">
+                    Livreur affecté : <strong className="font-semibold">{detail.livreurNom}</strong> / {detail.vehiculeId}
+                  </span>
+                  <button
+                    data-testid="btn-desaffecter"
+                    onClick={desaffecterTournee}
+                    disabled={actionEnCours}
+                    className="px-4 py-2 bg-error/10 text-error border border-error/20 rounded-md font-semibold text-sm hover:bg-error hover:text-on-error transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Désaffecter
+                  </button>
                 </div>
-              </div>
+              )}
 
-              {/* Sélecteur Véhicule */}
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6, fontSize: 14 }}>
-                  Véhicule
-                  {detail.poidsEstimeKg != null && (
-                    <span style={{ fontWeight: 'normal', fontSize: 12, color: '#6c757d', marginLeft: 8 }}>
-                      (charge estimée : {detail.poidsEstimeKg} kg)
-                    </span>
-                  )}
-                </label>
-                <select
-                  data-testid="select-vehicule"
-                  value={vehiculeSelectionne}
-                  onChange={e => setVehiculeSelectionne(e.target.value)}
-                  style={selectStyle}
-                  disabled={!livreurSelectionne}
-                >
-                  <option value="">Sélectionner un véhicule disponible...</option>
-                  {vehicules.map(v => (
-                    <option key={v.id} value={v.id} disabled={!v.disponible}>
-                      {v.id}{v.capaciteKg != null ? ` (${v.capaciteKg} kg)` : ''}{!v.disponible ? ` — Indisponible (${v.tourneeAffectee ?? 'déjà affecté'})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <div style={{ fontSize: 12, color: '#6c757d', marginTop: 4 }}>
-                  Véhicules disponibles : {vehicules.filter(v => v.disponible).map(v => v.id).join(', ') || 'Aucun'}
-                  &nbsp;({vehicules.filter(v => v.disponible).length}/{vehicules.length})
+              {/* Sélecteurs dans un conteneur card */}
+              <div className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 mb-4">
+                {/* Sélecteur Livreur */}
+                <div className="mb-5">
+                  <label className="text-[10px] font-bold text-outline uppercase mb-1.5 block tracking-wide">
+                    Livreur
+                  </label>
+                  <div className="relative">
+                    <select
+                      data-testid="select-livreur"
+                      value={livreurSelectionne}
+                      onChange={e => setLivreurSelectionne(e.target.value)}
+                      className="w-full bg-white border border-outline-variant/50 rounded-lg py-2.5 px-4 text-sm appearance-none focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer text-on-surface"
+                    >
+                      <option value="">Sélectionner un livreur disponible...</option>
+                      {livreurs.map(l => {
+                        const estLivreurActuel = l.id === detail?.livreurId;
+                        const estDesactive = !l.disponible && !estLivreurActuel;
+                        return (
+                          <option key={l.id} value={l.id} disabled={estDesactive}>
+                            {l.nom}{estDesactive ? ` — Déjà affecté (${l.tourneeAffectee ?? 'autre tournée'})` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-base">expand_more</span>
+                  </div>
+                  <div className="text-xs text-on-surface-variant mt-1">
+                    Livreurs disponibles : {livreurs.filter(l => l.disponible).map(l => l.nom).join(', ') || 'Aucun'}
+                    &nbsp;({livreurs.filter(l => l.disponible).length}/{livreurs.length})
+                  </div>
+                </div>
+
+                {/* Sélecteur Véhicule */}
+                <div>
+                  <label className="text-[10px] font-bold text-outline uppercase mb-1.5 block tracking-wide">
+                    Véhicule
+                    {detail.poidsEstimeKg != null && (
+                      <span className="normal-case font-normal text-on-surface-variant ml-2 text-[10px]">
+                        (charge estimée : {detail.poidsEstimeKg} kg)
+                      </span>
+                    )}
+                  </label>
+                  <div className="relative">
+                    <select
+                      data-testid="select-vehicule"
+                      value={vehiculeSelectionne}
+                      onChange={e => setVehiculeSelectionne(e.target.value)}
+                      disabled={!livreurSelectionne}
+                      className="w-full bg-white border border-outline-variant/50 rounded-lg py-2.5 px-4 text-sm appearance-none focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer text-on-surface disabled:bg-surface-container disabled:cursor-not-allowed"
+                    >
+                      <option value="">Sélectionner un véhicule disponible...</option>
+                      {vehicules.map(v => (
+                        <option key={v.id} value={v.id} disabled={!v.disponible}>
+                          {v.id}{v.capaciteKg != null ? ` (${v.capaciteKg} kg)` : ''}{!v.disponible ? ` — Indisponible (${v.tourneeAffectee ?? 'déjà affecté'})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-base">expand_more</span>
+                  </div>
+                  <div className="text-xs text-on-surface-variant mt-1">
+                    Véhicules disponibles : {vehicules.filter(v => v.disponible).map(v => v.id).join(', ') || 'Aucun'}
+                    &nbsp;({vehicules.filter(v => v.disponible).length}/{vehicules.length})
+                  </div>
                 </div>
               </div>
 
@@ -551,38 +659,39 @@ export default function DetailTourneePlanifieePage({
               {compatibilite && (
                 <div
                   data-testid={`indicateur-compatibilite-${compatibilite.resultat}`}
-                  style={{
-                    borderRadius: 4,
-                    padding: '10px 14px',
-                    marginBottom: 12,
-                    fontSize: 13,
-                    background: compatibilite.resultat === 'COMPATIBLE' ? '#d1e7dd' : '#f8d7da',
-                    border: `1px solid ${compatibilite.resultat === 'COMPATIBLE' ? '#badbcc' : '#f5c2c7'}`,
-                    color: compatibilite.resultat === 'COMPATIBLE' ? '#0f5132' : '#842029',
-                  }}
+                  className={`rounded-xl p-4 mb-4 text-sm ${
+                    compatibilite.resultat === 'COMPATIBLE'
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3'
+                      : 'bg-error-container/40 border border-error/10'
+                  }`}
                 >
                   {compatibilite.resultat === 'COMPATIBLE' && (
-                    <span>Véhicule compatible — marge {compatibilite.margeOuDepassementKg} kg</span>
+                    <>
+                      <span className="material-symbols-outlined text-emerald-600 text-base leading-none">check_circle</span>
+                      <span>Véhicule compatible — marge {compatibilite.margeOuDepassementKg} kg</span>
+                    </>
                   )}
 
                   {compatibilite.resultat === 'DEPASSEMENT' && !depassementForce && (
                     <div>
-                      <strong>Chargement trop lourd</strong> — {compatibilite.message}
+                      <p className="font-semibold text-error mb-1">Chargement trop lourd</p>
+                      <p className="text-on-surface-variant text-xs mb-3">{compatibilite.message}</p>
 
                       {/* ─── Lien réaffectation (US-034 SC1) ─── */}
-                      <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <div className="flex gap-2 items-center flex-wrap">
                         <button
                           data-testid="btn-reaffecter-vehicule-plus-grand"
                           onClick={ouvrirPanneauReaffectation}
-                          style={{ ...btnPrimaire, fontSize: 13, padding: '6px 12px' }}
+                          className="px-4 py-2 bg-primary text-on-primary rounded-md font-semibold text-sm hover:opacity-90 shadow-sm flex items-center gap-2"
                         >
+                          <span className="material-symbols-outlined text-base leading-none">swap_horiz</span>
                           Réaffecter à un véhicule plus grand
                         </button>
                         <button
                           data-testid="btn-affecter-quand-meme"
                           onClick={forcerAffectationMalgreDepassement}
                           disabled={actionEnCours}
-                          style={{ ...btnSecondaireOrange, fontSize: 13, padding: '6px 12px' }}
+                          className="px-4 py-2 bg-[#fff3e0] text-amber-900 border border-orange-300 rounded-md font-semibold text-sm hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Affecter quand même
                         </button>
@@ -591,7 +700,7 @@ export default function DetailTourneePlanifieePage({
                   )}
 
                   {compatibilite.resultat === 'DEPASSEMENT' && depassementForce && (
-                    <span>Affectation forcée malgré le dépassement — surveiller la tournée</span>
+                    <span className="text-amber-800">Affectation forcée malgré le dépassement — surveiller la tournée</span>
                   )}
                 </div>
               )}
@@ -600,64 +709,49 @@ export default function DetailTourneePlanifieePage({
               {panneauReaffectationOuvert && (
                 <div
                   data-testid="panneau-reaffectation"
-                  style={{
-                    border: '1px solid #0d6efd',
-                    borderRadius: 6,
-                    padding: 16,
-                    marginBottom: 16,
-                    background: '#f0f4ff',
-                  }}
+                  className="border border-primary/30 rounded-xl p-4 mb-4 bg-primary-fixed/10"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <strong style={{ fontSize: 14 }}>
+                  <div className="flex justify-between items-center mb-3">
+                    <strong className="text-sm font-semibold text-on-surface">
                       Véhicules compatibles (capacité ≥ {compatibilite?.poidsEstimeKg ?? detail.poidsEstimeKg} kg)
                     </strong>
                     <button
                       data-testid="btn-fermer-panneau-reaffectation"
                       onClick={() => setPanneauReaffectationOuvert(false)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#6c757d' }}
+                      className="bg-transparent border-none cursor-pointer text-lg text-on-surface-variant hover:text-on-surface transition-colors p-1 leading-none"
                     >
                       ×
                     </button>
                   </div>
 
                   {chargementVehicules && (
-                    <div data-testid="chargement-vehicules-compatibles" style={{ fontSize: 13, color: '#6c757d' }}>
+                    <div data-testid="chargement-vehicules-compatibles" className="text-sm text-on-surface-variant">
                       Recherche en cours...
                     </div>
                   )}
 
                   {!chargementVehicules && vehiculesCompatibles.length === 0 && (
-                    <div data-testid="aucun-vehicule-disponible" style={{ fontSize: 13, color: '#6c757d', fontStyle: 'italic' }}>
+                    <div data-testid="aucun-vehicule-disponible" className="text-sm text-on-surface-variant italic">
                       Aucun véhicule disponible pour cette capacité
                     </div>
                   )}
 
                   {!chargementVehicules && vehiculesCompatibles.length > 0 && (
-                    <ul data-testid="liste-vehicules-compatibles" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    <ul data-testid="liste-vehicules-compatibles" className="list-none p-0 m-0 space-y-1.5">
                       {vehiculesCompatibles.map(v => (
                         <li
                           key={v.vehiculeId}
                           data-testid={`vehicule-compatible-${v.vehiculeId}`}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '8px 12px',
-                            borderRadius: 4,
-                            marginBottom: 6,
-                            background: '#fff',
-                            border: '1px solid #dee2e6',
-                          }}
+                          className="flex justify-between items-center px-3 py-2 rounded-lg bg-white border border-outline-variant/20"
                         >
-                          <div style={{ fontSize: 13 }}>
-                            <strong>{v.vehiculeId}</strong> — {v.capaciteKg} kg — {v.typeVehicule}
+                          <div className="text-sm text-on-surface">
+                            <strong className="font-semibold">{v.vehiculeId}</strong> — {v.capaciteKg} kg — {v.typeVehicule}
                           </div>
                           <button
                             data-testid={`btn-selectionner-vehicule-${v.vehiculeId}`}
                             onClick={() => selectionnerVehiculeCompatible(v.vehiculeId)}
                             disabled={actionEnCours}
-                            style={{ ...btnPrimaire, fontSize: 12, padding: '4px 10px' }}
+                            className="px-3 py-1.5 bg-primary text-on-primary rounded-md font-semibold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Sélectionner
                           </button>
@@ -668,20 +762,23 @@ export default function DetailTourneePlanifieePage({
                 </div>
               )}
 
-              {/* Message si sélection incomplète */}
+              {/* Message si sélection incomplète ou livreur indisponible */}
               {!peutValider && (
-                <div data-testid="msg-selection-incomplete" style={{ fontSize: 13, color: '#6c757d', marginBottom: 12 }}>
-                  Veuillez sélectionner un livreur{!livreurSelectionne ? ' et un véhicule' : ''} pour valider l'affectation.
+                <div data-testid="msg-selection-incomplete" className="text-sm text-on-surface-variant mb-3">
+                  {livreurSelectionne && !livreurSelectionneValide
+                    ? `Ce livreur est déjà affecté à une autre tournée. Veuillez en sélectionner un autre.`
+                    : `Veuillez sélectionner un livreur${!livreurSelectionne ? ' et un véhicule' : ''} pour valider l'affectation.`
+                  }
                 </div>
               )}
 
               {/* Boutons */}
-              <div style={{ display: 'flex', gap: 12 }}>
+              <div className="flex gap-3 flex-wrap">
                 <button
                   data-testid="btn-valider-affectation"
                   onClick={affecterSeulement}
                   disabled={!peutValider || actionEnCours}
-                  style={{ ...btnPrimaire, opacity: !peutValider ? 0.5 : 1 }}
+                  className={`px-5 py-2.5 bg-surface-container text-on-surface border border-outline-variant/30 rounded-md font-semibold text-sm hover:bg-surface-container-high transition-colors flex items-center gap-2 ${!peutValider ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   VALIDER L'AFFECTATION
                 </button>
@@ -690,11 +787,9 @@ export default function DetailTourneePlanifieePage({
                   data-testid="btn-valider-et-lancer"
                   onClick={affecterEtLancer}
                   disabled={!peutLancer || actionEnCours}
-                  style={{
-                    ...btnSucces,
-                    opacity: !peutLancer ? 0.5 : 1,
-                  }}
+                  className={`px-5 py-2.5 bg-primary text-on-primary rounded-md font-semibold text-sm hover:opacity-90 shadow-sm flex items-center gap-2 ${!peutLancer ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
+                  <span className="material-symbols-outlined text-base leading-none">play_arrow</span>
                   {detail.anomalies.length > 0 && !depassementNonForce
                     ? 'Lancer malgré l\'anomalie'
                     : 'VALIDER ET LANCER'}
@@ -702,7 +797,7 @@ export default function DetailTourneePlanifieePage({
               </div>
 
               {depassementNonForce && (
-                <div data-testid="msg-depassement-bloque" style={{ fontSize: 12, color: '#842029', marginTop: 6 }}>
+                <div data-testid="msg-depassement-bloque" className="text-xs text-error mt-1.5">
                   Le lancement est bloqué jusqu'à réaffectation ou forçage.
                 </div>
               )}
@@ -716,31 +811,26 @@ export default function DetailTourneePlanifieePage({
 
 // ─── Données mock pour les tests ──────────────────────────────────────────────
 
+// 6 livreurs canoniques alignés avec devLivreurs.ts (mobile) et DevDataSeeder.java (svc-supervision)
+// Règle : disponible:false = livreur affecté à une TourneePlanifiee AFFECTEE ou LANCEE ce jour
+//   - T-202 : Jean Moreau AFFECTEE (VH-04)
+//   - T-204 : Paul Dupont LANCEE (VH-03)
+//   - T-205 : Sophie Bernard AFFECTEE
+//   - T-206 : Lucas Petit AFFECTEE
+//   - Pierre Martin : EN_COURS dans BC-03 (VueTournee T-201), pas de TourneePlanifiee active → disponible
 const livreursMock: LivreurDisponible[] = [
-  { id: 'livreur-001', nom: 'P. Morel',  disponible: false, tourneeAffectee: 'T-202' }, // déjà affecté (seedé)
-  { id: 'livreur-002', nom: 'L. Petit',  disponible: false, tourneeAffectee: 'T-204' }, // déjà lancé (seedé)
-  { id: 'livreur-003', nom: 'S. Roger',  disponible: true },
-  { id: 'livreur-004', nom: 'J. Dubois', disponible: true },
-  { id: 'livreur-005', nom: 'C. Leroy',  disponible: true },
+  { id: 'livreur-001', nom: 'Pierre Martin',  disponible: true },
+  { id: 'livreur-002', nom: 'Paul Dupont',    disponible: false, tourneeAffectee: 'T-204' },   // LANCEE
+  { id: 'livreur-003', nom: 'Marie Lambert',  disponible: true },
+  { id: 'livreur-004', nom: 'Jean Moreau',    disponible: false, tourneeAffectee: 'T-202' },   // AFFECTEE
+  { id: 'livreur-005', nom: 'Sophie Bernard', disponible: false, tourneeAffectee: 'T-205' },   // AFFECTEE
+  { id: 'livreur-006', nom: 'Lucas Petit',    disponible: false, tourneeAffectee: 'T-206' },   // AFFECTEE
 ];
 
 const vehiculesMock: VehiculeDisponible[] = [
-  { id: 'VH-04', disponible: true,  capaciteKg: 700 },
-  { id: 'VH-07', disponible: false, tourneeAffectee: 'T-202', capaciteKg: 600 }, // déjà affecté (seedé)
+  { id: 'VH-04', disponible: false, tourneeAffectee: 'T-202', capaciteKg: 700 }, // affecté à Jean Moreau (T-202)
+  { id: 'VH-07', disponible: true,  capaciteKg: 600 },
   { id: 'VH-08', disponible: true,  capaciteKg: 800 },
   { id: 'VH-11', disponible: true,  capaciteKg: 700 },
-  { id: 'VH-03', disponible: false, tourneeAffectee: 'T-204', capaciteKg: 500 }, // déjà lancé (seedé)
+  { id: 'VH-03', disponible: false, tourneeAffectee: 'T-204', capaciteKg: 500 }, // lancé avec Paul Dupont (T-204)
 ];
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const ongletStyle: React.CSSProperties = {
-  padding: '8px 20px', background: 'none', border: 'none',
-  cursor: 'pointer', fontWeight: 'bold', fontSize: 14,
-};
-const h3Style: React.CSSProperties = { fontSize: 14, fontWeight: 'bold', marginBottom: 8, color: '#495057' };
-const btnPrimaire: React.CSSProperties = { background: '#0d6efd', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
-const btnSecondaire: React.CSSProperties = { background: '#6c757d', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 12px', cursor: 'pointer', fontSize: 13 };
-const btnSecondaireOrange: React.CSSProperties = { background: '#fd7e14', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
-const btnSucces: React.CSSProperties = { background: '#198754', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 14 };
-const selectStyle: React.CSSProperties = { width: '100%', padding: '8px', borderRadius: 4, border: '1px solid #ced4da', fontSize: 14 };

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Colors } from '../theme/colors';
 import { getTourneeAujourdhui, TourneeNonTrouveeError } from '../api/tourneeApi';
 import { TourneeDTO } from '../api/tourneeTypes';
 import ColisItem from '../components/ColisItem';
@@ -32,6 +33,7 @@ import { useConsignesLocales } from '../hooks/useConsignesLocales';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { IndicateurSync } from '../components/design-system/IndicateurSync';
 import { useSwipeHint } from '../hooks/useSwipeHint';
+import { offlineQueue } from '../domain/offlineQueueInstance';
 
 /** Intervalle de polling pour les instructions ENVOYEE (US-016) */
 const POLLING_INTERVAL_MS = 10_000;
@@ -83,6 +85,14 @@ export const ListeColisScreen: React.FC = () => {
 
   // Bloquant 2 — Statut réseau réel (US-026 + feedback 2026-04-01)
   const syncStatus = useNetworkStatus();
+
+  // US-062 — Compteur d'envois en attente (mis à jour à chaque changement d'état)
+  const [pendingCount, setPendingCount] = useState<number>(offlineQueue.getPendingCount());
+
+  // Rafraîchir le compteur à chaque chargement/rafraîchissement de la liste
+  useEffect(() => {
+    setPendingCount(offlineQueue.getPendingCount());
+  }, [etat]);
 
   // US-045 — Hint swipe : visible si < SEUIL_HINT (3) swipes réussis
   // Remplacement de la logique "sessions" (Bloquant 6) par la logique "swipes réussis"
@@ -369,7 +379,7 @@ export const ListeColisScreen: React.FC = () => {
     return (
       <View style={styles.centeredContainer} testID="etat-vide">
         <Text style={styles.videText} testID="message-aucun-colis">
-          Aucun colis assigne pour aujourd'hui.{'\n'}Contactez votre superviseur.
+          Aucune tournée n'a encore été commandée pour vous.{'\n'}Veuillez vous rapprocher de votre superviseur.
         </Text>
       </View>
     );
@@ -382,12 +392,10 @@ export const ListeColisScreen: React.FC = () => {
   return (
     <View style={styles.container} testID="liste-colis-screen">
       {/* Bloquant 2 — Bandeau "Hors ligne" quand réseau indisponible (feedback 2026-04-01) */}
+      {/* US-062 : pendingCount transmis pour afficher le compteur d'envois en attente */}
       {syncStatus === 'offline' && (
         <View style={styles.bandeauHorsLigne} testID="bandeau-hors-ligne">
-          <IndicateurSync syncStatus="offline" />
-          <Text style={styles.bandeauHorsLigneTexte}>
-            {' '}Hors ligne — vos actions seront synchronisees
-          </Text>
+          <IndicateurSync syncStatus="offline" pendingCount={pendingCount} />
         </View>
       )}
 
@@ -471,6 +479,7 @@ export const ListeColisScreen: React.FC = () => {
 
       {/* Liste des colis (filtree par zone si filtre actif) */}
       <FlatList
+        style={styles.flatList}
         data={colisAffiches}
         keyExtractor={(item) => item.colisId}
         renderItem={({ item }) => (
@@ -486,7 +495,7 @@ export const ListeColisScreen: React.FC = () => {
           <RefreshControl
             refreshing={rafraichissement}
             onRefresh={handleRafraichissement}
-            colors={['#2196F3']}
+            colors={[Colors.primary]}
           />
         }
         testID="flatlist-colis"
@@ -506,7 +515,11 @@ export const ListeColisScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.surface,
+    overflow: 'hidden',
+  },
+  flatList: {
+    flex: 1,
   },
   centeredContainer: {
     flex: 1,
@@ -515,22 +528,24 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   bandeauProgression: {
-    backgroundColor: '#1565C0',
-    padding: 16,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: 64,
   },
   bandeauProgressionGauche: {
     flex: 1,
   },
   resteALivrer: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   estimationFin: {
-    color: '#BBDEFB',
+    color: 'rgba(255,255,255,0.75)',
     fontSize: 14,
   },
   boutonConsignes: {
@@ -542,14 +557,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginLeft: 12,
     gap: 6,
+    minHeight: 48,
+    minWidth: 48,
   },
   boutonConsignesTexte: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontSize: 13,
     fontWeight: '700',
   },
   badge: {
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.error,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -558,54 +575,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeTexte: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontSize: 11,
     fontWeight: '800',
   },
   boutonCloture: {
-    backgroundColor: '#388E3C',
+    backgroundColor: Colors.tertiaryContainer,
     margin: 16,
     marginTop: 8,
-    borderRadius: 8,
-    padding: 14,
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
+    minHeight: 56,
+    justifyContent: 'center',
   },
   boutonClotureText: {
-    color: '#FFFFFF',
+    color: Colors.onTertiary,
     fontSize: 16,
     fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   liste: {
     paddingVertical: 8,
+    paddingBottom: 88,
   },
   chargementText: {
     marginTop: 16,
-    color: '#616161',
+    color: Colors.onSurfaceVariant,
     fontSize: 14,
   },
   erreurText: {
-    color: '#D32F2F',
+    color: Colors.error,
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
   },
   videText: {
-    color: '#616161',
+    color: Colors.onSurfaceVariant,
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
   },
   // Bloquant 2 — Bandeau hors ligne
   bandeauHorsLigne: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: Colors.error,
     paddingVertical: 8,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
   bandeauHorsLigneTexte: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,

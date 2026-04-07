@@ -8,3 +8,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Overlay glass (W-03 PanneauInstruction) ────────────────────────────── */
+.glass-overlay {
+  background: rgba(247, 249, 251, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ─── Ombre modal (W-03 PanneauInstruction) ──────────────────────────────── */
+.modal-shadow {
+  box-shadow: 0 24px 48px -12px rgba(25, 28, 30, 0.06);
+}

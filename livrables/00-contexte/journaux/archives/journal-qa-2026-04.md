@@ -44,3 +44,15 @@
 | 2026-04-03 | US-018 | Re-run L1 mvn — 23/23 PASS (svc-oms partagé, EvenementLivraisonTest=9) | src/backend/svc-oms |
 | 2026-04-03 | US-019 | Re-run L1 Jest — 47/47 PASS (authStore + ConnexionScreen) | src/mobile src/__tests__/ |
 | 2026-04-03 | US-020 | Re-run L1 Jest — 15/15 PASS (ConnexionPage + webAuthService) | src/web/supervision src/__tests__/ |
+| 2026-04-04 | US-051→059 | Scénarios as-built rédigés (59 TCs, L1/L2/L3). 6 anomalies OBS-AS-001 à OBS-AS-006. | livrables/07-tests/scenarios/corrections-as-built-scenarios.md |
+| 2026-04-04 | US-051→059 | Poste de commande tests manuels complété — section "Corrections As-Built". | livrables/06-dev/poste-de-commande-tests.md |
+| 2026-04-05 | US-034 | Scénarios + rapport créés (7 TCs L1/L2/L3) — Validée 24/24 | livrables/07-tests/scenarios/US-034-*.md |
+| 2026-04-05 | US-035 | Scénarios + rapport créés (10 TCs L1/L2) — Validée 13/13 | livrables/07-tests/scenarios/US-035-*.md |
+| 2026-04-05 | US-036 | Scénarios + rapport créés (7 TCs L1) — Validée 16/16 | livrables/07-tests/scenarios/US-036-*.md |
+| 2026-04-05 | US-037 | Scénarios + rapport créés (13 TCs L1) — Validée 352/352 | livrables/07-tests/scenarios/US-037-*.md |
+| 2026-04-05 | US-038 | Scénarios + rapport créés (8 TCs L1) — Validée 329/329 mobile | livrables/07-tests/scenarios/US-038-*.md |
+| 2026-04-05 | US-042 | Scénarios + rapport créés (4 TCs L1) — Validée 27/27 | livrables/07-tests/scenarios/US-042-*.md |
+| 2026-04-05 | US-043 | Scénarios + rapport créés (6 TCs L1) — Validée 10/10 | livrables/07-tests/scenarios/US-043-*.md |
+| 2026-04-05 | US-045 | Scénarios + rapport créés (7 TCs L1) — Validée 17/17 | livrables/07-tests/scenarios/US-045-*.md |
+| 2026-04-05 | US-047 | Scénarios + rapport créés (5 TCs L1) — Validée 365/365 non-rég | livrables/07-tests/scenarios/US-047-*.md |
+| 2026-04-05 | US-048 | Scénarios + rapport créés (5 TCs L1/L2) — Validée | livrables/07-tests/scenarios/US-048-*.md |

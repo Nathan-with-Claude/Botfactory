@@ -21,8 +21,9 @@
  * Wireframe : M-07 — Mes consignes
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
+  BackHandler,
   FlatList,
   StyleSheet,
   Text,
@@ -239,6 +240,15 @@ export function MesConsignesScreen({
   onVoirColis,
   estHorsConnexion = false,
 }: MesConsignesScreenProps): React.JSX.Element {
+  // US-055 R2 — Bouton retour Android natif : intercepté pour appeler onRetour()
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      onRetour();
+      return true;
+    });
+    return () => handler.remove();
+  }, [onRetour]);
+
   return (
     <View style={styles.container} testID="mes-consignes-screen">
       {/* Header */}

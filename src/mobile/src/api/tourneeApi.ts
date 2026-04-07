@@ -6,31 +6,27 @@ import {
   RecapitulatifTourneeDTO,
   TourneeDTO,
 } from './tourneeTypes';
+import { createHttpClient } from './httpClient';
+import { authStore } from '../store/authStoreInstance';
 
 /**
  * Client API — Tournee
  *
- * Appelle le backend svc-tournee : GET /api/tournees/today
- * Le JWT est inclus dans les headers Authorization par l'intercepteur HTTP
- * (a implementer dans US-019 avec react-native-app-auth).
- *
- * En profil dev, le MockJwtAuthFilter backend n'a pas besoin de token.
+ * Appelle le backend svc-tournee via httpClient qui injecte automatiquement
+ * le header Authorization: Bearer <token> depuis l'authStore singleton.
+ * Compatible avec les fake JWT produits par devAuthOptions (US-047) et le
+ * MockJwtAuthFilter backend qui lit le champ "sub" pour identifier le livreur.
  */
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:8081';
+const { apiFetch } = createHttpClient({ authStore });
 
 /**
  * Recupere la tournee du jour pour le livreur authentifie.
  * Throws en cas d'erreur reseau ou HTTP non-2xx.
  */
 export async function getTourneeAujourdhui(): Promise<TourneeDTO> {
-  const response = await fetch(`${API_BASE_URL}/api/tournees/today`, {
+  const response = await apiFetch('/api/tournees/today', {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      // TODO (US-019) : ajouter Authorization: `Bearer ${token}` depuis le store auth
-    },
   });
 
   if (response.status === 404) {
@@ -56,16 +52,9 @@ export async function getDetailColis(
   tourneeId: string,
   colisId: string
 ): Promise<ColisDTO> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/tournees/${encodeURIComponent(tourneeId)}/colis/${encodeURIComponent(colisId)}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        // TODO (US-019) : ajouter Authorization: `Bearer ${token}` depuis le store auth
-      },
-    }
+  const response = await apiFetch(
+    `/api/tournees/${encodeURIComponent(tourneeId)}/colis/${encodeURIComponent(colisId)}`,
+    { method: 'GET' }
   );
 
   if (response.status === 404) {
@@ -96,15 +85,10 @@ export async function declarerEchecLivraison(
   colisId: string,
   request: DeclarerEchecRequest
 ): Promise<ColisDTO> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/tournees/${encodeURIComponent(tourneeId)}/colis/${encodeURIComponent(colisId)}/echec`,
+  const response = await apiFetch(
+    `/api/tournees/${encodeURIComponent(tourneeId)}/colis/${encodeURIComponent(colisId)}/echec`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        // TODO (US-019) : ajouter Authorization: `Bearer ${token}` depuis le store auth
-      },
       body: JSON.stringify(request),
     }
   );
@@ -144,15 +128,10 @@ export async function confirmerLivraison(
   colisId: string,
   request: ConfirmerLivraisonRequest
 ): Promise<PreuveLivraisonDTO> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/tournees/${encodeURIComponent(tourneeId)}/colis/${encodeURIComponent(colisId)}/livraison`,
+  const response = await apiFetch(
+    `/api/tournees/${encodeURIComponent(tourneeId)}/colis/${encodeURIComponent(colisId)}/livraison`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        // TODO (US-019) : ajouter Authorization: `Bearer ${token}` depuis le store auth
-      },
       body: JSON.stringify(request),
     }
   );
@@ -191,16 +170,9 @@ export async function confirmerLivraison(
  * @throws TourneeNonTrouveeError si la tournee n'existe pas (404)
  */
 export async function cloturerTournee(tourneeId: string): Promise<RecapitulatifTourneeDTO> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/tournees/${encodeURIComponent(tourneeId)}/cloture`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        // TODO (US-019) : ajouter Authorization: `Bearer ${token}` depuis le store auth
-      },
-    }
+  const response = await apiFetch(
+    `/api/tournees/${encodeURIComponent(tourneeId)}/cloture`,
+    { method: 'POST' }
   );
 
   if (response.status === 404) {

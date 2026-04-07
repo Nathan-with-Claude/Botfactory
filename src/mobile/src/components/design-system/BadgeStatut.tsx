@@ -32,11 +32,11 @@ export interface BadgeStatutProps {
 type ColorMap = { fond: string; texte: string; point: string };
 
 const VARIANT_COLORS: Record<BadgeVariant, ColorMap> = {
-  succes:         { fond: Colors.succesLeger,         texte: Colors.succesFonce,        point: Colors.succes },
-  alerte:         { fond: Colors.alerteLeger,          texte: Colors.alerteFonce,         point: Colors.alerte },
-  avertissement:  { fond: Colors.avertissementLeger,  texte: Colors.avertissementFonce, point: Colors.avertissement },
-  info:           { fond: Colors.infoLeger,            texte: Colors.infoFonce,           point: Colors.info },
-  neutre:         { fond: Colors.fondNeutre,           texte: Colors.texteSecondaire,     point: Colors.texteTertiaire },
+  succes:         { fond: Colors.tertiaryFixed,        texte: Colors.onTertiaryFixed,     point: Colors.tertiaryContainer },
+  alerte:         { fond: Colors.errorContainer,       texte: Colors.onErrorContainer,    point: Colors.error },
+  avertissement:  { fond: Colors.avertissementLeger,   texte: Colors.avertissementFonce,  point: Colors.avertissement },
+  info:           { fond: Colors.secondaryContainer,   texte: Colors.onSecondaryContainer, point: Colors.primary },
+  neutre:         { fond: Colors.surfaceContainer,     texte: Colors.onSurfaceVariant,    point: Colors.outline },
 };
 
 /**
