@@ -69,7 +69,7 @@ class VueTourneeEventHandlerTest {
 
         EvenementTourneeCommand command = new EvenementTourneeCommand(
                 "EVT-001", "COLIS_LIVRE", "T-001", "livreur-001", "C-009", null,
-                Instant.now().toString()
+                Instant.now().toString(), 0
         );
 
         // When
@@ -104,7 +104,7 @@ class VueTourneeEventHandlerTest {
 
         EvenementTourneeCommand command = new EvenementTourneeCommand(
                 "EVT-002", "ECHEC_DECLAREE", "T-001", "livreur-001", "C-003", "ABSENT",
-                Instant.now().toString()
+                Instant.now().toString(), 0
         );
 
         // When
@@ -136,7 +136,7 @@ class VueTourneeEventHandlerTest {
 
         EvenementTourneeCommand command = new EvenementTourneeCommand(
                 "EVT-003", "TOURNEE_CLOTUREE", "T-001", "livreur-001", null, null,
-                Instant.now().toString()
+                Instant.now().toString(), 0
         );
 
         // When
@@ -159,7 +159,7 @@ class VueTourneeEventHandlerTest {
 
         EvenementTourneeCommand command = new EvenementTourneeCommand(
                 "EVT-42", "COLIS_LIVRE", "T-001", "livreur-001", "C-009", null,
-                Instant.now().toString()
+                Instant.now().toString(), 0
         );
 
         // When
@@ -183,7 +183,7 @@ class VueTourneeEventHandlerTest {
 
         EvenementTourneeCommand command = new EvenementTourneeCommand(
                 "EVT-010", "COLIS_LIVRE", "T-NOUVEAU", "livreur-999", "C-001", null,
-                Instant.now().toString()
+                Instant.now().toString(), 0
         );
 
         // When
@@ -212,7 +212,7 @@ class VueTourneeEventHandlerTest {
 
         EvenementTourneeCommand command = new EvenementTourneeCommand(
                 "EVT-999", "TYPE_INCONNU", "T-001", "livreur-001", null, null,
-                Instant.now().toString()
+                Instant.now().toString(), 0
         );
 
         // When - ne doit pas lancer d'exception

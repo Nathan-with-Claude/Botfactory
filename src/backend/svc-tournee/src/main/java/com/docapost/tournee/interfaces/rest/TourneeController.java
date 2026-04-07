@@ -114,6 +114,12 @@ public class TourneeController {
 
         try {
             Tournee tournee = consulterListeColisHandler.handle(command);
+            // Notifie supervision du démarrage (idempotent via eventId stable "start-{tourneeId}")
+            supervisionNotifier.notifierTourneeDemarree(
+                    tournee.getId().value(),
+                    livreurIdStr,
+                    tournee.getColis().size()
+            );
             return ResponseEntity.ok(TourneeDTO.from(tournee));
         } catch (TourneeNotFoundException ex) {
             return ResponseEntity.notFound().build();

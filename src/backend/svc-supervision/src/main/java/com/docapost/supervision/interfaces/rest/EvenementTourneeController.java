@@ -57,7 +57,8 @@ public class EvenementTourneeController {
                 request.livreurId(),
                 request.colisId(),
                 request.motif(),
-                request.horodatage()
+                request.horodatage(),
+                request.colisTotal()
         );
         vueTourneeEventHandler.handle(command);
         return ResponseEntity.noContent().build();

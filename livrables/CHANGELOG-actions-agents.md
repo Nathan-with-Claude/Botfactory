@@ -1714,3 +1714,15 @@
 
 - 2026-04-06T11:00Z @architecte-metier UPDATE → /livrables/00-contexte/journaux/journal-architecte-metier.md
   Session 2026-04-06 : validation modélisation US-066, 4 décisions structurantes ajoutées, points d'attention mis à jour.
+
+- 2026-04-08T00:00Z @developpeur UPDATE → /livrables/00-contexte/infrastructure-locale.md
+  Ajout section "Endpoints dev" : DELETE /dev/tms/reset, POST /dev/tms/full-reset, POST /internal/dev/reseed.
+
+- 2026-04-08T00:00Z @developpeur UPDATE → /livrables/06-dev/vertical-slices/US-032-impl.md
+  Mise à jour : TOURNEE_DEMARREE ajouté (Interface Layer svc-tournee + svc-supervision), colisTotal dans DTO, limites 2 et 5 marquées RÉSOLU.
+
+- 2026-04-08T00:00Z @developpeur CREATE → /livrables/06-dev/vertical-slices/corrections-sync-cqrs-2026-04-08.md
+  4 corrections sync CQRS : seeder idempotent, IDs alignés, TOURNEE_DEMARREE avec colisTotal, full-reset endpoint + bouton frontend.
+
+- 2026-04-08T00:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
+  Ajout intervention Sync CQRS 2026-04-08 + 3 décisions techniques (eventId stable, suppression sup-xxx, reset auto-reseed).

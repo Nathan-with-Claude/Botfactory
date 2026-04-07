@@ -53,6 +53,22 @@ public class DevDataSeeder implements CommandLineRunner {
         seedLivreur004(today);
     }
 
+    /**
+     * Supprime toutes les tournées existantes et recrée les données de test.
+     * Utilisé par POST /internal/dev/reseed (appelé par svc-supervision full-reset).
+     */
+    @Transactional
+    public void resetAndReseed() {
+        log.info("[DevDataSeeder] resetAndReseed — suppression de toutes les tournees...");
+        tourneeJpaRepository.deleteAll();
+        LocalDate today = LocalDate.now();
+        seedLivreur001(today);
+        seedLivreur002(today);
+        seedLivreur003(today);
+        seedLivreur004(today);
+        log.info("[DevDataSeeder] resetAndReseed — terminé");
+    }
+
     // ─── livreur-001 : Pierre Martin (5 colis) ────────────────────────────────
 
     private void seedLivreur001(LocalDate today) {

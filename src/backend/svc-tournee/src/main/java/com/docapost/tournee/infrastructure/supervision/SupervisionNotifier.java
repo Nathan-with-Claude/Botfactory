@@ -39,13 +39,16 @@ public class SupervisionNotifier {
 
     private final RestTemplate restTemplate;
     private final String supervisionApiUrl;
+    private final String internalSecret;
 
     public SupervisionNotifier(
             RestTemplate restTemplate,
-            @Value("${supervision.api.url:http://localhost:8082}") String supervisionApiUrl
+            @Value("${supervision.api.url:http://localhost:8082}") String supervisionApiUrl,
+            @Value("${internal.secret:}") String internalSecret
     ) {
         this.restTemplate = restTemplate;
         this.supervisionApiUrl = supervisionApiUrl;
+        this.internalSecret = internalSecret;
     }
 
     /**
@@ -60,31 +63,53 @@ public class SupervisionNotifier {
     public void notifierAsync(String eventType, String tourneeId, String livreurId, String colisId) {
         String eventId = UUID.randomUUID().toString();
         String horodatage = Instant.now().toString();
+        String payload = buildPayload(eventId, eventType, tourneeId, livreurId, colisId, horodatage);
 
         CompletableFuture.runAsync(() ->
-                envoyerAvecRetry(eventId, eventType, tourneeId, livreurId, colisId, horodatage)
+                envoyerPayloadAvecRetry(eventId, eventType, tourneeId, payload)
         );
     }
 
     /**
-     * Tente d'envoyer l'evenement a svc-supervision avec retry (MAX_TENTATIVES fois).
+     * Notifie svc-supervision du démarrage d'une tournee avec son colisTotal.
+     * Utilise un eventId stable ("start-{tourneeId}") pour garantir l'idempotence :
+     * seul le premier appel crée la VueTournee dans supervision.
+     *
+     * @param tourneeId  identifiant de la tournee
+     * @param livreurId  identifiant du livreur
+     * @param colisTotal nombre total de colis de la tournee
+     */
+    public void notifierTourneeDemarree(String tourneeId, String livreurId, int colisTotal) {
+        String eventId = "start-" + tourneeId; // stable → idempotence supervision
+        String horodatage = Instant.now().toString();
+        String colisIdJson = "null";
+        String payload = String.format(
+                "{\"eventId\":\"%s\",\"eventType\":\"TOURNEE_DEMARREE\",\"tourneeId\":\"%s\"," +
+                "\"livreurId\":\"%s\",\"colisId\":%s,\"motif\":null,\"horodatage\":\"%s\",\"colisTotal\":%d}",
+                eventId, tourneeId, livreurId, colisIdJson, horodatage, colisTotal
+        );
+
+        CompletableFuture.runAsync(() ->
+                envoyerPayloadAvecRetry(eventId, "TOURNEE_DEMARREE", tourneeId, payload)
+        );
+    }
+
+    /**
+     * Envoie un payload JSON pré-construit a svc-supervision avec retry.
      * Log WARN en cas d'echec definitif.
      */
-    private void envoyerAvecRetry(
-            String eventId,
-            String eventType,
-            String tourneeId,
-            String livreurId,
-            String colisId,
-            String horodatage
+    private void envoyerPayloadAvecRetry(
+            String eventId, String eventType, String tourneeId, String payload
     ) {
         String url = supervisionApiUrl + EVENTS_PATH;
-        String payload = buildPayload(eventId, eventType, tourneeId, livreurId, colisId, horodatage);
 
         for (int tentative = 1; tentative <= MAX_TENTATIVES; tentative++) {
             try {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
+                if (internalSecret != null && !internalSecret.isBlank()) {
+                    headers.set("X-Internal-Secret", internalSecret);
+                }
                 HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
                 restTemplate.postForEntity(url, entity, Void.class);
@@ -111,7 +136,6 @@ public class SupervisionNotifier {
 
     /**
      * Construit le payload JSON de l'evenement a envoyer.
-     * Format simple pour eviter une dependance Jackson dans l'infrastructure.
      */
     private String buildPayload(
             String eventId, String eventType, String tourneeId,
@@ -120,7 +144,7 @@ public class SupervisionNotifier {
         String colisIdJson = colisId != null ? "\"" + colisId + "\"" : "null";
         return String.format(
                 "{\"eventId\":\"%s\",\"eventType\":\"%s\",\"tourneeId\":\"%s\"," +
-                "\"livreurId\":\"%s\",\"colisId\":%s,\"motif\":null,\"horodatage\":\"%s\"}",
+                "\"livreurId\":\"%s\",\"colisId\":%s,\"motif\":null,\"horodatage\":\"%s\",\"colisTotal\":0}",
                 eventId, eventType, tourneeId, livreurId, colisIdJson, horodatage
         );
     }

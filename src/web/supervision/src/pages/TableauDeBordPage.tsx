@@ -475,23 +475,42 @@ interface TableauDeBordPageProps {
   fetchFn?: (url: string) => Promise<Response>;
   wsFactory?: (url: string) => MockWebSocket;
   alerteFn?: () => void; // injection pour les tests (remplace jouerAlerteAudio)
+  postFn?: (url: string) => Promise<Response>; // injection pour les tests
 }
 
 const TableauDeBordPage: React.FC<TableauDeBordPageProps> = ({
   onVoirTournee,
   onExporterBilan,
-  apiBaseUrl,
+  apiBaseUrl = 'http://localhost:8082',
   wsBaseUrl,
   fetchFn,
   wsFactory,
   alerteFn = jouerAlerteAudio,
+  postFn,
 }) => {
-  const { tableau, erreur, connecte, chargement, reconnecterManuellement, deconnecteDepuisMs } = useTableauDeBord({
+  const { tableau, erreur, connecte, chargement, actualiser, reconnecterManuellement, deconnecteDepuisMs } = useTableauDeBord({
     apiBaseUrl,
     wsBaseUrl,
     fetchFn,
     wsFactory,
   });
+
+  const [resetEnCours, setResetEnCours] = React.useState(false);
+
+  const handleFullReset = async () => {
+    setResetEnCours(true);
+    try {
+      const doPost = postFn ?? ((url: string) => fetch(url, { method: 'POST' }));
+      await doPost(`${apiBaseUrl}/dev/tms/full-reset`);
+      actualiser();
+    } catch {
+      // erreur silencieuse — l'actualiser() rechargera les données
+    } finally {
+      setResetEnCours(false);
+    }
+  };
+
+  const isDevMode = process.env.REACT_APP_AUTH_BYPASS === 'true';
 
   // US-044 — compteur "Déconnecté depuis X s / X min Y s / X h Y min" mis à jour chaque seconde
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -685,6 +704,19 @@ const TableauDeBordPage: React.FC<TableauDeBordPageProps> = ({
             >
               <span className="material-symbols-outlined text-sm">file_download</span>
               Exporter le bilan
+            </button>
+          )}
+          {/* Dev only — réinitialiser toutes les données (supervision + svc-tournee) */}
+          {isDevMode && (
+            <button
+              data-testid="btn-full-reset"
+              onClick={handleFullReset}
+              disabled={resetEnCours}
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-600 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition-all disabled:opacity-50"
+              title="Réinitialise les données de test (supervision + svc-tournee)"
+            >
+              <span className="material-symbols-outlined text-sm">refresh</span>
+              {resetEnCours ? 'Réinitialisation…' : 'Reset données dev'}
             </button>
           )}
         </div>

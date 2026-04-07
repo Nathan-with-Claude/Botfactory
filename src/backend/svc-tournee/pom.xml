@@ -23,7 +23,7 @@
     <description>BC-01 Orchestration de Tournee — Service Spring Boot</description>
 
     <properties>
-        <java.version>20</java.version>
+        <java.version>21</java.version>
     </properties>
 
     <dependencies>
@@ -78,7 +78,7 @@
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>postgres-socket-factory</artifactId>
-            <version>1.15.0</version>
+            <version>1.28.2</version>
         </dependency>
 
         <!-- Tests -->

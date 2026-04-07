@@ -60,7 +60,8 @@ steps:
       - '--allow-unauthenticated'
       - '--port=8081'
       - '--set-secrets=POSTGRES_PASSWORD=tournee-db-password:latest,INTERNAL_SECRET=internal-secret:latest'
-      - '--set-env-vars=^|^SPRING_PROFILES_ACTIVE=prod,recette|POSTGRES_URL=jdbc:postgresql:///docupost_tournee?cloudSqlInstance=$PROJECT_ID:europe-west1:docupost-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory|POSTGRES_USER=docupost'
+      - '--add-cloudsql-instances=$PROJECT_ID:europe-west1:docupost-db'
+      - '--set-env-vars=^|^SPRING_PROFILES_ACTIVE=prod,recette|POSTGRES_URL=jdbc:postgresql:///docupost_tournee?cloudSqlInstance=$PROJECT_ID:europe-west1:docupost-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory|POSTGRES_USER=docupost|SUPERVISION_API_URL=${_SVC_SUPERVISION_URL}'
 
   # ── Deploy svc-supervision ─────────────────────────────────────────────────
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -77,6 +78,7 @@ steps:
       - '--allow-unauthenticated'
       - '--port=8082'
       - '--set-secrets=SUPERVISION_DB_PASSWORD=supervision-db-password:latest,INTERNAL_SECRET=internal-secret:latest'
+      - '--add-cloudsql-instances=$PROJECT_ID:europe-west1:docupost-db'
       - '--set-env-vars=^|^SPRING_PROFILES_ACTIVE=prod,recette|SUPERVISION_DB_URL=jdbc:postgresql:///docupost_supervision?cloudSqlInstance=$PROJECT_ID:europe-west1:docupost-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory|SUPERVISION_DB_USER=docupost|ALLOWED_ORIGINS=${_FRONTEND_URLS}|DOCUPOST_DEV_SVC_TOURNEE_URL=${_SVC_TOURNEE_URL}'
 
   # ── Deploy frontend-supervision ────────────────────────────────────────────
@@ -98,7 +100,7 @@ substitutions:
   _TAG: latest
   _SVC_SUPERVISION_URL: https://svc-supervision-llb4mq4zha-ew.a.run.app
   _SVC_TOURNEE_URL: https://svc-tournee-llb4mq4zha-ew.a.run.app
-  _FRONTEND_URLS: https://frontend-supervision-llb4mq4zha-ew.a.run.app,https://frontend-supervision-830746169662.europe-west1.run.app
+  _FRONTEND_URLS: https://frontend-supervision-llb4mq4zha-ew.a.run.app,https://frontend-supervision-830746169662.europe-west1.run.app,http://localhost:8084
   _AUTH_BYPASS: 'true'
 
 images:

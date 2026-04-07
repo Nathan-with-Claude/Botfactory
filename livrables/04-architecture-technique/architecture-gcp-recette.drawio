@@ -9,13 +9,23 @@
     </mxCell>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- ZONE : Utilisateur                                       -->
+    <!-- ZONE : Utilisateurs                                      -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <mxCell id="zone_user" value="Utilisateurs" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.cisco.firewalls.firewall;sketch=0;html=1;pointerEvents=1;dashed=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fillStyle=auto;aspect=fixed;" vertex="1" parent="1">
-      <mxGeometry x="60" y="110" width="80" height="80" as="geometry" />
+
+    <!-- Superviseur (navigateur) -->
+    <mxCell id="zone_user" value="Superviseur" style="shape=mxgraph.cisco.computers_and_peripherals.pc;sketch=0;html=1;pointerEvents=1;dashed=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fillStyle=auto;aspect=fixed;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="60" y="100" width="70" height="70" as="geometry" />
     </mxCell>
-    <mxCell id="zone_user_label" value="Superviseur / Livreur&#xa;(navigateur)" style="text;html=1;align=center;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
-      <mxGeometry x="40" y="195" width="120" height="30" as="geometry" />
+    <mxCell id="zone_user_label" value="Superviseur&#xa;(navigateur)" style="text;html=1;align=center;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="40" y="178" width="110" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- Livreur (app mobile) -->
+    <mxCell id="zone_livreur" value="Livreur" style="shape=mxgraph.cisco.computers_and_peripherals.mobile_phone;sketch=0;html=1;pointerEvents=1;dashed=0;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fillStyle=auto;aspect=fixed;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="60" y="260" width="50" height="80" as="geometry" />
+    </mxCell>
+    <mxCell id="zone_livreur_label" value="Livreur&#xa;(app mobile&#xa;React Native / Expo)" style="text;html=1;align=center;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="30" y="348" width="120" height="40" as="geometry" />
     </mxCell>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -151,12 +161,38 @@
     <!-- CONNEXIONS PRINCIPALES                                   -->
     <!-- ═══════════════════════════════════════════════════════ -->
 
-    <!-- User → frontend -->
+    <!-- Superviseur → frontend -->
     <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1565C0;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="zone_user" target="frontend" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
     <mxCell id="e1_label" value="HTTPS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#1565C0;" vertex="1" connectable="0" parent="e1">
       <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Livreur → svc-tournee (tournées, colis, livraison, clôture) -->
+    <mxCell id="e_livreur_tournee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#388E3C;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="zone_livreur" target="svc_tournee" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="170" y="300" />
+          <mxPoint x="170" y="490" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_livreur_tournee_label" value="HTTPS + JWT Bearer&#xa;GET /tournees/today&#xa;GET /colis/{id}&#xa;POST /livraison | /echec | /cloture" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontColor=#388E3C;" vertex="1" connectable="0" parent="e_livreur_tournee">
+      <mxGeometry x="0.1" y="-30" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Livreur → svc-supervision (instructions, polling 10s) -->
+    <mxCell id="e_livreur_supervision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#2E7D32;strokeWidth=1.5;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="zone_livreur" target="svc_supervision" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="185" y="300" />
+          <mxPoint x="185" y="520" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_livreur_supervision_label" value="HTTPS + JWT Bearer (polling 10s)&#xa;GET /instructions/en-attente&#xa;PATCH /instructions/{id}/executer&#xa;PATCH /instructions/{id}/prendre-en-compte" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontColor=#2E7D32;" vertex="1" connectable="0" parent="e_livreur_supervision">
+      <mxGeometry x="0.3" y="30" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
     </mxCell>
 
     <!-- frontend → svc-supervision -->
@@ -265,6 +301,9 @@
     </mxCell>
     <mxCell id="leg7" value="⚠ À déployer (Keycloak)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;fontSize=9;" vertex="1" parent="legend_zone">
       <mxGeometry x="990" y="20" width="110" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="leg8" value="App mobile livreur (polling 10s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeDashArray=5 5;fontSize=9;" vertex="1" parent="legend_zone">
+      <mxGeometry x="20" y="45" width="200" height="10" as="geometry" />
     </mxCell>
 
   </root>

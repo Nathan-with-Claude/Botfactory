@@ -3,10 +3,16 @@ package com.docapost.supervision.interfaces.dev;
 import com.docapost.supervision.domain.planification.model.*;
 import com.docapost.supervision.domain.planification.repository.TourneePlanifieeRepository;
 import com.docapost.supervision.infrastructure.seeder.DevDataSeeder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,6 +37,7 @@ import java.util.*;
 @Profile({"dev", "recette"})
 public class DevTmsController {
 
+    private static final Logger log = LoggerFactory.getLogger(DevTmsController.class);
     private static final Random RANDOM = new Random();
 
     // Zones réalistes pour la génération
@@ -52,13 +59,19 @@ public class DevTmsController {
 
     private final TourneePlanifieeRepository tourneePlanifieeRepository;
     private final DevDataSeeder devDataSeeder;
+    private final RestTemplate restTemplate;
+    private final String svcTourneeBaseUrl;
 
     public DevTmsController(
             TourneePlanifieeRepository tourneePlanifieeRepository,
-            DevDataSeeder devDataSeeder
+            DevDataSeeder devDataSeeder,
+            @Qualifier("devRestTemplate") RestTemplate restTemplate,
+            @Value("${docupost.dev.svc-tournee-url:http://localhost:8081}") String svcTourneeBaseUrl
     ) {
         this.tourneePlanifieeRepository = tourneePlanifieeRepository;
         this.devDataSeeder = devDataSeeder;
+        this.restTemplate = restTemplate;
+        this.svcTourneeBaseUrl = svcTourneeBaseUrl;
     }
 
     /**
@@ -98,15 +111,39 @@ public class DevTmsController {
     }
 
     /**
-     * Vide toutes les TourneesPlanifiees et VueTournee.
-     * Permet de repartir de zéro pour les tests E2E.
+     * Vide toutes les données supervision et reseed.
+     * Permet de repartir de zéro (supervision uniquement).
      *
      * @return 204 No Content
      */
     @DeleteMapping("/reset")
     public ResponseEntity<Void> reset() {
         devDataSeeder.reinitialiser();
+        devDataSeeder.seed();
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Full-reset : vide supervision + reseed svc-tournee + reseed supervision.
+     * Utiliser ce endpoint (via le bouton "Réinitialiser" du dashboard) pour
+     * remettre les deux services à zéro de manière synchronisée.
+     *
+     * @return 200 OK avec statut
+     */
+    @PostMapping("/full-reset")
+    public ResponseEntity<Map<String, Object>> fullReset() {
+        devDataSeeder.reinitialiser();
+
+        // Appel svc-tournee reseed (best-effort : ne bloque pas si service éteint)
+        try {
+            restTemplate.postForEntity(svcTourneeBaseUrl + "/internal/dev/reseed", null, Void.class);
+            log.info("[DevTmsController] svc-tournee reseed OK");
+        } catch (RestClientException e) {
+            log.warn("[DevTmsController] Echec appel svc-tournee reseed : {} (supervision reseed continue)", e.getMessage());
+        }
+
+        devDataSeeder.seed();
+        return ResponseEntity.ok(Map.of("statut", "OK", "message", "Données réinitialisées"));
     }
 
     // ─── Génération réaliste ──────────────────────────────────────────────────

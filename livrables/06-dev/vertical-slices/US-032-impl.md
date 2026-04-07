@@ -62,29 +62,31 @@ Nouveaux fichiers :
 
 ### Interface Layer (svc-supervision)
 
-Endpoint ajouté dans `SupervisionController` :
+Endpoint ajouté dans `EvenementTourneeController` :
 ```
 POST /api/supervision/internal/vue-tournee/events
 Content-Type: application/json
 
 {
   "eventId": "uuid-v4",
-  "eventType": "COLIS_LIVRE | ECHEC_DECLAREE | TOURNEE_CLOTUREE",
+  "eventType": "COLIS_LIVRE | ECHEC_DECLAREE | TOURNEE_CLOTUREE | TOURNEE_DEMARREE",
   "tourneeId": "string",
   "livreurId": "string",
   "colisId": "string | null",
   "motif": "string | null",
-  "horodatage": "ISO-8601"
+  "horodatage": "ISO-8601",
+  "colisTotal": 0
 }
 
-Réponses : 200 OK | 400 Bad Request (eventId/eventType/tourneeId manquant)
+Réponses : 204 No Content | 400 Bad Request (eventId/eventType/tourneeId manquant)
 ```
 
-Nouveau DTO : `EvenementTourneeRequest` (record Java)
+Nouveau DTO : `EvenementTourneeRequest` (record Java) — champ `colisTotal` ajouté le 2026-04-08.
 
 ### Interface Layer (svc-tournee)
 
 `TourneeController` modifié pour injecter `SupervisionNotifier` et l'appeler après :
+- `GET /today` → `notifierTourneeDemarree(tourneeId, livreurId, nbColis)` (eventId stable `"start-{tourneeId}"`)
 - `POST /{tourneeId}/colis/{colisId}/livraison` → `notifierAsync("COLIS_LIVRE", ...)`
 - `POST /{tourneeId}/colis/{colisId}/echec` → `notifierAsync("ECHEC_DECLAREE", ...)`
 - `POST /{tourneeId}/cloture` → `notifierAsync("TOURNEE_CLOTUREE", ...)`
@@ -206,19 +208,20 @@ curl -X POST http://localhost:8082/api/supervision/internal/vue-tournee/events \
 
 ## Limites connues
 
-1. **livreurId non résolu** : `SupervisionNotifier` passe le token `"livreur"` (littéral) comme
-   livreurId. En production, il faudrait extraire l'ID depuis le `SecurityContext` de svc-tournee.
-   La création auto de VueTournee utilisera donc cet ID factice comme nom de livreur.
+1. **livreurId non résolu** : `SupervisionNotifier` passe le token JWT comme livreurId.
+   Le nom affiché dans supervision vient du DevDataSeeder (en dev) ou du champ `livreurNom`
+   de la TourneePlanifiee (en recette via DevEventBridge).
 
-2. **colisTotal à 0** pour les VueTournee créées automatiquement (tournées non présentes dans les
-   seeds de supervision). Un endpoint de réconciliation `GET /internal/vue-tournee/reconcile/{tourneeId}`
-   est prévu en V2 (cf. US-032 scénario 5).
+2. ~~**colisTotal à 0**~~ **RÉSOLU** (2026-04-08) : L'événement `TOURNEE_DEMARREE` est maintenant
+   émis par `TourneeController.GET /today` avec le `colisTotal` réel. `VueTourneeEventHandler`
+   crée ou met à jour la `VueTournee` avec ce total. EventId stable `"start-{tourneeId}"` garantit
+   l'idempotence.
 
 3. **Pas de circuit-breaker** : uniquement 2 tentatives avec backoff 500ms. En production,
    un pattern Resilience4j ou une outbox seraient plus robustes.
 
-4. **Payload JSON construit manuellement** dans `SupervisionNotifier.buildPayload()` pour éviter
-   une dépendance Jackson dans la couche infrastructure. En V2, utiliser `ObjectMapper` injecté.
+4. **Payload JSON construit manuellement** dans `SupervisionNotifier` pour éviter une dépendance
+   Jackson dans la couche infrastructure. En V2, utiliser `ObjectMapper` injecté.
 
-5. **Route /internal non authentifiée** : protégée uniquement par isolation réseau.
-   En production, ajouter un secret partagé (header `X-Internal-Secret`) ou mTLS.
+5. ~~**Route /internal non authentifiée**~~ **RÉSOLU** (2026-04-04, US-058) : header
+   `X-Internal-Secret` vérifié par `InternalSecretFilter` en production.

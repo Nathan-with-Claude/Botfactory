@@ -151,6 +151,19 @@ GCP_REPO="docupost"
 DB_INSTANCE="docupost-recette-prod:europe-west1:docupost-db"
 ```
 
+### Endpoints dev (profil dev/recette uniquement)
+
+| Endpoint | Service | Description |
+|----------|---------|-------------|
+| `DELETE /dev/tms/reset` | svc-supervision | Réinitialise et reseed supervision uniquement |
+| `POST /dev/tms/full-reset` | svc-supervision | Reset supervision + appel svc-tournee reseed + reseed supervision |
+| `POST /internal/dev/tournees` | svc-tournee | Crée une tournée fictive (appelé par DevEventBridge) |
+| `POST /internal/dev/reseed` | svc-tournee | Supprime toutes les tournées et recrée les données de test |
+| `POST /dev/tms/import` | svc-supervision | Génère N TourneesPlanifiees simulées |
+
+> Ces endpoints n'existent **pas** en profil `prod`. Le bouton "Reset données dev" du dashboard
+> supervision appelle `POST /dev/tms/full-reset` (visible uniquement si `REACT_APP_AUTH_BYPASS=true`).
+
 ### Protocole de déploiement manuel (sans GitHub)
 
 ```bash

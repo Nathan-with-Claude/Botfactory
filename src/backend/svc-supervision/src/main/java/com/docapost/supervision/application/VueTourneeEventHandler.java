@@ -74,11 +74,13 @@ public class VueTourneeEventHandler {
         Optional<VueTournee> optVueTournee = vueTourneeRepository.findByTourneeId(command.tourneeId());
         VueTournee vueTournee = optVueTournee.orElseGet(() -> {
             log.info("VueTournee introuvable pour tourneeId={} — creation automatique", command.tourneeId());
+            // Pour TOURNEE_DEMARREE : utiliser le colisTotal de l'evenement
+            int total = "TOURNEE_DEMARREE".equals(command.eventType()) ? command.colisTotal() : 0;
             return new VueTournee(
                     command.tourneeId(),
-                    command.livreurId(), // nom de livreur inconnu, on utilise l'ID en attendant
+                    command.livreurId(),
                     0,
-                    0,
+                    total,
                     StatutTourneeVue.EN_COURS,
                     Instant.now()
             );
@@ -129,6 +131,13 @@ public class VueTourneeEventHandler {
             }
             case "TOURNEE_CLOTUREE" -> {
                 vue.cloturer();
+                return true;
+            }
+            case "TOURNEE_DEMARREE" -> {
+                // Synchroniser colisTotal si la VueTournee a été auto-créée avec 0
+                if (command.colisTotal() > 0 && vue.getColisTotal() == 0) {
+                    vue.mettreAJourAvancement(vue.getColisTraites(), command.colisTotal());
+                }
                 return true;
             }
             default -> {

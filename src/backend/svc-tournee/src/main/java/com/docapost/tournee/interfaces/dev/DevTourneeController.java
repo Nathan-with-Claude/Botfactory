@@ -2,6 +2,7 @@ package com.docapost.tournee.interfaces.dev;
 
 import com.docapost.tournee.domain.model.*;
 import com.docapost.tournee.domain.repository.TourneeRepository;
+import com.docapost.tournee.infrastructure.seeder.DevDataSeeder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -69,10 +70,12 @@ public class DevTourneeController {
     );
 
     private final TourneeRepository tourneeRepository;
+    private final DevDataSeeder devDataSeeder;
     private final Random random = new Random();
 
-    public DevTourneeController(TourneeRepository tourneeRepository) {
+    public DevTourneeController(TourneeRepository tourneeRepository, DevDataSeeder devDataSeeder) {
         this.tourneeRepository = tourneeRepository;
+        this.devDataSeeder = devDataSeeder;
     }
 
     /**
@@ -170,6 +173,20 @@ public class DevTourneeController {
             ));
         }
         return colisList;
+    }
+
+    /**
+     * POST /internal/dev/reseed
+     * Supprime toutes les tournées du jour et les recrée depuis le seeder.
+     * Appelé par svc-supervision POST /dev/tms/full-reset.
+     *
+     * @return 200 OK
+     */
+    @PostMapping("/reseed")
+    public ResponseEntity<Map<String, Object>> reseed() {
+        devDataSeeder.resetAndReseed();
+        log.info("[DevTourneeController] reseed terminé");
+        return ResponseEntity.ok(Map.of("statut", "OK"));
     }
 
     // ─── DTO interne ──────────────────────────────────────────────────────────
