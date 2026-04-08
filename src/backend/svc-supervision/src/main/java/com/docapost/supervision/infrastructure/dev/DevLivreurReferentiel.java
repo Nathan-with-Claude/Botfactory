@@ -21,12 +21,12 @@ import java.util.List;
 public class DevLivreurReferentiel implements LivreurReferentiel {
 
     private static final List<LivreurInfo> REFERENTIEL = List.of(
-            new LivreurInfo("livreur-pierre-martin",  "Pierre Martin"),
-            new LivreurInfo("livreur-paul-dupont",    "Paul Dupont"),
-            new LivreurInfo("livreur-marie-lambert",  "Marie Lambert"),
-            new LivreurInfo("livreur-jean-moreau",    "Jean Moreau"),
-            new LivreurInfo("livreur-sophie-bernard", "Sophie Bernard"),
-            new LivreurInfo("livreur-lucas-petit",    "Lucas Petit")
+            new LivreurInfo("livreur-001", "Pierre Martin"),
+            new LivreurInfo("livreur-002", "Paul Dupont"),
+            new LivreurInfo("livreur-003", "Marie Lambert"),
+            new LivreurInfo("livreur-004", "Jean Moreau"),
+            new LivreurInfo("livreur-005", "Sophie Bernard"),
+            new LivreurInfo("livreur-006", "Lucas Petit")
     );
 
     @Override

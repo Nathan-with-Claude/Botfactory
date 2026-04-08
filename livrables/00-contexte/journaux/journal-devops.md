@@ -43,6 +43,7 @@
 | 2026-04-07 | Documentation déploiement manuel GCP sans GitHub — process opérationnel | deploiement-manuel-gcp.md, infrastructure-locale.md |
 | 2026-04-07 | As-built Cloud Run complet — état réel services, env vars, bugs corrigés, limitations | as-built-cloudrun-recette.md |
 | 2026-04-07 | Fix ALLOWED_ORIGINS svc-supervision (était placeholder) + correction noms secrets dans infra-locale | infrastructure-locale.md, svc-supervision (Cloud Run) |
+| 2026-04-08 | Ajout localhost:8083 dans _FRONTEND_URLS cloudbuild.yaml (port Expo Web local) + mise à jour pipeline-cicd.md et strategie-deploiement.md | cloudbuild.yaml, pipeline-cicd.md, strategie-deploiement.md |
 
 ---
 

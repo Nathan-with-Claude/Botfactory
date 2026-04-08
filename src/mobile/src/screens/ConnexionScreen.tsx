@@ -130,6 +130,7 @@ export function ConnexionScreen({
   return (
     <ScrollView
       testID="screen-connexion"
+      style={styles.scrollView}
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
@@ -252,9 +253,12 @@ export function ConnexionScreen({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+  },
   container: {
     flexGrow: 1,
-    backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     padding: Theme.spacing.lg,

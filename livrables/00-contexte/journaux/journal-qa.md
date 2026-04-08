@@ -84,6 +84,7 @@
 | US-060 | persist() après sync offlineQueue | Oui (5 TCs L1) | — | Oui | Validée (60/60, Bug P0 résolu) |
 | US-061 | react-native-signature-canvas | Oui (6 TCs L1) | — | Oui | Validée (33/33, P0 légal résolu) |
 | US-062 | Compteur envois en attente IndicateurSync | Oui (7 TCs L1) | — | Oui | Validée (53/53) |
+| US-066 | Page état des livreurs W-08 | Oui (16 TCs L1/L2/L3) | Non exécuté | Oui | Validée (L1 23/23 PASS, L2 4/5 PASS après correctif, L3 bloqué frontend) |
 
 **Légende statuts** : `À faire` | `Scénarios rédigés` | `Exécutés` | `Validée` | `Partielle`
 
@@ -95,17 +96,14 @@
 
 | Date | US | Action | Fichier |
 | ---- | -- | ------ | ------- |
-> ← Entrées 2026-03-25, 2026-04-02, 2026-04-03, 2026-04-04 et US-034 à US-048 (2026-04-05) archivées dans [archives/journal-qa-2026-04.md](archives/journal-qa-2026-04.md)
-| 2026-04-05 | US-049 | Scénarios + rapport créés (6 TCs L1/L2) — Validée 795/795 | livrables/07-tests/scenarios/US-049-*.md |
-| 2026-04-05 | US-050 | Scénarios + rapport créés (10 TCs L1/L2) — Validée 152/152+272/272 | livrables/07-tests/scenarios/US-050-*.md |
-| 2026-04-05 | US-055 | Scénarios + rapport créés (5 TCs L1/L3) — Partielle (R1 L1 ok, R2 déféré) | livrables/07-tests/scenarios/US-055-*.md |
-| 2026-04-05 | US-056 | Scénarios + rapport créés (7 TCs L1) — Validée 28/28 offlineQueue | livrables/07-tests/scenarios/US-056-*.md |
-| 2026-04-05 | US-057 | Scénarios + rapport créés (4 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-057-*.md |
+> ← Entrées 2026-03-25, 2026-04-02, 2026-04-03, 2026-04-04 et US-034 à US-057 (2026-04-05) archivées dans [archives/journal-qa-2026-04.md](archives/journal-qa-2026-04.md)
 | 2026-04-05 | US-058 | Scénarios + rapport créés (8 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-058-*.md |
 | 2026-04-05 | US-059 | Scénarios + rapport créés (6 TCs L1) — Validée MVP alternatif | livrables/07-tests/scenarios/US-059-*.md |
 | 2026-04-05 | US-060 | Scénarios + rapport créés (5 TCs L1) — Validée Bug P0 résolu | livrables/07-tests/scenarios/US-060-*.md |
 | 2026-04-05 | US-061 | Scénarios + rapport créés (6 TCs L1) — Validée Bug P0 légal résolu 33/33 | livrables/07-tests/scenarios/US-061-*.md |
 | 2026-04-05 | US-062 | Scénarios + rapport créés (7 TCs L1) — Validée 53/53 | livrables/07-tests/scenarios/US-062-*.md |
+| 2026-04-08 | US-066 | Scénarios + rapport créés (16 TCs L1/L2/L3) — L1 23/23 PASS, L2 bloqué OBS-066-02, L3 non exécuté | livrables/07-tests/scenarios/US-066-*.md |
+| 2026-04-08 | US-066 | Re-run L2 après correctif OBS-066-02 (DevLivreurReferentiel IDs alignés) — L2 4/5 PASS, US validée | livrables/07-tests/scenarios/US-066-rapport-test.md |
 
 ---
 
@@ -140,6 +138,8 @@
 - **OBS-AS-004 (ouvert)** : US-059 — pas de message utilisateur en cas de 413 (uniquement console.warn). UX silencieusement dégradée pour photos volumineuses.
 - **OBS-AS-005 (ouvert)** : US-055 migration partielle — bouton retour Android non fonctionnel depuis DetailColisScreen, CapturePreuveScreen, MesConsignesScreen. Prévu R2.
 - **infrastructure-locale.md** : non mis à jour avec commandes PostgreSQL (US-054) ni variables ALLOWED_ORIGINS/INTERNAL_SECRET (US-058). À traiter par @developpeur ou @devops.
+- **OBS-066-01 (non bloquant)** : sécurité dev bypass total sans token — comportement volontaire, à documenter explicitement dans MockJwtAuthFilter.
+- **OBS-066-02 (RESOLUE)** : DevLivreurReferentiel.java corrigé avec IDs numériques (livreur-001..006). Re-run L2 PASS. US-066 validée.
 
 ### Points d'attention spécifiques US-001 à US-007 (archivés)
 

@@ -114,4 +114,18 @@
 | 2026-04-04 | US-025 palette | Application palette MD3 designer (M-01 à M-06). 60+ tokens colors.ts, theme.ts créé, 5 écrans + 6 composants. | /livrables/06-dev/vertical-slices/US-025-impl.md |
 | 2026-04-04 | US-051/052/053/054/055/056/058/059 | Corrections as-built P0+P1. 154/154 tests svc-supervision. | /livrables/06-dev/vertical-slices/corrections-as-built-impl.md |
 | 2026-04-04 | US-060 | Correction persist() manquant dans sync(). 5 nouveaux tests TDD. 21/21 verts. | /livrables/06-dev/vertical-slices/US-060-impl.md |
+| 2026-04-04 | US-061 | Finalisation config react-native-signature-canvas dans CapturePreuveScreen : webStyle enrichi (border-radius 12px, footer masqué), height 240, descriptionText "Signez ici". 33/33 CapturePreuveScreen tests verts. | /livrables/06-dev/vertical-slices/US-061-impl.md |
+| 2026-04-04 | US-056 | Tests TDD 7 cas pour persistance enqueue + initialize() : enqueue persiste via void persist(), initialize() charge/idempotent/résiste JSON corrompu/FIFO. 28/28 offlineQueue verts. | /livrables/06-dev/vertical-slices/US-056-impl.md |
+| 2026-04-04 | US-059 | Option MVP : config multipart 5MB/10MB ajoutée dans svc-tournee/application.yml (svc-supervision déjà fait). syncExecutor : double seuil 500Ko warn / 1Mo erreur + onPhotoTooLarge callback + TODO R2 multipart complet. 6/6 syncExecutor tests verts. | /livrables/06-dev/vertical-slices/US-059-impl.md |
+| 2026-04-04 | US-057 | WebSocket STOMP : SupervisionWebSocketConfig existante documentée + TableauDeBordBroadcaster vérifié. 4 nouveaux tests unitaires TDD. SecurityConfig : `/ws/**` permis. 165/165 tests verts. | /livrables/06-dev/vertical-slices/US-057-impl.md |
+| 2026-04-04 | US-058 | InternalSecretFilter corrigé : bypass sur secret vide (isBlank) ajouté en plus du bypass dev-secret-ignored. SecurityConfig restauré (linter avait simplifié). 7 nouveaux tests unitaires TDD. 165/165 tests verts. | /livrables/06-dev/vertical-slices/US-058-impl.md |
+
+### Décisions archivées 2026-04-05 (depuis journal principal)
+
+| Date | US | Décision | Justification |
+| --- | --- | --- | --- |
+| 2026-04-05 | US-063 | Cards cliquables avec role="radio"+aria-checked plutôt que input[type="radio"] | Compatibilité toBeChecked() de jest-dom sans casser les data-testid existants. Meilleure UX (card entière cliquable vs petit bouton radio) |
+| 2026-04-05 | US-063 | glass-overlay et modal-shadow ajoutés dans globals.css (pas dans tokens.css) | globals.css est le fichier d'entrée des directives Tailwind, cohérent pour les utilitaires CSS custom globaux |
+| 2026-04-05 | US-064 | Deux helpers purs extraits (statutLabel, statutColorClass) plutôt que ternaire inline complexe dans le JSX | Lisibilité, testabilité, séparation présentation/logique. Aucune logique métier ajoutée. |
+| 2026-04-05 | US-064 | Aucun style={{}} résiduel — toutes les valeurs étaient exprimables en Tailwind (pas de largeur de barre dynamique) | Conformité stricte à la règle "style={{}} seulement pour valeurs dynamiques calculées" |
 | 2026-04-04 | US-061 | Finalisation react-native-signature-canvas dans CapturePreuveScreen. 33/33 verts. | /livrables/06-dev/vertical-slices/US-061-impl.md |

@@ -48,6 +48,10 @@ class DevTmsControllerTest {
     @MockBean
     private DevDataSeeder devDataSeeder;
 
+    @MockBean
+    @org.springframework.beans.factory.annotation.Qualifier("devRestTemplate")
+    private org.springframework.web.client.RestTemplate devRestTemplate;
+
     // ─── SC1 : Import simulé ──────────────────────────────────────────────────
 
     @Test

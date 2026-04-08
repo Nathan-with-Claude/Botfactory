@@ -56,3 +56,8 @@
 | 2026-04-05 | US-045 | Scénarios + rapport créés (7 TCs L1) — Validée 17/17 | livrables/07-tests/scenarios/US-045-*.md |
 | 2026-04-05 | US-047 | Scénarios + rapport créés (5 TCs L1) — Validée 365/365 non-rég | livrables/07-tests/scenarios/US-047-*.md |
 | 2026-04-05 | US-048 | Scénarios + rapport créés (5 TCs L1/L2) — Validée | livrables/07-tests/scenarios/US-048-*.md |
+| 2026-04-05 | US-049 | Scénarios + rapport créés (6 TCs L1/L2) — Validée 795/795 | livrables/07-tests/scenarios/US-049-*.md |
+| 2026-04-05 | US-050 | Scénarios + rapport créés (10 TCs L1/L2) — Validée 152/152+272/272 | livrables/07-tests/scenarios/US-050-*.md |
+| 2026-04-05 | US-055 | Scénarios + rapport créés (5 TCs L1/L3) — Partielle (R1 L1 ok, R2 déféré) | livrables/07-tests/scenarios/US-055-*.md |
+| 2026-04-05 | US-056 | Scénarios + rapport créés (7 TCs L1) — Validée 28/28 offlineQueue | livrables/07-tests/scenarios/US-056-*.md |
+| 2026-04-05 | US-057 | Scénarios + rapport créés (4 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-057-*.md |

@@ -561,3 +561,65 @@ Backend svc-oms sur port 8083 (profil dev).
 | 2 | NON_AFFECTEE | POST sur tp-203 | HTTP 409 | PASS |
 | 3 | Lancer-toutes | POST /plans/2026-03-25/lancer-toutes | HTTP 200 + nbTourneesLancees | PASS |
 | 4 | Date invalide | POST /plans/not-a-date/lancer-toutes | HTTP 400 | PASS |
+
+---
+
+## US-066 : Page état des livreurs (W-08)
+
+### Prérequis
+
+```bash
+# Démarrer svc-supervision (port 8082)
+cd /home/admin/Botfactory/src/backend/svc-supervision
+JAVA_HOME="/usr/lib/jvm/java-21-openjdk-arm64" \
+  mvn spring-boot:run -Dspring-boot.run.profiles=dev &
+
+# Attendre que le service soit prêt (environ 50s)
+curl http://localhost:8082/actuator/health
+
+# Démarrer le frontend supervision (port 3000)
+cd /home/admin/Botfactory/src/web/supervision
+REACT_APP_API_URL=http://localhost:8082 npm start
+```
+
+### URLs à tester
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:3000` | Tableau de bord superviseur |
+| Cliquer "Livreurs" dans la nav | Page W-08 état des livreurs |
+| `http://localhost:8082/api/supervision/livreurs/etat-du-jour` | API backend |
+| `http://localhost:8082/api/supervision/livreurs/etat-du-jour?date=2026-04-08` | API avec date explicite |
+
+### Check-list de tests manuels
+
+| # | Scénario | Action | Résultat attendu | Statut |
+|---|----------|--------|-----------------|--------|
+| 1 | Accès W-08 depuis nav | Cliquer "Livreurs" depuis W-01 | Page W-08 s'affiche sans rechargement complet | A tester |
+| 2 | 6 livreurs affichés | Consulter W-08 | 6 lignes, une par livreur avec nom + badge état | A tester |
+| 3 | Bandeau compteurs | Observer le bandeau en haut | Compteurs 1/4/1 (SANS/AFFECTE/EN_COURS) cohérents | A tester |
+| 4 | Badge EN_COURS vert | Observer Paul Dupont | Badge vert "EN COURS — T-204" | A tester |
+| 5 | Badge AFFECTE bleu | Observer Pierre Martin | Badge bleu "AFFECTE — T-201" | A tester |
+| 6 | Badge SANS_TOURNEE gris | Observer Jean Moreau | Badge gris "SANS TOURNEE" | A tester |
+| 7 | Filtre "Sans tournee" | Cliquer filtre SANS_TOURNEE | Seul Jean Moreau visible | A tester |
+| 8 | Retour "Tous" | Cliquer filtre TOUS | 6 lignes de nouveau affichees | A tester |
+| 9 | Bouton Affecter | Cliquer "Affecter" sur Jean Moreau | Redirection vers W-04 (planification) | A tester |
+| 10 | Bouton Voir tournee | Cliquer "Voir tournée" sur Paul Dupont | Redirection vers W-02 (detail tournee) | A tester |
+| 11 | Retour tableau de bord | Cliquer "Retour au tableau de bord" | Retour sur W-01 | A tester |
+| 12 | API directe | curl avec token Bearer | HTTP 200, 6 livreurs (apres correction OBS-066-02) | FAIL (bug OBS-066-02) |
+
+### Notes
+
+> **Anomalie bloquante OBS-066-02** : L'API `/api/supervision/livreurs/etat-du-jour` retourne
+> tous les livreurs avec l'état SANS_TOURNEE car les IDs dans `DevLivreurReferentiel`
+> (`livreur-paul-dupont`) ne correspondent pas aux IDs du `DevDataSeeder` (`livreur-002`).
+> Demander à @developpeur de corriger `DevLivreurReferentiel.java` avant de valider les
+> tests manuels 3 à 12.
+
+### Token Bearer pour tester l'API en direct
+
+```bash
+curl -H "Authorization: Bearer dev-token-superviseur" \
+  http://localhost:8082/api/supervision/livreurs/etat-du-jour
+```
+

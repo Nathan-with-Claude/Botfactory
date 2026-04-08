@@ -100,7 +100,7 @@ substitutions:
   _TAG: latest
   _SVC_SUPERVISION_URL: https://svc-supervision-llb4mq4zha-ew.a.run.app
   _SVC_TOURNEE_URL: https://svc-tournee-llb4mq4zha-ew.a.run.app
-  _FRONTEND_URLS: https://frontend-supervision-llb4mq4zha-ew.a.run.app,https://frontend-supervision-830746169662.europe-west1.run.app,http://localhost:8084
+  _FRONTEND_URLS: https://frontend-supervision-llb4mq4zha-ew.a.run.app,https://frontend-supervision-830746169662.europe-west1.run.app,http://localhost:8084,http://localhost:8083
   _AUTH_BYPASS: 'true'
 
 images:

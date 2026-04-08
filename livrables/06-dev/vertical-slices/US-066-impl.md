@@ -139,12 +139,12 @@ curl -H "Authorization: Bearer dev-token-superviseur" \
 Réponse attendue (état seed du jour) :
 ```json
 [
-  {"livreurId":"livreur-paul-dupont","nomComplet":"Paul Dupont","etat":"EN_COURS","tourneePlanifieeId":"tp-204","codeTms":"T-204"},
-  {"livreurId":"livreur-pierre-martin","nomComplet":"Pierre Martin","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-201","codeTms":"T-201"},
-  {"livreurId":"livreur-marie-lambert","nomComplet":"Marie Lambert","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-202","codeTms":"T-202"},
-  {"livreurId":"livreur-sophie-bernard","nomComplet":"Sophie Bernard","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-205","codeTms":"T-205"},
-  {"livreurId":"livreur-lucas-petit","nomComplet":"Lucas Petit","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-206","codeTms":"T-206"},
-  {"livreurId":"livreur-jean-moreau","nomComplet":"Jean Moreau","etat":"SANS_TOURNEE","tourneePlanifieeId":null,"codeTms":null}
+  {"livreurId":"livreur-002","nomComplet":"Paul Dupont","etat":"EN_COURS","tourneePlanifieeId":"tp-204","codeTms":"T-204"},
+  {"livreurId":"livreur-001","nomComplet":"Pierre Martin","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-201","codeTms":"T-201"},
+  {"livreurId":"livreur-003","nomComplet":"Marie Lambert","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-202","codeTms":"T-202"},
+  {"livreurId":"livreur-005","nomComplet":"Sophie Bernard","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-205","codeTms":"T-205"},
+  {"livreurId":"livreur-006","nomComplet":"Lucas Petit","etat":"AFFECTE_NON_LANCE","tourneePlanifieeId":"tp-206","codeTms":"T-206"},
+  {"livreurId":"livreur-004","nomComplet":"Jean Moreau","etat":"SANS_TOURNEE","tourneePlanifieeId":null,"codeTms":null}
 ]
 ```
 
@@ -183,6 +183,41 @@ Résultat : **6/6 verts** (171/171 suite totale svc-supervision verts)
 | SC10 | Mise à jour WebSocket partielle (un seul livreur) |
 
 Résultat : **17/17 verts** (289/289 suite totale web — hors 2 bugs pré-existants US-035/US-044)
+
+## Correctif post-QA — Anomalie OBS-066-02 (2026-04-08)
+
+### Bug
+
+`DevLivreurReferentiel.java` utilisait des IDs symboliques (ex. `livreur-paul-dupont`)
+non alignés avec les IDs numériques de `DevDataSeeder` (ex. `livreur-002`).
+
+Conséquence : la requête JPQL `WHERE tp.livreurId = :livreurId` ne trouvait aucune
+`TourneePlanifiee` correspondante, et tous les livreurs retournaient `SANS_TOURNEE`
+au lieu de leur état réel (AFFECTE_NON_LANCE ou EN_COURS).
+
+### Correction appliquée
+
+Fichier : `src/backend/svc-supervision/src/main/java/.../infrastructure/dev/DevLivreurReferentiel.java`
+
+Remplacement des IDs symboliques par les IDs numériques cohérents avec `DevDataSeeder` :
+
+| Avant (incorrect) | Après (correct) |
+|---|---|
+| `livreur-pierre-martin` | `livreur-001` |
+| `livreur-paul-dupont` | `livreur-002` |
+| `livreur-marie-lambert` | `livreur-003` |
+| `livreur-jean-moreau` | `livreur-004` |
+| `livreur-sophie-bernard` | `livreur-005` |
+| `livreur-lucas-petit` | `livreur-006` |
+
+### Validation post-correctif
+
+- `ConsulterEtatLivreursHandlerTest` : **6/6 PASS** (tests non affectés — ils mockent
+  le référentiel avec leurs propres IDs via Mockito).
+- Bug `DevTmsControllerTest` (4 erreurs `ApplicationContext`) confirmé **préexistant**
+  (même résultat avant et après le correctif) — hors périmètre OBS-066-02.
+
+---
 
 ## Fichiers créés / modifiés
 

@@ -3,6 +3,21 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-04-08T16:30Z @devops UPDATE → cloudbuild.yaml, pipeline-cicd.md, strategie-deploiement.md
+  Ajout localhost:8083 dans _FRONTEND_URLS (port Expo Web local) ; refonte pipeline-cicd.md et strategie-deploiement.md avec état réel recette GCP + procédures rollback.
+
+- 2026-04-08T14:00Z @qa RE-RUN → livrables/07-tests/scenarios/US-066-rapport-test.md, US-066-scenarios.md
+  Re-run L2 après correctif OBS-066-02 : TC-066-L2-01/03/04/05 PASS. TC-066-L2-02 documenté (bypass dev intentionnel). US-066 validée (27/31 — L3 bloqué frontend non démarré, couverture L1 suffisante).
+
+- 2026-04-08T12:10Z @developpeur FIX → src/backend/svc-supervision/src/test/java/com/docapost/supervision/interfaces/dev/DevTmsControllerTest.java
+  Ajout @MockBean @Qualifier("devRestTemplate") RestTemplate dans DevTmsControllerTest. Résout UnsatisfiedDependencyException dans contexte @WebMvcTest. 4/4 tests verts.
+
+- 2026-04-08T12:00Z @developpeur FIX → src/backend/svc-supervision/src/main/java/.../infrastructure/dev/DevLivreurReferentiel.java
+  Correctif OBS-066-02 : IDs symboliques (livreur-pierre-martin…) remplacés par IDs numériques (livreur-001…) pour aligner avec DevDataSeeder. La jointure JPQL retrouvait 0 tournée — tous les livreurs retournaient SANS_TOURNEE. 6/6 ConsulterEtatLivreursHandlerTest PASS.
+
+- 2026-04-08T12:00Z @developpeur UPDATE → /livrables/06-dev/vertical-slices/US-066-impl.md
+  Ajout section "Correctif post-QA OBS-066-02" + mise à jour réponse API attendue avec IDs corrects.
+
 - 2026-04-07T10:30Z @devops CREATE → /livrables/08-devops/as-built-cloudrun-recette.md
   As-built complet Cloud Run : état réel des 3 services, env vars, secrets, IAM, 10 bugs corrigés, limitations connues.
 
@@ -1726,3 +1741,15 @@
 
 - 2026-04-08T00:00Z @developpeur UPDATE → /livrables/00-contexte/journaux/journal-developpeur.md
   Ajout intervention Sync CQRS 2026-04-08 + 3 décisions techniques (eventId stable, suppression sup-xxx, reset auto-reseed).
+
+- 2026-04-08T10:00Z @qa CREATE → /livrables/07-tests/scenarios/US-066-scenarios.md
+  Scénarios US-066 (16 TCs L1/L2/L3) : état des livreurs W-08. L1 Java 6/6 PASS, L1 RTL 17/17 PASS.
+
+- 2026-04-08T10:00Z @qa CREATE → /livrables/07-tests/scenarios/US-066-rapport-test.md
+  Rapport US-066 : L1 23/23 PASS, L2 bloqué OBS-066-02 (désalignement IDs DevLivreurReferentiel), L3 non exécuté (frontend absent). Verdict : Rejetée — correction P1 requise.
+
+- 2026-04-08T10:00Z @qa UPDATE → /livrables/06-dev/poste-de-commande-tests.md
+  Ajout section US-066 avec check-list 12 tests manuels et note anomalie OBS-066-02.
+
+- 2026-04-08T10:00Z @qa UPDATE → /livrables/00-contexte/journaux/journal-qa.md
+  Ajout entrée US-066, OBS-066-01/02, archivage US-049 à US-057 vers journal-qa-2026-04.md.
