@@ -96,12 +96,87 @@ steps:
       - '--allow-unauthenticated'
       - '--port=80'
 
+  # ── Fetch EXPO_TOKEN depuis Secret Manager (via REST, pas gcloud) ────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: fetch-expo-token
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        set -e
+        ACCESS_TOKEN=$$(curl -sf -H "Metadata-Flavor: Google" \
+          "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
+          | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+        if [ -z "$$ACCESS_TOKEN" ]; then echo "ERROR: no access token"; exit 1; fi
+        PAYLOAD=$$(curl -sf -H "Authorization: Bearer $$ACCESS_TOKEN" \
+          "https://secretmanager.googleapis.com/v1/projects/docupost-recette-prod/secrets/expo-token/versions/latest:access")
+        DATA_B64=$$(echo "$$PAYLOAD" | grep -o '"data": *"[^"]*"' | grep -o '"[^"]*"$$' | tr -d '"')
+        echo "$$DATA_B64" | base64 -d > /workspace/expo-token.txt
+        echo "Token fetched (length: $$(wc -c < /workspace/expo-token.txt) chars)"
+
+  # ── Build APK mobile via EAS Build ────────────────────────────────────────
+  # node:20 pour eas-cli. APK sauvegardé dans /workspace (partagé entre steps).
+  - name: 'node:20'
+    id: build-mobile-apk
+    waitFor: ['fetch-expo-token']
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        set -xe
+        echo "=== START build-mobile-apk ==="
+        apt-get update -qq && apt-get install -y -qq jq
+        echo "jq installed"
+        cd src/mobile
+        npm install -g eas-cli@latest --silent
+        echo "eas-cli installed: $$(eas --version)"
+        npm install --legacy-peer-deps --silent
+        echo "npm ci done"
+        export EXPO_TOKEN=$$(cat /workspace/expo-token.txt)
+        echo "Token length: $$(echo -n $$EXPO_TOKEN | wc -c)"
+        if [ -z "$$EXPO_TOKEN" ]; then echo "ERREUR: EXPO_TOKEN vide"; exit 1; fi
+        echo ">>> EAS Build"
+        BUILD_JSON=$$(eas build \
+          --platform android \
+          --profile preview \
+          --non-interactive \
+          --wait \
+          --json 2>&1 || echo "[]")
+        echo ">>> BUILD_JSON: $$BUILD_JSON" | head -20
+        APK_URL=$$(echo "$$BUILD_JSON" | jq -r 'if type=="array" then .[0].artifacts.buildUrl else .artifacts.buildUrl end // empty' 2>/dev/null || true)
+        if [ -z "$$APK_URL" ] || [ "$$APK_URL" = "null" ]; then
+          APK_URL=$$(eas build:list --platform android --limit 1 --json --non-interactive 2>/dev/null | jq -r '.[0].artifacts.buildUrl // empty' || true)
+        fi
+        echo "APK URL : $$APK_URL"
+        if [ -z "$$APK_URL" ] || [ "$$APK_URL" = "null" ]; then
+          echo "ERREUR : URL APK introuvable"; exit 1
+        fi
+        curl -fsSLk "$$APK_URL" -o /workspace/docupost-livreur.apk
+        echo "Taille: $$(wc -c < /workspace/docupost-livreur.apk) bytes"
+        echo "=== END build-mobile-apk OK ==="
+
+  # ── Upload APK vers GCS ────────────────────────────────────────────────────
+  # cloud-sdk lit /workspace/docupost-livreur.apk (partagé depuis step précédent)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: upload-mobile-apk
+    waitFor: ['build-mobile-apk']
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        set -e
+        echo ">>> Upload vers GCS ($$(wc -c < /workspace/docupost-livreur.apk) bytes)"
+        gsutil cp /workspace/docupost-livreur.apk gs://${_APK_BUCKET}/docupost-livreur-${_TAG}.apk
+        gsutil cp /workspace/docupost-livreur.apk gs://${_APK_BUCKET}/docupost-livreur-latest.apk
+        echo "APK dispo : https://storage.googleapis.com/${_APK_BUCKET}/docupost-livreur-latest.apk"
+
 substitutions:
   _TAG: latest
   _SVC_SUPERVISION_URL: https://svc-supervision-llb4mq4zha-ew.a.run.app
   _SVC_TOURNEE_URL: https://svc-tournee-llb4mq4zha-ew.a.run.app
   _FRONTEND_URLS: https://frontend-supervision-llb4mq4zha-ew.a.run.app,https://frontend-supervision-830746169662.europe-west1.run.app,http://localhost:8084,http://localhost:8083
   _AUTH_BYPASS: 'true'
+  _APK_BUCKET: docupost-apk-recette
 
 images:
   - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-tournee:$_TAG'
@@ -109,4 +184,4 @@ images:
   - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/frontend-supervision:$_TAG'
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: GCS_ONLY

@@ -8,7 +8,7 @@ target/
 .expo/
 src/mobile/.expo/
 src/mobile/node_modules/
-src/mobile/package-lock.json
+
 
 # IDE
 .vscode/
