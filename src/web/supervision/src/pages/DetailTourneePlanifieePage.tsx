@@ -75,7 +75,7 @@ export default function DetailTourneePlanifieePage({
   apiBaseUrl = 'http://localhost:8082',
   fetchFn = fetch.bind(window),
   onRetour,
-  livreurs = livreursMock,
+  livreurs,
   vehicules = vehiculesMock,
 }: DetailTourneePlanifieePageProps) {
 
@@ -90,6 +90,9 @@ export default function DetailTourneePlanifieePage({
   const [vehiculeSelectionne, setVehiculeSelectionne] = useState('');
   const [actionEnCours, setActionEnCours] = useState(false);
 
+  // Liste effective des livreurs : prop (tests) ou fetch API (production)
+  const [livreursEffectifs, setLivreursEffectifs] = useState<LivreurDisponible[]>(livreurs ?? livreursMock);
+
   // Compatibilité véhicule (US-030)
   const [compatibilite, setCompatibilite] = useState<CompatibiliteVehiculeDTO | null>(null);
   const [depassementForce, setDepassementForce] = useState(false);
@@ -103,6 +106,23 @@ export default function DetailTourneePlanifieePage({
     chargerDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourneePlanifieeId]);
+
+  // Charge la liste réelle des livreurs depuis l'API quand aucun prop n'est fourni (hors tests)
+  useEffect(() => {
+    if (livreurs) return; // prop fourni (tests) → ne pas écraser
+    fetchFn(`${apiBaseUrl}/api/supervision/livreurs/etat-du-jour`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data: { livreurId: string; nomComplet: string; etat: string; codeTms?: string }[]) => {
+        setLivreursEffectifs(data.map(l => ({
+          id: l.livreurId,
+          nom: l.nomComplet,
+          disponible: l.etat === 'SANS_TOURNEE',
+          tourneeAffectee: l.etat !== 'SANS_TOURNEE' ? (l.codeTms ?? undefined) : undefined,
+        })));
+      })
+      .catch(() => { /* garde le mock en cas d'échec */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiBaseUrl, fetchFn]);
 
   // Réinitialiser la compatibilité quand le véhicule change
   useEffect(() => {
@@ -285,7 +305,7 @@ export default function DetailTourneePlanifieePage({
     setActionEnCours(true);
     setErreur(null);
     try {
-      const livreurObj = livreurs.find(l => l.id === livreurSelectionne);
+      const livreurObj = livreursEffectifs.find(l => l.id === livreurSelectionne);
       const res = await fetchFn(
         `${apiBaseUrl}/api/planification/tournees/${tourneePlanifieeId}/affecter`,
         {
@@ -326,10 +346,10 @@ export default function DetailTourneePlanifieePage({
     }
   };
 
-  const livreurNomSelectionne = () => livreurs.find(l => l.id === livreurSelectionne)?.nom ?? livreurSelectionne;
+  const livreurNomSelectionne = () => livreursEffectifs.find(l => l.id === livreurSelectionne)?.nom ?? livreurSelectionne;
   // Un livreur est valide si : disponible OU déjà affecté à cette tournée (réaffectation)
   const livreurSelectionneValide = !livreurSelectionne ||
-    (livreurs.find(l => l.id === livreurSelectionne)?.disponible !== false) ||
+    (livreursEffectifs.find(l => l.id === livreurSelectionne)?.disponible !== false) ||
     livreurSelectionne === detail?.livreurId;
   const peutValider = !!livreurSelectionne && !!vehiculeSelectionne && livreurSelectionneValide;
   const tourneeVerrouillee = detail?.statut === 'LANCEE';
@@ -603,7 +623,7 @@ export default function DetailTourneePlanifieePage({
                       className="w-full bg-white border border-outline-variant/50 rounded-lg py-2.5 px-4 text-sm appearance-none focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer text-on-surface"
                     >
                       <option value="">Sélectionner un livreur disponible...</option>
-                      {livreurs.map(l => {
+                      {livreursEffectifs.map(l => {
                         const estLivreurActuel = l.id === detail?.livreurId;
                         const estDesactive = !l.disponible && !estLivreurActuel;
                         return (
@@ -616,8 +636,8 @@ export default function DetailTourneePlanifieePage({
                     <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-base">expand_more</span>
                   </div>
                   <div className="text-xs text-on-surface-variant mt-1">
-                    Livreurs disponibles : {livreurs.filter(l => l.disponible).map(l => l.nom).join(', ') || 'Aucun'}
-                    &nbsp;({livreurs.filter(l => l.disponible).length}/{livreurs.length})
+                    Livreurs disponibles : {livreursEffectifs.filter(l => l.disponible).map(l => l.nom).join(', ') || 'Aucun'}
+                    &nbsp;({livreursEffectifs.filter(l => l.disponible).length}/{livreursEffectifs.length})
                   </div>
                 </div>
 

@@ -79,21 +79,26 @@ public class DevDataSeeder implements CommandLineRunner {
     }
 
     /**
-     * Initialise les données de test. Idempotent : skip si des données existent déjà.
+     * Initialise les données de test. Idempotent : skip si des TourneePlanifiee existent déjà pour aujourd'hui.
+     * Si la date a changé (ex. redéploiement le lendemain), toutes les données sont réinitialisées
+     * et re-seedées avec la date du jour pour garantir la cohérence.
      * Appeler reinitialiser() avant seed() pour forcer un re-seed complet.
      */
     public void seed() {
-        // Idempotence : skip si des VueTournee existent déjà (redémarrage sans reset)
-        if (vueTourneeJpaRepository.count() > 0) {
-            log.info("[DevDataSeeder] Données déjà présentes — skip (idempotent)");
+        LocalDate today = LocalDate.now();
+
+        // Idempotence : skip uniquement si les TourneePlanifiee du jour sont déjà présentes.
+        // Si la base contient des données d'un autre jour (ex. redéploiement), on réinitialise tout
+        // pour éviter que les livreurs apparaissent "non affectés" à cause de dates périmées.
+        if (!tourneePlanifieeJpaRepository.findByDate(today).isEmpty()) {
+            log.info("[DevDataSeeder] TourneePlanifiees du jour ({}) déjà présentes — skip (idempotent)", today);
             return;
         }
 
         // ─── BC-07 Planification — Plan du jour (US-021 à US-024) ────────────────
-        // Nettoyage préalable pour garantir des données fraîches (date du jour)
-        tourneePlanifieeJpaRepository.deleteAll();
+        // Nettoyage complet avant re-seed (données périmées ou première initialisation)
+        reinitialiser();
 
-        LocalDate today = LocalDate.now();
         Instant importHeure = Instant.now().minusSeconds(3600);
 
         // T-201 : NON_AFFECTEE, 34 colis, Lyon 3e/6e, pas d'anomalie
