@@ -132,6 +132,10 @@ steps:
         echo "eas-cli installed: $$(eas --version)"
         npm install --legacy-peer-deps --silent
         echo "npm ci done"
+        git config --global user.email "cloudbuild@docupost.fr"
+        git config --global user.name "Cloud Build"
+        git init && git add -A && git commit -m "eas-build-snapshot" --quiet
+        echo "git init done"
         export EXPO_TOKEN=$$(cat /workspace/expo-token.txt)
         echo "Token length: $$(echo -n $$EXPO_TOKEN | wc -c)"
         if [ -z "$$EXPO_TOKEN" ]; then echo "ERREUR: EXPO_TOKEN vide"; exit 1; fi
