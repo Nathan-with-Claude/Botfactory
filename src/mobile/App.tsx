@@ -69,8 +69,8 @@ export default function App() {
                 loginFn={() => void authStore.login()}
                 status={authState.status}
                 error={authState.error}
-                devLivreurs={__DEV__ ? DEV_LIVREURS : undefined}
-                onDevLivreurSelected={__DEV__ ? handleDevLivreurSelected : undefined}
+                devLivreurs={(__DEV__ || process.env.EXPO_PUBLIC_ENV === 'recette') ? DEV_LIVREURS : undefined}
+                onDevLivreurSelected={(__DEV__ || process.env.EXPO_PUBLIC_ENV === 'recette') ? handleDevLivreurSelected : undefined}
               />
             )}
           </Stack.Screen>

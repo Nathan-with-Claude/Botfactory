@@ -1,6 +1,25 @@
 {
-  "plugins": [
-    "expo-asset",
-    "expo-font"
-  ]
+  "expo": {
+    "name": "DocuPost Livreur",
+    "slug": "docupostmobile",
+    "owner": "nathan_claude",
+    "version": "1.0.0",
+    "platforms": ["android", "web"],
+    "splash": {
+      "backgroundColor": "#FFFFFF"
+    },
+    "android": {
+      "package": "com.docapost.docupost"
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "./plugins/withAppAuth"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8daf2f89-f8cc-4366-9ab0-9bc4bfb7b6c1"
+      }
+    }
+  }
 }
