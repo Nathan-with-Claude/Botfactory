@@ -3,6 +3,78 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-04-21T15:30Z @po CREATE → livrables/05-backlog/user-stories/US-067-envoyer-broadcast-superviseur.md
+  Creation US-067 : Envoyer un broadcast depuis W-09 (Must Have / M). Commande EnvoyerBroadcast, TypeBroadcast ALERTE/INFO/CONSIGNE, ciblage TOUS/SECTEUR, fan-out FCM DD-013. 6 scenarios Gherkin.
+
+- 2026-04-21T15:30Z @po CREATE → livrables/05-backlog/user-stories/US-068-recevoir-broadcast-livreur.md
+  Creation US-068 : Recevoir et consulter les broadcasts sur l'app mobile (Must Have / M). Overlay push M-06 etendu, zone dediee M-08, MarquerBroadcastVu REST DD-012, comportement offline ENF-BROADCAST-004. 6 scenarios Gherkin.
+
+- 2026-04-21T15:30Z @po CREATE → livrables/05-backlog/user-stories/US-069-consulter-statuts-lecture-broadcast.md
+  Creation US-069 : Consulter les statuts de lecture des broadcasts depuis W-09 (Must Have / S). Compteur "Vu par N/M livreurs", detail nominatif BroadcastStatutLivraison, mise a jour temps reel WebSocket STOMP. 6 scenarios Gherkin.
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/broadcast/BroadcastMessage.java
+  Aggregate Root BroadcastMessage avec methode factory envoyer(), invariants (texte 1-280 chars, livreurIds non vide), event BroadcastEnvoye collecte.
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/broadcast/BroadcastSecteur.java
+  Value Object record BroadcastSecteur avec livreurIds (4 champs).
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/broadcast/events/BroadcastEnvoye.java
+  Domain Event record BroadcastEnvoye emis par BroadcastMessage.
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/domain/broadcast/repository/ (3 interfaces)
+  Ports domaine : BroadcastMessageRepository, BroadcastSecteurRepository, FcmTokenRepository.
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/application/broadcast/ (5 classes)
+  EnvoyerBroadcastCommand, AucunLivreurActifException, BroadcastResultat, EnvoyerBroadcastHandler, ConsulterSecteursHandler.
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/broadcast/ (9 classes)
+  Entities JPA + repos impl + FcmBroadcastAdapter (mode degrade FCM).
+
+- 2026-04-21T21:15Z @developpeur UPDATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/infrastructure/seeder/DevDataSeeder.java
+  Ajout seed broadcast_secteur (3 secteurs IDF) et fcm_token (6 tokens fictifs).
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/rest/BroadcastController.java
+  POST /api/supervision/broadcasts + GET /api/supervision/broadcast-secteurs.
+
+- 2026-04-21T21:15Z @developpeur CREATE → src/backend/svc-supervision/src/main/java/com/docapost/supervision/interfaces/dto/broadcast/ (4 DTOs)
+  EnvoyerBroadcastRequest, BroadcastCiblageRequest, BroadcastCreeDTO, BroadcastSecteurDTO.
+
+- 2026-04-21T21:15Z @developpeur UPDATE → src/backend/svc-supervision/pom.xml
+  Ajout dependance firebase-admin 9.2.0.
+
+- 2026-04-21T21:15Z @developpeur CREATE → livrables/06-dev/vertical-slices/US-067-impl.md
+  Vertical slice US-067 : 5/5 tests TDD verts, 176/176 suite totale verts.
+
+- 2026-04-21T15:30Z @po UPDATE → livrables/05-backlog/features.md
+  Ajout F-030 "Broadcast superviseur vers livreurs actifs" sous EPIC-003 (Must Have / MVP), rattachant US-067, US-068, US-069. Mise a jour du recapitulatif MoSCoW.
+
+- 2026-04-21T14:00Z @architecte-technique UPDATE → livrables/04-architecture-technique/design-decisions.md (v1.3), livrables/04-architecture-technique/exigences-non-fonctionnelles.md (v1.2)
+  Feature Broadcast : ajout DD-012 (BroadcastVu via endpoint REST mobile — décision vs FCM delivery receipt), DD-013 (fan-out FCM sendEachForMulticast — décision vs topic subscriptions), DD-014 (secteurs broadcast : configuration statique DocuPost — décision vs import TMS). Ajout section NFR broadcast : ENF-BROADCAST-001 (latence FCM < 10s), ENF-BROADCAST-002 (volumétrie 15 broadcasts/50 livreurs), ENF-BROADCAST-003 (rétention journée uniquement), ENF-BROADCAST-004 (comportement offline FCM queue + WatermelonDB PENDING), ENF-BROADCAST-005 (résilience FCM fan-out), ENF-BROADCAST-006 (RBAC SUPERVISEUR/LIVREUR). Section Feature Broadcast architecture-applicative.md déjà présente (v1.2 — pas de modification requise).
+
+- 2026-04-21T13:00Z @ux UPDATE → livrables/02-ux/user-journeys.md (v1.3)
+  Ajout Parcours 7 "Superviseur : Envoyer un broadcast" (Karim B.) : AS-IS/TO-BE, 5 étapes, Domain Events BroadcastEnvoyé/BroadcastLu, 13 nouveaux termes Ubiquitous Language ajoutés au glossaire terrain.
+
+- 2026-04-21T13:00Z @ux UPDATE → livrables/02-ux/wireframes.md (v1.5)
+  Ajout W-09 (Panneau Broadcast superviseur web) et M-08 (Zone messages broadcast livreur mobile). W-09 : drawer latéral sur W-01, 3 clics max, sélecteur type/ciblage, compteur 280 car., historique du jour avec statut vu. M-08 : liste messages du jour, badge non lus, overlay push cohérent avec M-06. Récapitulatif MVP mis à jour (14 écrans).
+
+- 2026-04-21T13:00Z @ux UPDATE → livrables/02-ux/personas.md (v1.1)
+  Enrichissement persona superviseur avec profil Karim B. : volume terrain (18 livreurs / 3 secteurs), objectif broadcast, verbatim Karim, 10 nouveaux termes glossaire.
+
+- 2026-04-21T13:00Z @ux UPDATE → livrables/00-contexte/journaux/journal-ux.md
+  Mise à jour contexte synthétisé (v1.5, 8 parcours, 14 écrans), ajout intervention broadcast.
+
+- 2026-04-21T12:00Z @architecte-metier UPDATE → livrables/03-architecture-metier/domain-model.md (v1.3), capability-map.md (v1.3), modules-fonctionnels.md (v1.1)
+  Intégration feature Broadcast superviseur → livreurs : ajout agrégat BroadcastMessage (BC-03), VO BroadcastCiblage/TypeBroadcast/BroadcastSecteur/StatutBroadcast, entité BroadcastStatutLivraison, domain events BroadcastEnvoyé/BroadcastVu, 3 règles métier transversales, capability 3.5, Module 8, mise à jour matrice dépendances et interfaces contractuelles. Décision : rattachement BC-03 Supervision (pas de nouveau BC).
+
+- 2026-04-21T00:00Z @sponsor UPDATE → livrables/01-vision/perimetre-mvp.md (v1.2)
+  Arbitrage feature Broadcast superviseur → livreurs : incluse dans le MVP (périmètre borné). Ajout section dédiée dans Parcours 2 + classification DDD Supporting Subdomain.
+
+- 2026-04-11T00:00Z @devops BUILD → gs://docupost-apk-recette/docupost-livreur-latest.apk (61.7 MiB)
+  Premier APK Android DocuPost Livreur produit via EAS Build (profil preview) et uploadé sur GCS. Disponible à https://storage.googleapis.com/docupost-apk-recette/docupost-livreur-latest.apk
+
+- 2026-04-10T00:00Z @devops UPDATE → cloudbuild.yaml, livrables/08-devops/pipeline-cicd.md, src/mobile/eas.json (NEW)
+  Ajout pipeline APK mobile : EAS Build (profil preview) + upload GCS bucket docupost-apk-recette. Secret expo-token dans Secret Manager. URLs latest + versionnée disponibles pour tests sur téléphone.
+
 - 2026-04-08T16:30Z @devops UPDATE → cloudbuild.yaml, pipeline-cicd.md, strategie-deploiement.md
   Ajout localhost:8083 dans _FRONTEND_URLS (port Expo Web local) ; refonte pipeline-cicd.md et strategie-deploiement.md avec état réel recette GCP + procédures rollback.
 

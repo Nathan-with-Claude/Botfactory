@@ -5,6 +5,10 @@ import com.docapost.supervision.domain.model.TypeInstruction;
 import com.docapost.supervision.domain.planification.events.TourneeLancee;
 import com.docapost.supervision.domain.planification.model.*;
 import com.docapost.supervision.domain.repository.VueTourneeRepository;
+import com.docapost.supervision.infrastructure.broadcast.BroadcastSecteurEntity;
+import com.docapost.supervision.infrastructure.broadcast.BroadcastSecteurJpaRepository;
+import com.docapost.supervision.infrastructure.broadcast.FcmTokenEntity;
+import com.docapost.supervision.infrastructure.broadcast.FcmTokenJpaRepository;
 import com.docapost.supervision.infrastructure.dev.DevEventBridge;
 import com.docapost.supervision.infrastructure.persistence.*;
 import com.docapost.supervision.infrastructure.planification.TourneePlanifieeJpaRepository;
@@ -52,6 +56,8 @@ public class DevDataSeeder implements CommandLineRunner {
     private final TourneePlanifieeJpaRepository tourneePlanifieeJpaRepository;
     private final ProcessedEventJpaRepository processedEventJpaRepository;
     private final DevEventBridge devEventBridge;
+    private final BroadcastSecteurJpaRepository broadcastSecteurJpaRepository;
+    private final FcmTokenJpaRepository fcmTokenJpaRepository;
 
     public DevDataSeeder(
             VueTourneeRepository vueTourneeRepository,
@@ -61,7 +67,9 @@ public class DevDataSeeder implements CommandLineRunner {
             InstructionJpaRepository instructionJpaRepository,
             TourneePlanifieeJpaRepository tourneePlanifieeJpaRepository,
             ProcessedEventJpaRepository processedEventJpaRepository,
-            DevEventBridge devEventBridge
+            DevEventBridge devEventBridge,
+            BroadcastSecteurJpaRepository broadcastSecteurJpaRepository,
+            FcmTokenJpaRepository fcmTokenJpaRepository
     ) {
         this.vueTourneeRepository = vueTourneeRepository;
         this.vueTourneeJpaRepository = vueTourneeJpaRepository;
@@ -71,6 +79,8 @@ public class DevDataSeeder implements CommandLineRunner {
         this.tourneePlanifieeJpaRepository = tourneePlanifieeJpaRepository;
         this.processedEventJpaRepository = processedEventJpaRepository;
         this.devEventBridge = devEventBridge;
+        this.broadcastSecteurJpaRepository = broadcastSecteurJpaRepository;
+        this.fcmTokenJpaRepository = fcmTokenJpaRepository;
     }
 
     @Override
@@ -207,6 +217,24 @@ public class DevDataSeeder implements CommandLineRunner {
         tourneePlanifieeJpaRepository.save(TourneePlanifieeMapper.toEntity(tp206));
 
         log.info("[DevDataSeeder] Données initialisées — 2 LANCEE (T-202, T-204), 2 AFFECTEE (T-205, T-206), 2 NON_AFFECTEE (T-201, T-203)");
+
+        // ─── BC-03 Broadcast — Secteurs et tokens FCM (US-067) ───────────────────
+        if (broadcastSecteurJpaRepository.count() == 0) {
+            broadcastSecteurJpaRepository.save(new BroadcastSecteurEntity("SECT-IDF-01", "Secteur 1 — Nord Essonne", true));
+            broadcastSecteurJpaRepository.save(new BroadcastSecteurEntity("SECT-IDF-02", "Secteur 2 — Sud Essonne", true));
+            broadcastSecteurJpaRepository.save(new BroadcastSecteurEntity("SECT-IDF-03", "Secteur 3 — Val-de-Marne", true));
+            log.info("[DevDataSeeder] 3 secteurs broadcast insérés");
+        }
+
+        if (fcmTokenJpaRepository.count() == 0) {
+            for (String livreurId : java.util.List.of(
+                    "livreur-001", "livreur-002", "livreur-003",
+                    "livreur-004", "livreur-005", "livreur-006")) {
+                fcmTokenJpaRepository.save(new FcmTokenEntity(
+                        livreurId, "fake-fcm-token-" + livreurId, Instant.now()));
+            }
+            log.info("[DevDataSeeder] 6 tokens FCM fictifs insérés");
+        }
     }
 
     /**
