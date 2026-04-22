@@ -466,6 +466,326 @@ via Expo EAS Build ou Fastlane selon la configuration retenue en DD-009.
 
 ---
 
+## Feature Broadcast — Architecture applicative
+
+> Section ajoutée en v1.2 — 2026-04-21.
+> Source : entretien Karim B. (Superviseur IDF Sud), périmètre-mvp.md §"Feature Broadcast",
+> domain-model.md §"BC-03 BroadcastMessage", modules-fonctionnels.md Module 8,
+> wireframes.md W-09 et M-08.
+
+---
+
+### Vue d'ensemble du flux Broadcast
+
+```
+Superviseur (W-09)
+     │
+     │ 1. POST /api/supervision/broadcasts  (EnvoyerBroadcast)
+     ▼
+API Gateway  →  JWT validation (rôle SUPERVISEUR)
+     │
+     ▼
+svc-supervision
+  EnvoyerBroadcastUseCase
+     │
+     │ 2. Query BC-07 : GET /api/supervision/livreurs/etat-du-jour
+     │    → résolution des LivreurId (EtatJournalierLivreur == EN_COURS)
+     │    + filtrage par codeSecteur si ciblage SECTEUR
+     │
+     │ 3. BroadcastMessage.envoyer(livreurIds) → Domain Event BroadcastEnvoyé
+     │    (persisté dans outbox_events)
+     │
+     ▼
+outbox poller (5s)
+     │
+     ▼
+svc-notification  (BroadcastEnvoyeHandler)
+     │
+     │ 4. Récupère les FCM tokens des livreurIds résolus
+     │    (table fcm_token : livreurId → fcmToken — mise à jour au login mobile)
+     │
+     │ 5. FCM sendEachForMulticast(tokens[], notification)
+     ▼
+Firebase Cloud Messaging
+     │
+     ▼
+App mobile livreur (Android)
+  - Si app en arrière-plan : notification push système
+  - Si app au premier plan : overlay M-08
+
+     │ 6. Livreur ouvre l'écran M-08 (zone messages)
+     │    → affichage automatique déclenche :
+     │    POST /api/supervision/broadcasts/{id}/vu  (MarquerBroadcastVu)
+     ▼
+svc-supervision
+  MarquerBroadcastVuUseCase
+     │
+     │ 7. BroadcastMessage.marquerVu(livreurId) → Domain Event BroadcastVu
+     │
+     ▼
+BroadcastVuHandler (lecture seule)
+     │ 8. Mise à jour Read Model broadcast_statut_livraison
+     │ 9. WebSocket push → /topic/broadcasts/{broadcastId}/vu
+     ▼
+Interface web superviseur (W-09 historique)
+  → compteur "Vu par N / M livreurs" mis à jour en temps réel
+```
+
+---
+
+### Flux 1 : Commande EnvoyerBroadcast
+
+#### Séquence détaillée
+
+```
+POST /api/supervision/broadcasts
+{
+  "type": "ALERTE",
+  "texte": "Rue Oberkampf barrée — contournez par Rue Saint-Maur",
+  "ciblage": { "typeCiblage": "SECTEUR", "secteurs": ["SECT-02"] }
+}
+```
+
+Étapes dans `svc-supervision` :
+
+1. `BroadcastController` (interface layer) reçoit la commande. Vérifie le rôle SUPERVISEUR via le JWT. Construit `EnvoyerBroadcastCommand`.
+2. `EnvoyerBroadcastUseCase` (application layer) :
+   a. Appelle `LivreurEtatQueryPort.getEtatDuJour(date)` — port vers BC-07.
+   b. Filtre les livreurs EN_COURS. Si ciblage SECTEUR, croise avec les codeSecteur de la TourneePlanifiee.
+   c. Si liste vide : lance `BroadcastSansDestinataireException` → HTTP 422.
+   d. Instancie `BroadcastMessage` (aggregate root), appelle `envoyer(livreurIds)`.
+   e. Persiste l'agrégat + insère l'événement `BroadcastEnvoyé` dans la table `outbox_events` dans la même transaction ACID.
+3. Réponse HTTP 201 avec `broadcastMessageId`.
+
+#### Structure de couches BC-03 — extension Broadcast
+
+```
+svc-supervision/
+├── domain/broadcast/
+│   ├── model/
+│   │   ├── BroadcastMessage.java        # Aggregate Root
+│   │   ├── TypeBroadcast.java           # Value Object (enum) : ALERTE / INFO / CONSIGNE
+│   │   ├── BroadcastCiblage.java        # Value Object
+│   │   ├── TypeCiblage.java             # Value Object (enum) : TOUS / SECTEUR
+│   │   ├── BroadcastSecteur.java        # Value Object : codeSecteur + libelle
+│   │   ├── BroadcastStatutLivraison.java# Entity (livreurId, statut, horodatageVu)
+│   │   └── StatutBroadcast.java         # Value Object (enum) : ENVOYE / VU
+│   ├── events/
+│   │   ├── BroadcastEnvoye.java         # Domain Event
+│   │   └── BroadcastVu.java             # Domain Event
+│   └── repository/
+│       └── BroadcastMessageRepository.java  # Interface (port)
+│
+├── application/broadcast/
+│   ├── usecase/
+│   │   ├── EnvoyerBroadcastUseCase.java
+│   │   └── MarquerBroadcastVuUseCase.java
+│   ├── handler/
+│   │   └── BroadcastVuHandler.java      # Consomme BroadcastVu → Read Model
+│   └── port/
+│       └── LivreurEtatQueryPort.java    # Déjà existant (BC-07) — réutilisé
+│
+├── infrastructure/broadcast/
+│   ├── persistence/
+│   │   ├── BroadcastMessageRepositoryImpl.java
+│   │   └── BroadcastSecteurReferentiel.java   # Table broadcast_secteur (statique)
+│   └── websocket/
+│       └── BroadcastVuWebSocketPublisher.java  # Push /topic/broadcasts/{id}/vu
+│
+├── interface/broadcast/
+│   ├── rest/
+│   │   └── BroadcastController.java
+│   └── dto/
+│       ├── EnvoyerBroadcastRequest.java
+│       ├── BroadcastMessageDto.java
+│       └── BroadcastStatutLivraisonDto.java
+```
+
+---
+
+### Flux 2 : Confirmation de lecture (BroadcastVu)
+
+L'app mobile envoie un appel REST explicite dès l'affichage du message en M-08 :
+
+```
+POST /api/supervision/broadcasts/{broadcastMessageId}/vu
+Authorization: Bearer {jwt-livreur}
+```
+
+Aucun corps de requête — le `livreurId` est extrait du JWT.
+
+Étapes dans `svc-supervision` :
+
+1. `BroadcastController` vérifie que le livreurId (extrait du JWT) est bien dans la liste `statutsLivraison` du `BroadcastMessage` (invariant : seuls les destinataires peuvent émettre BroadcastVu).
+2. `MarquerBroadcastVuUseCase` appelle `BroadcastMessage.marquerVu(livreurId, horodatage)`. Met à jour le `BroadcastStatutLivraison` correspondant de ENVOYE à VU.
+3. Domain Event `BroadcastVu` écrit dans `outbox_events` (même transaction que l'agrégat).
+4. `BroadcastVuHandler` (consommateur outbox) met à jour le read model `broadcast_statut_livraison` (table dénormalisée) et pousse via WebSocket.
+
+---
+
+### Read Model W-09 — Statuts "vu" par livreur
+
+Le tableau de bord superviseur (W-09, section historique) nécessite un affichage rapide
+des statuts de lecture sans recharger l'agrégat complet à chaque mise à jour.
+
+#### Table de read model dédiée
+
+```sql
+-- Read model dénormalisé pour l'affichage W-09
+CREATE TABLE broadcast_statut_livraison (
+    broadcast_message_id UUID NOT NULL,
+    livreur_id           VARCHAR(100) NOT NULL,
+    statut               VARCHAR(10)  NOT NULL DEFAULT 'ENVOYE',  -- ENVOYE | VU
+    horodatage_vu        TIMESTAMPTZ,
+    PRIMARY KEY (broadcast_message_id, livreur_id),
+    FOREIGN KEY (broadcast_message_id) REFERENCES broadcast_message(id)
+);
+CREATE INDEX idx_bsl_message ON broadcast_statut_livraison(broadcast_message_id);
+```
+
+#### Table de l'agrégat principal
+
+```sql
+CREATE TABLE broadcast_message (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type_broadcast     VARCHAR(20)  NOT NULL,   -- ALERTE | INFO | CONSIGNE
+    texte              VARCHAR(280) NOT NULL,
+    type_ciblage       VARCHAR(10)  NOT NULL,   -- TOUS | SECTEUR
+    secteurs           JSONB,                   -- null si TOUS, sinon [{"codeSecteur":"SECT-01","libelle":"..."}]
+    superviseur_id     VARCHAR(100) NOT NULL,
+    horodatage_envoi   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    livreur_ids        JSONB        NOT NULL    -- snapshot des destinataires au moment de l'envoi
+);
+CREATE INDEX idx_bm_date ON broadcast_message(DATE(horodatage_envoi));
+```
+
+#### Query W-09 — Historique du jour
+
+```
+GET /api/supervision/broadcasts?date=2026-04-21
+```
+
+Réponse : liste de `BroadcastMessageDto` avec, pour chacun :
+- `broadcastMessageId`, `type`, `texte`, `horodatageEnvoi`
+- `nbDestinataires` (calculé : COUNT des BroadcastStatutLivraison)
+- `nbVus` (calculé : COUNT WHERE statut = 'VU')
+- `statutsLivraison` : liste des livreurs avec leur statut (accès via `GET /api/supervision/broadcasts/{id}/statuts`)
+
+Rétention MVP : messages de la journée uniquement. Pas de pagination nécessaire au MVP
+(max ~15 broadcasts par journée selon la volumétrie Karim B.).
+
+---
+
+### Résolution des destinataires à l'envoi
+
+La résolution des FCM tokens des livreurs actifs du jour repose sur deux étapes :
+
+**Étape A — Résolution des LivreurIds (BC-07)**
+
+`EnvoyerBroadcastUseCase` appelle `LivreurEtatQueryPort.getEtatDuJour(date)` (port existant,
+introduit pour US-066). Ce port est implémenté par `Bc07LivreurEtatAdapter` qui appelle
+l'endpoint `GET /api/supervision/livreurs/etat-du-jour` du `svc-supervision` (ou directement
+la logique interne puisque BC-07 est fusionné dans le même service au MVP).
+
+Règle de filtrage :
+- Ciblage TOUS : `EtatJournalierLivreur == EN_COURS`
+- Ciblage SECTEUR : `EN_COURS` ET `codeTms` associé à l'un des `codeSecteur` ciblés
+
+**Étape B — Récupération des FCM tokens (table dédiée)**
+
+Les FCM tokens sont stockés dans une table dédiée mise à jour lors du login mobile :
+
+```sql
+CREATE TABLE fcm_token (
+    livreur_id   VARCHAR(100) PRIMARY KEY,
+    fcm_token    VARCHAR(500) NOT NULL,
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    platform     VARCHAR(10)  NOT NULL DEFAULT 'ANDROID'  -- ANDROID | IOS
+);
+```
+
+L'app mobile envoie son token FCM à chaque démarrage :
+```
+PUT /api/mobile/fcm-token
+{ "fcmToken": "...", "platform": "ANDROID" }
+```
+
+`svc-notification` joint les LivreurIds résolus à cette table pour construire la liste de tokens.
+Si un livreur n'a pas de token enregistré, il est ignoré (log WARNING — pas d'erreur fatale).
+
+---
+
+### Intégration WebSocket/STOMP — Mise à jour temps réel du compteur "vu" (W-09)
+
+Lorsqu'un livreur marque un broadcast comme vu, le superviseur voit le compteur se mettre
+à jour en temps réel dans W-09 sans rechargement de page.
+
+#### Topic STOMP
+
+```
+/topic/broadcasts/{broadcastMessageId}/vu
+```
+
+Payload envoyé à chaque BroadcastVu :
+
+```json
+{
+  "broadcastMessageId": "uuid",
+  "livreurId": "livreur-xyz",
+  "horodatageVu": "2026-04-21T09:42:15Z",
+  "nbVus": 12,
+  "nbDestinataires": 18
+}
+```
+
+#### Flux React (W-09)
+
+1. Le composant `BroadcastHistoriquePanel` souscrit au topic `/topic/broadcasts/{id}/vu` via le hook `useBroadcastVu(broadcastMessageId)`.
+2. À chaque message STOMP reçu, le compteur `nbVus` de l'item correspondant dans la liste est mis à jour via `React Query` ou `Zustand` (même pattern que le tableau de bord existant).
+3. En cas de reconnexion WebSocket, un appel REST `GET /api/supervision/broadcasts/{id}/statuts` recharge l'état complet.
+
+#### Extension du `SuperviseurWebSocketPublisher` existant
+
+`BroadcastVuWebSocketPublisher` suit le même pattern que `LivreurEtatWebSocketPublisher` (existant) et `SuperviseurWebSocketPublisher` (existant). Il est instancié comme `@Component` Spring et injecté dans `BroadcastVuHandler`.
+
+---
+
+### Extension du diagramme C4 Conteneurs pour le Broadcast
+
+Les conteneurs existants ne changent pas. Les flux suivants s'ajoutent :
+
+```
+webapp (W-09) ──── POST /api/supervision/broadcasts ──→ api-gateway ──→ svc-supervision
+                                                                              │
+                                                          ┌───────────────────┤
+                                                          │                   │
+                                                          ▼                   ▼
+                                                   BC-07 (interne)    outbox_events
+                                                   résolution         (BroadcastEnvoyé)
+                                                   livreurs actifs         │
+                                                                            ▼
+                                                                     svc-notification
+                                                                     FCM sendEachForMulticast
+                                                                            │
+                                                                            ▼
+                                                                     Firebase → App Android
+
+app-mobile ──── POST /api/supervision/broadcasts/{id}/vu ──→ svc-supervision
+                                                                     │
+                                                              BroadcastVu event
+                                                                     │
+                                                              ┌──────┴──────────────────┐
+                                                              ▼                         ▼
+                                                       broadcast_statut_livraison  WebSocket STOMP
+                                                       (read model mis à jour)     /topic/broadcasts/{id}/vu
+                                                                                        │
+                                                                                        ▼
+                                                                                 webapp (W-09)
+                                                                                 compteur vu mis à jour
+```
+
+---
+
 ## Diagramme de déploiement simplifié
 
 ```

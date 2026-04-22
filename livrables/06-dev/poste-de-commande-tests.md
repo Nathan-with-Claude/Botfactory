@@ -6,6 +6,94 @@
 
 ---
 
+## Feature Broadcast Superviseur → Livreurs (US-067/068/069) — 2026-04-22
+
+### Pré-requis
+
+**Backend svc-supervision** :
+```bash
+cd c:/Github/Botfactory/src/backend/svc-supervision
+JAVA_HOME="C:/Program Files/Java/jdk-23" mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# Disponible sur http://localhost:8082
+# Le seeder crée automatiquement : 3 secteurs (SECT-IDF-01/02/03), 6 tokens FCM fictifs
+```
+
+**Frontend supervision** :
+```bash
+cd c:/Github/Botfactory/src/web/supervision
+REACT_APP_API_URL=http://localhost:8082 REACT_APP_AUTH_BYPASS=true npm start
+# Disponible sur http://localhost:3000
+```
+
+**Mobile livreur (Expo Web)** :
+```bash
+cd c:/Github/Botfactory/src/mobile
+EXPO_PUBLIC_API_URL=http://localhost:8081 EXPO_PUBLIC_SUPERVISION_URL=http://localhost:8082 npx expo start --web --port 8083
+# Disponible sur http://localhost:8083
+```
+
+> **Profil dev** : toutes les requêtes backend sont authentifiées comme `superviseur-001 / ROLE_SUPERVISEUR` automatiquement.
+> **FCM simulé** : les messages push sont logués INFO (non envoyés) — comportement normal en dev.
+
+---
+
+### US-067 — Envoyer un broadcast à ses livreurs actifs (W-09)
+
+**Anomalies connues avant test** :
+- OBS-BROAD-001 : ciblage par secteur retourne 422 (livreurIds non stockés en base) — à ignorer pour le test SECTEUR
+- OBS-BROAD-000 : corrigée (FcmBroadcastAdapter)
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes |
+|---|----------|--------|-----------------|--------|-------|
+| 1 | Ouvrir W-09 | Sur http://localhost:3000, cliquer "Broadcast" dans la barre de navigation gauche | Le panneau W-09 s'affiche avec formulaire de composition | ☐ | |
+| 2 | Bouton ENVOYER inactif | Sur le formulaire W-09, saisir un texte sans sélectionner le type | Le bouton ENVOYER doit être grisé (disabled) | ☐ | |
+| 3 | Sélectionner TypeBroadcast | Cliquer sur "ALERTE" | Le bouton ENVOYER devient actif | ☐ | |
+| 4 | Envoi ALERTE vers tous | Sélectionner ALERTE, saisir "Rue Gambetta barrée", ciblage=Tous, cliquer ENVOYER | Toast "Message envoyé à 2 livreurs" — message apparaît dans l'historique | ☐ | |
+| 5 | Compteur caractères | Saisir 280 caractères dans le textarea | Compteur affiche "280 / 280", bouton ENVOYER actif | ☐ | |
+| 6 | Blocage > 280 caractères | Tenter de saisir un 281e caractère | Le champ n'accepte pas le caractère supplémentaire | ☐ | |
+| 7 | Liste secteurs | Sélectionner le ciblage "Secteur" et observer la liste | SECT-IDF-01, SECT-IDF-02, SECT-IDF-03 disponibles (OBS-BROAD-001 : envoi échouera) | ☐ | |
+| 8 | API directe — secteurs | `curl http://localhost:8082/api/supervision/broadcast-secteurs` | JSON avec 3 secteurs et leurs libellés | ☐ | |
+
+---
+
+### US-068 — Recevoir les broadcasts sur l'app mobile (M-08)
+
+**Prérequis** : US-067 valide et au moins 1 broadcast envoyé.
+**Anomalies connues** : OBS-BROAD-003 (projection statuts vide) — le compteur de non-lus peut ne pas se mettre à jour.
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes |
+|---|----------|--------|-----------------|--------|-------|
+| 1 | Ouvrir l'app mobile | http://localhost:8083 — se connecter comme Pierre Morel (livreur-002) | Écran M-02 (Liste des colis) affiché, icône campaign visible dans le header | ☐ | |
+| 2 | Accéder à M-08 | Cliquer l'icône campaign dans le header | Écran M-08 (Zone messages) s'ouvre avec la liste des broadcasts du jour | ☐ | |
+| 3 | Liste messages | Observer M-08 avec au moins 1 broadcast envoyé | Chaque item : badge coloré [ALERTE]/[INFO]/[CONSIGNE], heure, texte, "De : superviseur-001" | ☐ | |
+| 4 | Aucun message | Tester M-08 sans broadcast envoyé (redémarrer svc-supervision) | Message "Votre superviseur n'a pas envoyé de message aujourd'hui." | ☐ | |
+| 5 | API directe | `curl "http://localhost:8082/api/supervision/broadcasts/du-jour?date=$(date +%Y-%m-%d)"` | JSON avec broadcasts du jour, nombreDestinataires et nombreVus | ☐ | |
+
+---
+
+### US-069 — Consulter les statuts de lecture dans W-09
+
+**Anomalies connues** : OBS-BROAD-003 (compteurs toujours 0, projection vide).
+
+| # | Scénario | Action | Résultat attendu | Statut | Notes |
+|---|----------|--------|-----------------|--------|-------|
+| 1 | Historique W-09 | Après un envoi, consulter la section "Historique des broadcasts du jour" dans W-09 | Les broadcasts apparaissent avec badge, heure, texte tronqué, "Vu par 0/2 livreurs" | ☐ | |
+| 2 | Détail nominatif | Cliquer le chevron [>] d'un broadcast | Panneau avec liste livreurs : Pierre Morel / EN ATTENTE, Paul Dupont / EN ATTENTE | ☐ | OBS-BROAD-003 : liste peut être vide |
+| 3 | Mise à jour temps réel | Depuis M-08 livreur, consulter un message — observer W-09 superviseur | Compteur "Vu par N/M" devrait se mettre à jour (OBS-BROAD-003 bloque) | ☐ | |
+| 4 | API historique | `curl "http://localhost:8082/api/supervision/broadcasts/du-jour?date=$(date +%Y-%m-%d)"` | JSON avec nombreVus et nombreDestinataires pour chaque broadcast | ☐ | |
+
+---
+
+### Anomalies actives à signaler au développeur
+
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| OBS-BROAD-001 | Bloquant | Ciblage secteur impossible — livreurIds absents de BroadcastSecteurEntity |
+| OBS-BROAD-002 | Bloquant (test) | Endpoints ROLE_LIVREUR non testables en L2 avec MockJwtAuthFilter dev |
+| OBS-BROAD-003 | Bloquant | BroadcastEnvoye non publié via ApplicationEventPublisher — projection statuts vide |
+
+---
+
 ## Corrections As-Built (US-051 à US-059) — 2026-04-04
 
 ### Pré-requis communs

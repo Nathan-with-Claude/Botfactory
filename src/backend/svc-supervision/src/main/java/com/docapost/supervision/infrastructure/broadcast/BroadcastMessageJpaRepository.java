@@ -25,4 +25,16 @@ public interface BroadcastMessageJpaRepository
      * @return liste triée par horodatage croissant
      */
     List<BroadcastMessageEntity> findByHorodatageEnvoiBetween(Instant debut, Instant fin);
+
+    /**
+     * Recherche les broadcasts destinés à un livreur donné dans une plage horaire.
+     * Utilisé par GET /broadcasts/recus (US-068).
+     *
+     * @param livreurId  identifiant du livreur destinataire
+     * @param debut      borne inférieure (inclusive)
+     * @param fin        borne supérieure (exclusive)
+     * @return liste des broadcasts contenant livreurId dans leur collection livreurIds
+     */
+    List<BroadcastMessageEntity> findAllByLivreurIdsContainingAndHorodatageEnvoiBetween(
+            String livreurId, Instant debut, Instant fin);
 }

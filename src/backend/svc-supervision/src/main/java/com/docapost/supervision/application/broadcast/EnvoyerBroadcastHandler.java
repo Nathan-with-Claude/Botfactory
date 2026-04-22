@@ -9,6 +9,7 @@ import com.docapost.supervision.domain.broadcast.repository.FcmTokenRepository;
 import com.docapost.supervision.domain.planification.model.EtatJournalierLivreur;
 import com.docapost.supervision.domain.planification.model.VueLivreur;
 import com.docapost.supervision.infrastructure.broadcast.FcmBroadcastAdapter;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -40,18 +41,21 @@ public class EnvoyerBroadcastHandler {
     private final BroadcastMessageRepository broadcastMessageRepository;
     private final FcmTokenRepository fcmTokenRepository;
     private final FcmBroadcastAdapter fcmBroadcastAdapter;
+    private final ApplicationEventPublisher eventPublisher;
 
     public EnvoyerBroadcastHandler(
             ConsulterEtatLivreursHandler consulterEtatLivreursHandler,
             BroadcastSecteurRepository broadcastSecteurRepository,
             BroadcastMessageRepository broadcastMessageRepository,
             FcmTokenRepository fcmTokenRepository,
-            FcmBroadcastAdapter fcmBroadcastAdapter) {
+            FcmBroadcastAdapter fcmBroadcastAdapter,
+            ApplicationEventPublisher eventPublisher) {
         this.consulterEtatLivreursHandler = consulterEtatLivreursHandler;
         this.broadcastSecteurRepository = broadcastSecteurRepository;
         this.broadcastMessageRepository = broadcastMessageRepository;
         this.fcmTokenRepository = fcmTokenRepository;
         this.fcmBroadcastAdapter = fcmBroadcastAdapter;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -110,7 +114,8 @@ public class EnvoyerBroadcastHandler {
         // 5. Persister l'aggregate
         broadcastMessageRepository.save(message);
 
-        // 6. Vider la liste interne d'événements après persistance
+        // 6. Publier les domain events collectés, puis vider
+        message.getEvenements().forEach(eventPublisher::publishEvent);
         message.clearEvenements();
 
         // 7. Récupérer les tokens FCM et envoyer en multicast

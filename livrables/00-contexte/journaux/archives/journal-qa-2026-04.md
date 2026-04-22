@@ -61,3 +61,10 @@
 | 2026-04-05 | US-055 | Scénarios + rapport créés (5 TCs L1/L3) — Partielle (R1 L1 ok, R2 déféré) | livrables/07-tests/scenarios/US-055-*.md |
 | 2026-04-05 | US-056 | Scénarios + rapport créés (7 TCs L1) — Validée 28/28 offlineQueue | livrables/07-tests/scenarios/US-056-*.md |
 | 2026-04-05 | US-057 | Scénarios + rapport créés (4 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-057-*.md |
+| 2026-04-05 | US-058 | Scénarios + rapport créés (8 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-058-*.md |
+| 2026-04-05 | US-059 | Scénarios + rapport créés (6 TCs L1) — Validée MVP alternatif | livrables/07-tests/scenarios/US-059-*.md |
+| 2026-04-05 | US-060 | Scénarios + rapport créés (5 TCs L1) — Validée Bug P0 résolu | livrables/07-tests/scenarios/US-060-*.md |
+| 2026-04-05 | US-061 | Scénarios + rapport créés (6 TCs L1) — Validée Bug P0 légal résolu 33/33 | livrables/07-tests/scenarios/US-061-*.md |
+| 2026-04-05 | US-062 | Scénarios + rapport créés (7 TCs L1) — Validée 53/53 | livrables/07-tests/scenarios/US-062-*.md |
+| 2026-04-08 | US-066 | Scénarios + rapport créés (16 TCs L1/L2/L3) — L1 23/23 PASS, L2 bloqué OBS-066-02, L3 non exécuté | livrables/07-tests/scenarios/US-066-*.md |
+| 2026-04-08 | US-066 | Re-run L2 après correctif OBS-066-02 (DevLivreurReferentiel IDs alignés) — L2 4/5 PASS, US validée | livrables/07-tests/scenarios/US-066-rapport-test.md |

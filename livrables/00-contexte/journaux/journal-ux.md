@@ -7,10 +7,10 @@
 
 ## Contexte synthétisé
 
-- **Livrables propriété** : `02-ux/` (personas.md v1.1, user-journeys.md v1.2, wireframes.md v1.4)
-- **Personas actifs** : 4 (Pierre livreur, Laurent logisticien/superviseur, Sophie DSI, Éric architecte)
-- **Parcours documentés** : 7 (Parcours 0 à 6)
-- **Wireframes** : 12 écrans (M-01→M-07 mobile, W-01→W-05 + W-08 web)
+- **Livrables propriété** : `02-ux/` (personas.md v1.1, user-journeys.md v1.3, wireframes.md v1.5)
+- **Personas actifs** : 4 (Pierre livreur, Laurent/Karim superviseur, Sophie DSI, Éric architecte)
+- **Parcours documentés** : 8 (Parcours 0 à 7)
+- **Wireframes** : 14 écrans (M-01→M-08 mobile, W-01→W-05 + W-08 + W-09 web)
 
 ### Personas en résumé
 
@@ -66,17 +66,22 @@
 | 2026-03-20 | 1.1 | Ajout Parcours 0 : enrichissement persona Laurent (rôle préparation), Parcours 0 AS-IS/TO-BE, wireframes W-04 et W-05 | personas.md, user-journeys.md, wireframes.md |
 | 2026-04-02 | 1.3 | Mise à jour wireframes : M-01 card SSO rétractable avant connexion (US-043), M-02 hint swipe onboarding (US-045), M-04 pad signature réel react-native-signature-canvas (US-046), M-07 NOUVEAU écran "Mes consignes" avec horodatage (US-037, US-042), W-01 compteur déconnexion WebSocket (US-044) | wireframes.md |
 | 2026-04-06 | 1.4 | Wireframe W-08 "État des livreurs" (US-066) : tableau VueLivreur temps réel, 3 tuiles KPI, filtres rapides, badges SANS_TOURNEE/AFFECTÉ/EN COURS, navigation W-04/W-05/W-02. Parcours 6 "Vérifier la disponibilité des livreurs". Glossaire enrichi (8 nouveaux termes). | wireframes.md, user-journeys.md |
+| 2026-04-21 | 1.5 | Feature Broadcast MVP (@sponsor 2026-04-21) : Parcours 7 "Superviseur : Envoyer un broadcast", wireframe W-09 (panneau broadcast superviseur web), wireframe M-08 (zone messages broadcast mobile livreur), enrichissement persona superviseur (Karim B.), 13 nouveaux termes Ubiquitous Language (broadcast, alerte, info, consigne, ciblage, secteur, livreurs actifs, statut vu, historique broadcast…). | personas.md, user-journeys.md, wireframes.md |
 
 ---
 
 ## Points d'attention — prochaines interventions
 
-- M-07 est maintenant documenté (US-037, US-042) — prochain écran mobile : M-08 si nécessaire
-- Le persona **Laurent** a deux modes : matin (Parcours 0, préparation) / journée (Parcours 2, supervision) — ne pas confondre les contextes
-- Le **mode offline** (Pierre) doit être reflété dans tout wireframe mobile : indiquer l'état de synchronisation
+- **M-08 livré** — Prochain écran mobile si besoin : M-09 (récapitulatif de clôture enrichi, hors scope actuel)
+- Le persona **Laurent/Karim** a deux modes : matin (Parcours 0, préparation) / journée (Parcours 2, supervision) — ne pas confondre les contextes
+- Le **mode offline** (Pierre) doit être reflété dans tout wireframe mobile : M-08 documente le comportement offline (messages FCM non reçus, stockage local des messages déjà reçus)
 - Les **états d'erreur** (import TMS échoué, livreur indisponible) doivent figurer dans tout wireframe W-04/W-05 ajouté
 - US-043 (card SSO avant connexion) et US-036 (post-connexion) forment un comportement composite — tout nouveau wireframe M-01 doit documenter les deux états
 - La **dette technique pad signature** (US-046) est soldée côté wireframe : M-04 documente maintenant le composant react-native-signature-canvas avec ses invariants légaux
-- **W-08 (US-066)** : wireframe complet livré. Prochaine étape : @architecte-metier doit confirmer la position de VueLivreur dans BC-03, @architecte-technique doit valider l'endpoint GET /api/supervision/livreurs/etat-du-jour
-- **SideNavBar** : trois entrées désormais (Préparation / Supervision / Livreurs) — le développeur doit mettre à jour le composant NavBar React existant pour ajouter l'entrée "Livreurs" avec icône `group`
-- **Parcours 6** enrichit l'Ubiquitous Language : 8 termes nouveaux (état du jour, VueLivreur, SANS_TOURNEE, AFFECTE_NON_LANCE, EN_COURS, disponible, désaffectation) — à transmettre à @architecte-metier
+- **W-08 (US-066)** : wireframe complet livré. @architecte-metier doit confirmer la position de VueLivreur dans BC-03, @architecte-technique doit valider l'endpoint GET /api/supervision/livreurs/etat-du-jour
+- **SideNavBar** : quatre entrées désormais (Préparation / Supervision / Livreurs / Broadcast) — le développeur doit mettre à jour le composant NavBar React pour ajouter l'entrée "Broadcast" avec icône `campaign`
+- **W-09 / M-08 (Broadcast)** : wireframes livrés — prochaines étapes :
+  - @architecte-metier : confirmer rattachement BroadcastMessage dans BC-03 (déjà fait v1.3) et valider les nouveaux Domain Events BroadcastEnvoyé / BroadcastLu
+  - @architecte-technique : spécifier l'endpoint POST /api/supervision/broadcasts et le mécanisme d'accusé de réception FCM pour le statut "vu"
+  - @po : créer les User Stories pour W-09 et M-08 dans le backlog
+- **Parcours 7** enrichit l'Ubiquitous Language : 13 termes nouveaux (broadcast, message broadcast, alerte, info, consigne, ciblage, secteur, livreurs actifs, statut vu, historique broadcast…) — transmis à @architecte-metier via le glossaire user-journeys.md

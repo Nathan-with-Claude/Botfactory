@@ -220,10 +220,14 @@ public class DevDataSeeder implements CommandLineRunner {
 
         // ─── BC-03 Broadcast — Secteurs et tokens FCM (US-067) ───────────────────
         if (broadcastSecteurJpaRepository.count() == 0) {
-            broadcastSecteurJpaRepository.save(new BroadcastSecteurEntity("SECT-IDF-01", "Secteur 1 — Nord Essonne", true));
-            broadcastSecteurJpaRepository.save(new BroadcastSecteurEntity("SECT-IDF-02", "Secteur 2 — Sud Essonne", true));
-            broadcastSecteurJpaRepository.save(new BroadcastSecteurEntity("SECT-IDF-03", "Secteur 3 — Val-de-Marne", true));
-            log.info("[DevDataSeeder] 3 secteurs broadcast insérés");
+            BroadcastSecteurEntity s1 = new BroadcastSecteurEntity("SECT-IDF-01", "Secteur 1 — Nord Essonne", true);
+            s1.setLivreurIds(java.util.List.of("livreur-001", "livreur-002"));
+            BroadcastSecteurEntity s2 = new BroadcastSecteurEntity("SECT-IDF-02", "Secteur 2 — Sud Essonne", true);
+            s2.setLivreurIds(java.util.List.of("livreur-003", "livreur-004"));
+            BroadcastSecteurEntity s3 = new BroadcastSecteurEntity("SECT-IDF-03", "Secteur 3 — Val-de-Marne", true);
+            s3.setLivreurIds(java.util.List.of("livreur-005", "livreur-006"));
+            broadcastSecteurJpaRepository.saveAll(java.util.List.of(s1, s2, s3));
+            log.info("[DevDataSeeder] 3 secteurs broadcast insérés avec livreurs affectés");
         }
 
         if (fcmTokenJpaRepository.count() == 0) {

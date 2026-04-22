@@ -548,3 +548,211 @@ Builds CI/CD :
   le premier sprint de développement feature.
 
 **Statut** : Acceptée
+
+---
+
+## DD-012 : Mécanisme BroadcastVu — Endpoint REST mobile vs FCM delivery receipt
+
+> Décision ajoutée en v1.3 — 2026-04-21.
+> Source : question ouverte remontée par @architecte-metier — entretien Karim B.
+
+**Contexte**
+Le Domain Event `BroadcastVu` doit être émis dès qu'un livreur affiche le message dans
+sa zone dédiée (M-08). Deux mécanismes sont envisageables pour confirmer la lecture :
+
+1. L'application mobile appelle un endpoint REST dédié au moment de l'affichage.
+2. Firebase Cloud Messaging expose des "delivery receipts" (confirmations de livraison du push).
+
+L'invariant métier est clair (domain-model.md, BC-03) : "Le statut VU est émis par
+l'application mobile dès l'affichage du message dans la zone dédiée — aucun clic 'lire'
+n'est requis du livreur."
+
+**Options envisagées**
+
+| Option | Description | Avantages | Inconvénients |
+|--------|-------------|-----------|---------------|
+| A — Endpoint REST mobile | L'app mobile appelle `POST /api/supervision/broadcasts/{id}/vu` dès l'affichage du composant M-08 | Contrôle total côté DocuPost, sémantique précise ("affiché à l'écran"), indépendant de FCM, testé unitairement, corrélé au JWT livreur | Requiert une connexion au moment de l'affichage (différé en mode offline) |
+| B — FCM delivery receipt | Firebase rapporte la livraison du push (delivery receipt) | Pas de code supplémentaire côté mobile | Ne confirme que la livraison du push (réception en background), pas l'affichage dans M-08 ; pas disponible sur tous les appareils Android ; sémantique incorrecte pour l'invariant métier |
+
+**Décision**
+Option A : Endpoint REST mobile `POST /api/supervision/broadcasts/{id}/vu`.
+
+Justifications :
+1. **Sémantique métier exacte** : la confirmation est déclenchée par l'affichage dans M-08,
+   pas par la réception en arrière-plan du push. FCM delivery receipt confirme la livraison
+   du push, non l'affichage. Ces deux événements sont distincts.
+2. **Contrôle applicatif** : le `livreurId` est extrait du JWT, l'invariant "seuls les
+   destinataires peuvent émettre BroadcastVu" est vérifié côté serveur.
+3. **Indépendance FCM** : le statut VU n'est pas couplé à la disponibilité de FCM.
+   Un livreur peut consulter M-08 via la zone messages même sans notification push
+   (app ouverte en premier plan, ouverture manuelle de la zone).
+4. **Comportement offline** : si le livreur est hors connexion au moment de l'affichage,
+   l'appel REST est mis en file locale (WatermelonDB PENDING) et rejoué dès le retour réseau.
+   Le statut VU sera légèrement différé mais cohérent.
+
+**Conséquences**
+- Positives : implémentation précise et testable, découplée de FCM, sémantique métier respectée.
+- Négatives : en mode offline, le statut VU peut être émis avec un délai (quelques minutes
+  maximum avant le retour réseau). Le superviseur verra "ENVOYE" jusqu'à la synchronisation.
+  Ce comportement est documenté dans M-08 (indicateur "En attente de sync" si mode offline).
+- RGPD : l'endpoint `POST .../vu` ne transmet aucune donnée supplémentaire — le `livreurId`
+  est extrait du JWT existant. Aucun champ libre. Conformité RGPD préservée.
+
+**Statut** : Acceptée
+
+---
+
+## DD-013 : Fan-out FCM pour broadcast — sendEachForMulticast vs topic subscriptions
+
+> Décision ajoutée en v1.3 — 2026-04-21.
+> Source : question ouverte remontée par @architecte-metier — entretien Karim B.
+
+**Contexte**
+Lors de l'envoi d'un `BroadcastMessage`, `svc-notification` doit diffuser une notification
+push FCM vers N livreurs simultanément (N = livreurs actifs résolus lors de l'envoi,
+généralement 2 à 20 au MVP selon la volumétrie Karim B.).
+
+Deux mécanismes FCM sont disponibles pour le fan-out :
+1. `sendEachForMulticast` : envoi d'une notification à une liste de tokens FCM individuels.
+   Résultat par token individuel (succès / échec / token invalide).
+2. Topic subscriptions : les devices s'abonnent à un topic FCM (ex. `secteur-IDF-SUD`),
+   le serveur publie sur le topic — FCM gère le fan-out.
+
+**Options envisagées**
+
+| Option | Description | Avantages | Inconvénients |
+|--------|-------------|-----------|---------------|
+| A — sendEachForMulticast | Liste de tokens FCM envoyée en une seule requête Firebase Admin SDK | Résultat individuel par token, détection des tokens expirés, pas de gestion d'abonnement côté app | Limite Firebase : 500 tokens par requête (MVP largement en dessous) |
+| B — Topic subscriptions | App mobile s'abonne à un topic au login ; serveur publie sur le topic | Fan-out géré par FCM, aucune gestion de tokens côté serveur | Synchronisation des abonnements complexe (gestion des arrivées/départs, secteurs multiples) ; pas de contrôle fin des destinataires actifs au moment de l'envoi ; les topics sont persistants — un livreur déconnecté peut recevoir des messages obsolètes |
+
+**Décision**
+Option A : `sendEachForMulticast` avec la liste des FCM tokens des livreurs résolus.
+
+Justifications :
+1. **Contrôle des destinataires** : la liste des tokens est calculée dynamiquement à partir
+   des livreurs EN_COURS au moment de l'envoi (BC-07). Le broadcast ne peut pas atteindre
+   un livreur inactif — invariant métier garanti.
+2. **Gestion des tokens invalides** : `sendEachForMulticast` retourne un résultat par token.
+   Les tokens expirés (`UNREGISTERED`) sont détectés et supprimés de la table `fcm_token`
+   automatiquement.
+3. **Simplicité opérationnelle** : aucun mécanisme d'abonnement côté app mobile, aucune
+   synchronisation des topics à gérer. La table `fcm_token` est la seule source de vérité.
+4. **Volumétrie MVP** : N livreurs maximum = 50. La limite FCM (500 tokens) est largement
+   respectée sans pagination au MVP.
+5. **Cohérence avec l'existant** : `FcmPushAdapter` gère déjà l'envoi individuel pour
+   les Instructions. `sendEachForMulticast` est une extension naturelle du même adapter.
+
+**Implémentation (extrait)**
+
+```java
+// FcmPushAdapter — méthode ajoutée pour le broadcast
+public BroadcastFanoutResult sendBroadcast(List<String> fcmTokens, BroadcastNotification notif) {
+    MulticastMessage message = MulticastMessage.builder()
+        .addAllTokens(fcmTokens)
+        .setNotification(Notification.builder()
+            .setTitle(notif.type().label())
+            .setBody(notif.texte())
+            .build())
+        .putAllData(Map.of(
+            "broadcastMessageId", notif.broadcastMessageId().toString(),
+            "type", notif.type().name()
+        ))
+        .build();
+    BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+    // Tokens UNREGISTERED → suppression de fcm_token (nettoyage automatique)
+    return mapToBroadcastFanoutResult(response, fcmTokens);
+}
+```
+
+**Post-MVP (Release 2)** : si le nombre de livreurs dépasse 500 ou si des groupes
+géographiques stables émergent (secteurs permanents), réévaluer les topic subscriptions
+avec un mécanisme de synchronisation d'abonnement déclenché par les events BC-07.
+
+**Conséquences**
+- Positives : contrôle précis des destinataires, détection automatique des tokens périmés,
+  aucun overhead de synchronisation d'abonnements.
+- Négatives : la liste de tokens doit être construite à chaque broadcast (acceptable :
+  1 query PostgreSQL sur `fcm_token` filtrée sur les livreurIds résolus, < 10ms).
+- Alerte ops : si plus de 10 % des tokens d'un broadcast retournent UNREGISTERED, log WARNING.
+
+**Statut** : Acceptée
+
+---
+
+## DD-014 : Source des secteurs broadcast — Configuration statique DocuPost vs import TMS
+
+> Décision ajoutée en v1.3 — 2026-04-21.
+> Source : question ouverte remontée par @architecte-metier — entretien Karim B.
+
+**Contexte**
+`BroadcastSecteur.codeSecteur` (Value Object dans BC-03) définit les zones géographiques
+prédéfinies servant d'unité de ciblage pour le broadcast. Deux sources sont possibles :
+1. Les zones codifiées dans le TMS (importées avec les tournées via BC-07).
+2. Une configuration statique propre à DocuPost, indépendante du TMS.
+
+"Si je pouvais choisir 'les livreurs du secteur 2', ce serait parfait." (Karim B.)
+"La notion de secteur prédéfini doit être alignée avec le modèle de données existant
+des tournées." (perimetre-mvp.md, Contraintes et dépendances)
+
+**Options envisagées**
+
+| Option | Description | Avantages | Inconvénients |
+|--------|-------------|-----------|---------------|
+| A — Zones issues du TMS (codeTms des TourneePlanifiee) | Les secteurs = regroupements de codes TMS (ex. "SECT-IDF-02" regroupe les tournées dont le codeTms commence par "IDF-02-*") | Cohérence avec le modèle de données existant, pas de saisie manuelle | Le TMS n'expose pas nécessairement une notion de secteur — les codes TMS sont des codes de tournée, pas de zone géographique |
+| B — Configuration statique dans DocuPost | Table `broadcast_secteur` dans `svc-supervision` : (codeSecteur, libelle, codesTmsAssocies[]) | Contrôle total de DocuPost sur la définition des secteurs, indépendant du modèle TMS, modifiable sans refactoring | Saisie et maintenance manuelle par un administrateur DocuPost |
+| C — Import automatique des secteurs depuis le TMS | Dériver les secteurs à partir des zones géographiques des tournées importées | Automatique, cohérent avec la planification | Complexité d'extraction, dépendance forte au modèle TMS (H6 à confirmer) |
+
+**Décision**
+Option B pour le MVP : table de configuration statique `broadcast_secteur` dans DocuPost,
+avec association manuelle aux `codeTms` des tournées.
+
+Justifications :
+1. **Indépendance du modèle TMS** : le TMS ne garantit pas une structuration en secteurs
+   géographiques. Les codes TMS sont des identifiants de tournées, pas de zones. Mapper
+   les secteurs opérationnels (que connaît Karim B.) sur des codes TMS est une transformation
+   métier qui appartient à DocuPost.
+2. **Stabilité MVP** : les secteurs prédéfinis de l'agence IDF Sud sont stables sur une
+   journée (Karim B. cite des exemples fixes : "secteur 2", "dépôt de Vincennes").
+   Une table statique suffit au MVP.
+3. **Découplage H6** : si H6 (API TMS) s'avère invalide, la table statique reste opérationnelle.
+   L'import automatique (Option C) dépend de H6.
+4. **Administration** : un endpoint réservé aux ADMIN permet de créer/modifier les secteurs :
+   `POST /api/admin/broadcast-secteurs`. La liste est exposée en lecture aux superviseurs
+   via `GET /api/supervision/broadcast-secteurs`.
+
+**Implémentation**
+
+```sql
+CREATE TABLE broadcast_secteur (
+    code_secteur    VARCHAR(50)  PRIMARY KEY,
+    libelle         VARCHAR(200) NOT NULL,
+    codes_tms       JSONB,       -- ["IDF-02-A","IDF-02-B"] — codes TMS associés
+    actif           BOOLEAN      NOT NULL DEFAULT true,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+-- Données initiales (migration Flyway V2__broadcast_secteurs.sql)
+INSERT INTO broadcast_secteur VALUES
+  ('SECT-IDF-01', 'IDF Nord', '["IDF-01-A","IDF-01-B","IDF-01-C"]', true, now()),
+  ('SECT-IDF-02', 'IDF Sud', '["IDF-02-A","IDF-02-B"]', true, now());
+```
+
+La résolution SECTEUR consiste à :
+1. Récupérer les `codesTms` du secteur depuis `broadcast_secteur`.
+2. Joindre avec les `TourneePlanifiee` (BC-07) dont le `codeTms` est dans cette liste
+   et dont `EtatJournalierLivreur == EN_COURS`.
+
+**Post-MVP (Release 2)** : si le TMS expose une API de secteurs géographiques natifs,
+envisager l'import automatique (Option C) via l'ACL TMS existant (BC-07), sans modification
+du modèle `BroadcastSecteur` côté DocuPost (seule l'implémentation de
+`BroadcastSecteurReferentiel` change).
+
+**Conséquences**
+- Positives : simplicité MVP, indépendance TMS, maîtrise totale de DocuPost sur sa propre
+  notion de secteur.
+- Négatives : maintenance manuelle des secteurs et de leur association aux codes TMS.
+  Risque de désalignement si le TMS modifie sa codification.
+  Mitigation : les codes TMS sont stables dans le cycle de vie des tournées journalières.
+- Administration : prévoir une US d'administration des secteurs ou une migration Flyway
+  initiale avec les secteurs de l'agence pilote (IDF Sud) avant le déploiement.
+
+**Statut** : Acceptée

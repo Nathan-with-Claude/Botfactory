@@ -11,11 +11,13 @@ import React from 'react';
 
 export interface SideNavBarProps {
   /** Page active pour surligner le lien correspondant */
-  activePage?: 'preparation' | 'supervision';
+  activePage?: 'preparation' | 'supervision' | 'broadcast';
   /** Callback navigation Préparation */
   onNavigatePreparation?: () => void;
   /** Callback navigation Supervision */
   onNavigateSupervision?: () => void;
+  /** Callback navigation Broadcast */
+  onNavigateBroadcast?: () => void;
   /** Callback déconnexion */
   onDeconnexion?: () => void;
 }
@@ -24,8 +26,9 @@ export function SideNavBar({
   activePage = 'preparation',
   onNavigatePreparation,
   onNavigateSupervision,
+  onNavigateBroadcast,
   onDeconnexion,
-}: SideNavBarProps): React.JSX.Element {
+}: Readonly<SideNavBarProps>): React.JSX.Element {
   return (
     <aside
       data-testid="side-nav-bar"
@@ -76,6 +79,29 @@ export function SideNavBar({
             monitoring
           </span>
           <span>Supervision</span>
+        </button>
+
+        {/* Lien Broadcast — US-069 */}
+        <button
+          data-testid="side-nav-bar-broadcast"
+          onClick={onNavigateBroadcast}
+          aria-current={activePage === 'broadcast' ? 'page' : undefined}
+          className={[
+            'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out w-full text-left text-sm font-body',
+            activePage === 'broadcast'
+              ? 'bg-white text-primary font-semibold shadow-sm'
+              : 'text-slate-600 hover:text-primary hover:bg-slate-200/50',
+          ].join(' ')}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={activePage === 'broadcast'
+              ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }
+              : undefined}
+          >
+            campaign
+          </span>
+          <span>Broadcast</span>
         </button>
       </div>
 

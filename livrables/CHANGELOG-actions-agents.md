@@ -3,6 +3,42 @@
 > Format : [date ISO] [agent] [type d'action] → [fichier(s) impacté(s)]
 > [résumé très court]
 
+- 2026-04-22T12:30Z @devops DEPLOY → recette GCP (TAG 0975f525, build 5a200cff)
+  Feature broadcast US-067/068/069 déployée. svc-supervision UP, frontend UP, /broadcast-secteurs 200 OK.
+
+- 2026-04-22T12:15Z @developpeur UPDATE → src/web/supervision/src/App.tsx
+  Fix OBS-L3-001 : import PanneauBroadcastPage, route { page: 'broadcast' } dans AppRoute, entrée Broadcast dans NAV_PAGES, rendu conditionnel. Route broadcast désormais accessible.
+
+- 2026-04-22T12:15Z @qa EXEC → e2e/US-067-broadcast-envoyer.spec.ts, e2e/US-069-broadcast-statuts.spec.ts
+  5/5 TCs L3 Playwright PASS en assertions réelles (14,8s). OBS-L3-001 résolue. Rapports US-067 et US-069 mis à jour.
+
+- 2026-04-22T11:35Z @developpeur UPDATE → livrables/07-tests/scenarios/US-067-rapport-test.md, US-068-rapport-test.md, US-069-rapport-test.md
+  Verdicts mis à jour VALIDÉE après correction OBS-BROAD-001/002/003. 183 tests mvn test PASS confirmé.
+
+- 2026-04-22T11:35Z @developpeur UPDATE → src/backend/svc-supervision/…/EnvoyerBroadcastHandler.java, BroadcastSecteurEntity.java, BroadcastSecteurRepositoryImpl.java, DevDataSeeder.java, MockJwtAuthFilter.java, EnvoyerBroadcastHandlerTest.java
+  Correction OBS-BROAD-001 (ciblage secteur), OBS-BROAD-002 (mock rôle LIVREUR), OBS-BROAD-003 (publication domain events). BUILD SUCCESS 183/183.
+
+- 2026-04-22T11:30Z @qa CREATE → livrables/07-tests/scenarios/US-067-scenarios.md, US-068-scenarios.md, US-069-scenarios.md
+  Scénarios de tests rédigés pour la feature Broadcast (US-067/068/069) : 34 TCs répartis L1/L2/L3 selon pyramide.
+
+- 2026-04-22T11:30Z @qa UPDATE → src/backend/svc-supervision/…/FcmBroadcastAdapter.java
+  Correction OBS-BROAD-000 : suppression @Autowired(required=false) Object firebaseMessaging → NoUniqueBeanDefinitionException au démarrage Spring Boot 3.x.
+
+- 2026-04-22T11:30Z @qa CREATE → livrables/07-tests/scenarios/US-067-rapport-test.md, US-068-rapport-test.md, US-069-rapport-test.md
+  Rapports d'exécution : L1 19/19 PASS (Java mvn test + Jest RNTL), L2 partiel (3 anomalies détectées : OBS-BROAD-001/002/003).
+
+- 2026-04-22T11:30Z @qa UPDATE → livrables/06-dev/poste-de-commande-tests.md
+  Ajout section US-067/068/069 : check-list tests manuels Product Owner, anomalies actives documentées.
+
+- 2026-04-22T11:30Z @qa CREATE → livrables/07-tests/plan-tests.md
+  Création plan-tests.md (fichier était vide) : vision globale feature broadcast, résultats L1/L2, corrections requises.
+
+- 2026-04-22T11:30Z @qa UPDATE → livrables/07-tests/jeux-de-donnees.md
+  Ajout JDD-BROADCAST-01/02/03 : secteurs dev, tokens FCM, commandes curl de test, données L1 Mockito.
+
+- 2026-04-22T11:30Z @qa UPDATE → livrables/00-contexte/journaux/journal-qa.md
+  Suivi US-067/068/069 + OBS-BROAD-000/001/002/003 documentées dans les points d'attention.
+
 - 2026-04-21T15:30Z @po CREATE → livrables/05-backlog/user-stories/US-067-envoyer-broadcast-superviseur.md
   Creation US-067 : Envoyer un broadcast depuis W-09 (Must Have / M). Commande EnvoyerBroadcast, TypeBroadcast ALERTE/INFO/CONSIGNE, ciblage TOUS/SECTEUR, fan-out FCM DD-013. 6 scenarios Gherkin.
 

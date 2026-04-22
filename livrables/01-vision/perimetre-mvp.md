@@ -1,8 +1,9 @@
 # Perimetre MVP DocuPost
 
-> Document de référence — Version 1.0 — 2026-03-19
+> Document de référence — Version 1.2 — 2026-04-21
 > Produit à partir des entretiens métier avec Pierre (livreur), Mme Dubois (DSI),
-> M. Garnier (Architecte Technique) et M. Renaud (Responsable Exploitation Logistique).
+> M. Garnier (Architecte Technique), M. Renaud (Responsable Exploitation Logistique)
+> et Karim B. (Superviseur logistique terrain, Île-de-France Sud).
 
 ---
 
@@ -28,6 +29,8 @@ en tournée.
 
 Ce parcours répond aux besoins de M. Renaud (responsable exploitation) et de Mme Dubois
 (DSI). Il remplace le pilotage par téléphone par une interface de supervision structurée.
+Il est complété par la feature Broadcast (voir section dédiée ci-dessous) suite à l'entretien
+avec Karim B. du 21/04/2026.
 
 | # | Etape du parcours | Fonctionnalites associees |
 |---|---|---|
@@ -35,6 +38,75 @@ Ce parcours répond aux besoins de M. Renaud (responsable exploitation) et de Mm
 | 2 | Detail d'une tournee | Consultation des colis de la tournée (statuts, incidents, localisation du livreur) |
 | 3 | Detection des risques | Alertes automatiques sur les tournées présentant un retard significatif |
 | 4 | Instruction au livreur | Envoi d'une instruction simple : prioriser un colis, annuler, reprogrammer |
+| 5 | Broadcast groupe | Envoi d'un message d'alerte ou d'information à N livreurs simultanément (tous ou par secteur), avec statut "vu" et historique du jour |
+
+---
+
+### Feature : Broadcast superviseur → livreurs
+
+> Décision d'arbitrage @sponsor — 2026-04-21 — Source : entretien Karim B.
+> (Entretien_broadcast_superviseur_21_04.md, synthese-entretiens.md §[2026-04-21])
+
+#### Décision : incluse dans le MVP
+
+##### Justification business
+
+Le besoin de communication de masse vers les livreurs est une lacune structurelle identifiée
+dans le Parcours 2 tel que défini initialement. L'étape 4 existante (instruction au livreur)
+couvre un livreur sur un colis précis. Elle ne couvre pas les alertes opérationnelles de zone
+ou de journée, qui sont indépendantes de tout colis (fermeture de voie, fermeture anticipée
+du dépôt, incident matériel, consigne de sécurité).
+
+Sans cette feature, les superviseurs continueront d'utiliser WhatsApp informel et le téléphone
+dès les premières semaines de déploiement, compromettant directement l'adoption de la
+plateforme. Ce risque d'adoption est jugé plus élevé que le risque de charge planning.
+
+Par ailleurs, l'infrastructure push (FCM) est déjà en place pour le Parcours 1 (notifications
+livreur). L'extension à un modèle broadcast ne nécessite pas de refonte de l'infrastructure.
+
+Fréquence terrain confirmée : 2 à 4 incidents par semaine nécessitant une communication
+urgente. Signal renforcé : 3 superviseurs de la même agence expriment le même besoin.
+
+#### Scope retenu pour le MVP
+
+| Critère | Décision MVP |
+|---|---|
+| Ciblage | Tous les livreurs actifs du jour + par secteur prédéfini (liste fixe à configurer) |
+| Canal | Notification push via FCM — app en arrière-plan couverte |
+| Type de message | Libellé normalisé (Alerte / Info / Consigne) + texte libre (max 280 caractères) |
+| Statut de lecture | Statut "vu" par livreur visible depuis le tableau de bord superviseur |
+| Historique | Messages de la journée consultables depuis le tableau de bord superviseur |
+| Expérience livreur | Zone dédiée dans l'app mobile pour consulter les messages reçus tout au long de la tournée |
+| Nombre de clics | Maximum 3 clics depuis le tableau de bord superviseur pour envoyer |
+| Sens de communication | Unidirectionnel uniquement (pas de réponse livreur) |
+
+#### Hors scope MVP (report en Release 2)
+
+- Sélection manuelle livreur par livreur (ciblage individuel multiple) — Release 2
+- Programmation différée d'un message — Release 2
+- Gabarits de messages réutilisables — Release 2
+- Export ou archivage long terme des broadcasts — Release 2
+
+#### Contraintes et dépendances
+
+- Dépend de l'infrastructure FCM déjà mise en place pour le Parcours 1.
+- Nouveau concept métier : `BroadcastMessage` — Aggregate Root à modéliser dans le
+  BC-Supervision (BC-03) ou dans un sous-domaine "Communication opérationnelle" à trancher
+  par @architecte-metier.
+- La notion de "secteur prédéfini" doit être alignée avec le modèle de données existant des
+  tournées (zones géographiques déjà codifiées dans le TMS ou à définir dans DocuPost).
+- Le statut "vu" implique un read model côté backend (événement FCM delivery receipt ou
+  accusé de réception app mobile) — à spécifier avec @architecte-technique.
+
+#### Classification DDD de la feature
+
+| Domaine pressenti                                      | Type                 | Justification                    |
+|--------------------------------------------------------|----------------------|----------------------------------|
+| BroadcastMessage (Communication opérationnelle groupe) | Supporting Subdomain | Voir note de classification (1). |
+
+> **(1)** Logique bornée — envoi, ciblage, statut de lecture — sans différenciation
+> concurrentielle propre. Pattern standard qui s'appuie sur le Core Domain
+> (Orchestration de tournée) pour connaître les livreurs actifs et leurs zones.
 
 ### Parcours 3 — Integration SI : Remontee des evenements
 

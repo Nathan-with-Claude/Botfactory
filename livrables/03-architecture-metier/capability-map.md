@@ -1,6 +1,6 @@
 # Capability Map DocuPost
 
-> Document de référence — Version 1.2 — 2026-04-06
+> Document de référence — Version 1.3 — 2026-04-21
 > Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
 > Architecte Technique, M. Renaud Responsable Exploitation Logistique), des livrables
 > de vision (/livrables/01-vision/) et du domain model (/livrables/03-architecture-metier/domain-model.md).
@@ -31,7 +31,8 @@ DocuPost
 │   ├── 3.1 Tableau de bord des tournées
 │   ├── 3.2 Détection des tournées à risque
 │   ├── 3.3 Instruction aux livreurs
-│   └── 3.4 État des livreurs du jour            ← [US-066]
+│   ├── 3.4 État des livreurs du jour            ← [US-066]
+│   └── 3.5 Communication opérationnelle groupe  ← [Broadcast]
 ├── 4. Notification et messaging                [Supporting]
 │   ├── 4.1 Notification push livreur
 │   └── 4.2 Alerte superviseur
@@ -119,6 +120,14 @@ un différenciateur central de DocuPost.
 | 3.4 État des livreurs du jour | 3.4.1 Consulter état des livreurs du jour | Afficher pour chaque livreur son état journalier (SANS_TOURNEE / AFFECTE_NON_LANCE / EN_COURS) dérivé depuis BC-07, avec mise à jour temps réel via WebSocket | MVP (US-066) | M. Renaud |
 | 3.4 État des livreurs du jour | 3.4.2 Filtrer les livreurs par état | Filtrer la liste des livreurs par état pour identifier rapidement les livreurs disponibles à affecter | MVP (US-066) | M. Renaud |
 | 3.4 État des livreurs du jour | 3.4.3 Navigation contextuelle depuis état livreur | Naviguer depuis l'état d'un livreur vers l'écran approprié : W-02 (EN_COURS), W-05 (AFFECTE_NON_LANCE), W-04 (SANS_TOURNEE) | MVP (US-066) | M. Renaud |
+| 3.5 Communication opérationnelle groupe | 3.5.1 Envoi de broadcast groupe | Composer et envoyer un message (Alerte / Info / Consigne, max 280 car.) vers tous les livreurs actifs du jour ou un secteur prédéfini, en 3 clics depuis le tableau de bord | MVP | Karim B. |
+| 3.5 Communication opérationnelle groupe | 3.5.2 Ciblage de broadcast par secteur | Restreindre l'envoi aux livreurs actifs d'un ou plusieurs secteurs géographiques prédéfinis | MVP | Karim B. |
+| 3.5 Communication opérationnelle groupe | 3.5.3 Suivi de lecture des broadcasts | Visualiser pour chaque broadcast envoyé la liste des destinataires et leur statut de lecture (ENVOYE / VU) depuis le tableau de bord superviseur | MVP | Karim B. |
+| 3.5 Communication opérationnelle groupe | 3.5.4 Historique des broadcasts du jour | Consulter la liste des broadcasts envoyés dans la journée depuis le tableau de bord superviseur | MVP | Karim B. |
+| 3.5 Communication opérationnelle groupe | 3.5.5 Réception de broadcast côté livreur | Afficher les broadcasts reçus dans une zone dédiée de l'app mobile, consultable tout au long de la tournée ; notification push même app en arrière-plan | MVP | Karim B. |
+| 3.5 Communication opérationnelle groupe | 3.5.6 Ciblage individuel multiple | Sélectionner manuellement un sous-ensemble arbitraire de livreurs comme destinataires | Post-MVP R2 | Karim B. |
+| 3.5 Communication opérationnelle groupe | 3.5.7 Programmation différée de broadcast | Planifier l'envoi d'un broadcast à une heure ultérieure dans la journée | Post-MVP R2 | Karim B. |
+| 3.5 Communication opérationnelle groupe | 3.5.8 Gabarits de messages réutilisables | Enregistrer et réutiliser des modèles de messages fréquents | Post-MVP R2 | Karim B. |
 
 ---
 
@@ -208,7 +217,7 @@ Nécessaire mais les besoins MVP sont couverts par les vues de supervision.
 |---|---|---|---|
 | 1. Gestion de l'exécution terrain | Core Domain | Oui (complet) | Maximal — modèle DDD riche, TDD, revues approfondies |
 | 2. Capture et gestion des preuves | Supporting | Oui (capture et accès support) | Fort — modèle interne solide, immuabilité garantie |
-| 3. Supervision et pilotage temps réel | Core Domain | Oui (tableau de bord, alertes, instructions) | Maximal — logique de détection complexe |
+| 3. Supervision et pilotage temps réel | Core Domain | Oui (tableau de bord, alertes, instructions, broadcast groupe) | Maximal — logique de détection complexe + communication opérationnelle |
 | 4. Notification et messaging | Supporting | Oui (push livreur, alertes superviseur) | Modéré — patterns standards event-driven |
 | 5. Intégration SI | Generic | Oui (OMS uniquement) | Faible — adapter standard, Anti-Corruption Layer |
 | 6. Gestion des utilisateurs | Supporting | Oui (SSO, rôles) | Faible — délégation au SSO corporate |

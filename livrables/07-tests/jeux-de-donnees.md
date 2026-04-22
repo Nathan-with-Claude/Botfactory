@@ -2,7 +2,7 @@
 
 **Produit par** : @qa
 **Date de création** : 2026-03-20
-**Dernière mise à jour** : 2026-03-23 (US-003)
+**Dernière mise à jour** : 2026-04-22 (US-067/068/069 — Feature Broadcast)
 
 > Ce fichier centralise les jeux de données de test pour tous les scénarios QA.
 > Il est alimenté au fur et à mesure des User Stories traitées.
@@ -417,4 +417,100 @@ Jeu E — filtrerColisByZone 'Zone Inexistante' :
   5 colis sans colis de 'Zone Inexistante'
   filtreZone = 'Zone Inexistante'
   → [] (liste vide, pas d'erreur)
+```
+
+---
+
+## Jeux de données US-067/068/069 : Feature Broadcast Superviseur → Livreurs
+
+### JDD-BROADCAST-01 : Secteurs et tokens FCM (DevDataSeeder profil dev)
+
+**Usage** : TC-067-L2-01/04, TC-068-L2-01/02, TC-069-L2-01/02
+**Profil** : dev (DevDataSeeder — inséré automatiquement au démarrage)
+**Contexte** : Données de base pour tester l'envoi broadcast et le marquage VU.
+
+```
+Secteurs disponibles (table broadcast_secteur) :
+  SECT-IDF-01 | Secteur 1 — Nord Essonne | actif=true
+  SECT-IDF-02 | Secteur 2 — Sud Essonne  | actif=true
+  SECT-IDF-03 | Secteur 3 — Val-de-Marne | actif=true
+  Note : livreurIds NON STOCKÉS (OBS-BROAD-001 — ciblage secteur non fonctionnel)
+
+Tokens FCM fictifs (table fcm_token) :
+  livreur-001 → fake-fcm-token-livreur-001
+  livreur-002 → fake-fcm-token-livreur-002
+  livreur-003 → fake-fcm-token-livreur-003
+  livreur-004 → fake-fcm-token-livreur-004
+  livreur-005 → fake-fcm-token-livreur-005
+  livreur-006 → fake-fcm-token-livreur-006
+
+Livreurs EN_COURS au démarrage (DevEventBridge) :
+  livreur-002 — tournée T-204
+  livreur-004 — tournée T-202
+  → nombreDestinataires=2 pour ciblage TOUS
+
+Livreurs dans d'autres états :
+  livreur-001, livreur-003, livreur-005, livreur-006 — SANS_TOURNEE ou AFFECTE_NON_LANCE
+```
+
+### JDD-BROADCAST-02 : Commandes curl de test L2
+
+**Usage** : TCs L2 de US-067/068/069
+**Profil** : dev — svc-supervision sur port 8082, MockJwtAuthFilter ROLE_SUPERVISEUR
+
+```bash
+# Envoyer un broadcast ALERTE à TOUS les livreurs actifs
+curl -s -X POST http://localhost:8082/api/supervision/broadcasts \
+  -H "Content-Type: application/json" \
+  -d '{"type":"ALERTE","texte":"Rue Gambetta barrée, prenez la rue Victor Hugo","ciblage":{"type":"TOUS","secteurs":[]}}'
+# → 201 : {"broadcastMessageId":"<UUID>","nombreDestinataires":2,"horodatageEnvoi":"..."}
+
+# Lister les secteurs disponibles
+curl -s http://localhost:8082/api/supervision/broadcast-secteurs
+# → 200 : [{"codeSecteur":"SECT-IDF-01","libelle":"Secteur 1 — Nord Essonne"},...]
+
+# Envoyer un broadcast avec texte vide (erreur attendue)
+curl -s -X POST http://localhost:8082/api/supervision/broadcasts \
+  -H "Content-Type: application/json" \
+  -d '{"type":"INFO","texte":"","ciblage":{"type":"TOUS","secteurs":[]}}'
+# → 422 : {"code":"VALIDATION_ERROR","message":"Le texte du broadcast ne peut pas être vide"}
+
+# Consulter l'historique du jour (SUPERVISEUR)
+curl -s "http://localhost:8082/api/supervision/broadcasts/du-jour?date=$(date +%Y-%m-%d)"
+# → 200 : [{broadcastMessageId, type, texte, horodatageEnvoi, nombreDestinataires, nombreVus},...]
+
+# Consulter les statuts nominatifs d'un broadcast
+curl -s "http://localhost:8082/api/supervision/broadcasts/<BROADCAST_ID>/statuts"
+# → 200 : [] (vide — OBS-BROAD-003 : projection non alimentée)
+
+# Marquer broadcast comme vu (LIVREUR — bloqué en dev : OBS-BROAD-002)
+curl -s -X POST "http://localhost:8082/api/supervision/broadcasts/<BROADCAST_ID>/vu" \
+  -H "Content-Type: application/json" \
+  -d '{"livreurId":"livreur-002"}'
+# → 403 Forbidden (MockJwtAuthFilter injecte ROLE_SUPERVISEUR, pas ROLE_LIVREUR)
+```
+
+### JDD-BROADCAST-03 : Jeu de données L1 (Mockito — EnvoyerBroadcastHandlerTest)
+
+**Usage** : TC-067-L1-01 à L1-05
+**Profil** : unitaire (pas de Spring, Mockito pur)
+
+```
+Livreurs EN_COURS mockés :
+  livreur-001 | Pierre Martin  | EN_COURS   | tp-201 | T-201
+  livreur-002 | Paul Dupont    | EN_COURS   | tp-202 | T-202
+  livreur-003 | Marie Lambert  | AFFECTE_NON_LANCE | tp-203 | T-203
+  livreur-004 | Jean Moreau    | EN_COURS   | tp-204 | T-204
+  livreur-005 | Sophie Bernard | EN_COURS   | tp-205 | T-205
+  livreur-006 | Lucas Petit    | SANS_TOURNEE | null | null
+
+Secteurs mockés pour TC-067-L1-02 (ciblage SECTEUR) :
+  SECT-IDF-01 → [livreur-001, livreur-003]
+  SECT-IDF-02 → [livreur-002, livreur-004]
+
+Tokens FCM mockés :
+  livreur-001 → token-001
+  livreur-002 → token-002
+  livreur-004 → token-004
+  livreur-005 → token-005
 ```

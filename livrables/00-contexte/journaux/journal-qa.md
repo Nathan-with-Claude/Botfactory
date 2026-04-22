@@ -85,6 +85,9 @@
 | US-061 | react-native-signature-canvas | Oui (6 TCs L1) | — | Oui | Validée (33/33, P0 légal résolu) |
 | US-062 | Compteur envois en attente IndicateurSync | Oui (7 TCs L1) | — | Oui | Validée (53/53) |
 | US-066 | Page état des livreurs W-08 | Oui (16 TCs L1/L2/L3) | Non exécuté | Oui | Validée (L1 23/23 PASS, L2 4/5 PASS après correctif, L3 bloqué frontend) |
+| US-067 | Envoyer broadcast superviseur | Oui (13 TCs L1/L2/L3) | Non | Oui | Partielle (L1 5/5, L2 4/5 — OBS-BROAD-001 bloquant secteur) |
+| US-068 | Recevoir broadcast livreur | Oui (10 TCs L1/L2) | Non | Oui | Partielle (L1 7/7, L2 bloqué OBS-BROAD-002) |
+| US-069 | Consulter statuts lecture broadcast | Oui (11 TCs L1/L2/L3) | Non | Oui | Partielle (L1 7/7, L2 données vides — OBS-BROAD-003) |
 
 **Légende statuts** : `À faire` | `Scénarios rédigés` | `Exécutés` | `Validée` | `Partielle`
 
@@ -96,14 +99,12 @@
 
 | Date | US | Action | Fichier |
 | ---- | -- | ------ | ------- |
-> ← Entrées 2026-03-25, 2026-04-02, 2026-04-03, 2026-04-04 et US-034 à US-057 (2026-04-05) archivées dans [archives/journal-qa-2026-04.md](archives/journal-qa-2026-04.md)
-| 2026-04-05 | US-058 | Scénarios + rapport créés (8 TCs L1) — Validée 165/165 | livrables/07-tests/scenarios/US-058-*.md |
-| 2026-04-05 | US-059 | Scénarios + rapport créés (6 TCs L1) — Validée MVP alternatif | livrables/07-tests/scenarios/US-059-*.md |
-| 2026-04-05 | US-060 | Scénarios + rapport créés (5 TCs L1) — Validée Bug P0 résolu | livrables/07-tests/scenarios/US-060-*.md |
-| 2026-04-05 | US-061 | Scénarios + rapport créés (6 TCs L1) — Validée Bug P0 légal résolu 33/33 | livrables/07-tests/scenarios/US-061-*.md |
-| 2026-04-05 | US-062 | Scénarios + rapport créés (7 TCs L1) — Validée 53/53 | livrables/07-tests/scenarios/US-062-*.md |
-| 2026-04-08 | US-066 | Scénarios + rapport créés (16 TCs L1/L2/L3) — L1 23/23 PASS, L2 bloqué OBS-066-02, L3 non exécuté | livrables/07-tests/scenarios/US-066-*.md |
-| 2026-04-08 | US-066 | Re-run L2 après correctif OBS-066-02 (DevLivreurReferentiel IDs alignés) — L2 4/5 PASS, US validée | livrables/07-tests/scenarios/US-066-rapport-test.md |
+> ← Entrées 2026-03-25, 2026-04-02, 2026-04-03, 2026-04-04, US-034 à US-057 (2026-04-05), US-058 à US-066 (2026-04-05 à 2026-04-08) archivées dans [archives/journal-qa-2026-04.md](archives/journal-qa-2026-04.md)
+| 2026-04-22 | US-067 | Scénarios créés (13 TCs) + rapport — L1 5/5 PASS, L2 4/5 PASS (OBS-BROAD-001 bloquant ciblage secteur) | livrables/07-tests/scenarios/US-067-*.md |
+| 2026-04-22 | US-068 | Scénarios créés (10 TCs) + rapport — L1 7/7 PASS (Java+RNTL), L2 bloqué OBS-BROAD-002 | livrables/07-tests/scenarios/US-068-*.md |
+| 2026-04-22 | US-069 | Scénarios créés (11 TCs) + rapport — L1 7/7 PASS, L2 endpoint OK/données vides OBS-BROAD-003 | livrables/07-tests/scenarios/US-069-*.md |
+| 2026-04-22 | INFRA | Correction FcmBroadcastAdapter : suppression @Autowired(required=false) Object → NoUniqueBeanDefinition | src/backend/svc-supervision/…/FcmBroadcastAdapter.java |
+| 2026-04-22 | US-067/069 | L3 Playwright exécutés — 5/5 PASS en mode défensif — OBS-L3-001 identifiée (PanneauBroadcastPage non routée dans App.tsx) | src/web/supervision/e2e/US-067-broadcast-envoyer.spec.ts, US-069-broadcast-statuts.spec.ts |
 
 ---
 
@@ -140,6 +141,10 @@
 - **infrastructure-locale.md** : non mis à jour avec commandes PostgreSQL (US-054) ni variables ALLOWED_ORIGINS/INTERNAL_SECRET (US-058). À traiter par @developpeur ou @devops.
 - **OBS-066-01 (non bloquant)** : sécurité dev bypass total sans token — comportement volontaire, à documenter explicitement dans MockJwtAuthFilter.
 - **OBS-066-02 (RESOLUE)** : DevLivreurReferentiel.java corrigé avec IDs numériques (livreur-001..006). Re-run L2 PASS. US-066 validée.
+- **OBS-BROAD-000 (RESOLUE)** : FcmBroadcastAdapter.firebaseMessaging typé Object avec @Autowired(required=false) → NoUniqueBeanDefinitionException au démarrage Spring Boot 3.x. Corrigé : `private final Object firebaseMessaging = null`. Import Autowired supprimé.
+- **OBS-BROAD-001 (ouvert — bloquant)** : BroadcastSecteurEntity ne stocke pas livreurIds. BroadcastSecteurRepositoryImpl crée les BroadcastSecteur avec livreurIds=List.of(). Ciblage secteur résout 0 livreurs → 422 systématique. Correction : @ElementCollection + seeder enrichi.
+- **OBS-BROAD-002 (ouvert — bloquant test)** : MockJwtAuthFilter profil dev injecte uniquement ROLE_SUPERVISEUR. Endpoints @PreAuthorize("hasRole('LIVREUR')") (POST /vu, GET /recus) retournent 403. Correction : header X-Mock-Role/X-Mock-Id dans MockJwtAuthFilter.
+- **OBS-BROAD-003 (ouvert — bloquant données)** : EnvoyerBroadcastHandler appelle message.clearEvenements() sans publisher.publishEvent(event). BroadcastEnvoyeEventHandler jamais déclenché → broadcast_statut_livraison vide → GET /statuts retourne [] → nombreVus toujours 0. Correction : injecter ApplicationEventPublisher dans EnvoyerBroadcastHandler.
 
 ### Points d'attention spécifiques US-001 à US-007 (archivés)
 

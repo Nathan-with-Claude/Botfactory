@@ -1,6 +1,6 @@
 # Architecture Fonctionnelle DocuPost — Modules Fonctionnels
 
-> Document de référence — Version 1.0 — 2026-03-19
+> Document de référence — Version 1.1 — 2026-04-21
 > Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
 > Architecte Technique, M. Renaud Responsable Exploitation Logistique), du domain model
 > et de la capability map (/livrables/03-architecture-metier/).
@@ -427,21 +427,123 @@ TournéeClôturée, LivraisonConfirmée, ÉchecLivraisonDéclaré (depuis Module
 
 ---
 
+## Module 8 — Broadcast Superviseur
+
+**Bounded Context** : BC-03 Supervision (extension — second Aggregate Root)
+**Classification DDD** : Supporting Subdomain
+**Plateforme** : Backend Java 21 / Spring Boot + Frontend React 19 / TypeScript (web) + Application mobile Android (réception)
+
+### Responsabilité
+
+Permettre au superviseur d'envoyer un message opérationnel (alerte, information, consigne)
+vers un groupe de livreurs actifs du jour en une seule action depuis le tableau de bord,
+sans appel téléphonique ni messagerie externe. Communication unidirectionnelle uniquement.
+
+"Mon problème numéro un en journée, c'est quand il se passe quelque chose sur le terrain
+et que je dois le faire savoir à tout le monde vite." (Karim B., Superviseur IDF Sud)
+
+### Entités et agrégats gérés (M8)
+
+| Élément | Type DDD | Description |
+|---|---|---|
+| BroadcastMessage | Aggregate Root | Message de groupe composé, envoyé, immuable après envoi |
+| TypeBroadcast | Value Object | ALERTE / INFO / CONSIGNE — libellé normalisé du message |
+| BroadcastCiblage | Value Object | TOUS ou SECTEUR — périmètre des destinataires |
+| BroadcastSecteur | Value Object | Secteur géographique prédéfini servant d'unité de ciblage |
+| BroadcastStatutLivraison | Entity (dans BroadcastMessage) | Trace individuelle par livreur : ENVOYE ou VU |
+
+### Acteurs impliqués
+
+| Acteur | Rôle |
+|---|---|
+| Superviseur | Compose le message, choisit le type et le ciblage, déclenche l'envoi depuis le tableau de bord web |
+| Livreur | Reçoit la notification push, consulte le message dans la zone dédiée de l'app mobile |
+| Système (BC-07) | Fournit la liste des livreurs actifs et leurs secteurs pour résoudre le ciblage |
+| Module 4 (Notification) | Achemine les notifications push FCM vers chaque livreur destinataire |
+
+### Capacités couvertes (M8)
+
+- 3.5.1 Envoi de broadcast groupe (message, type, ciblage TOUS ou SECTEUR)
+- 3.5.2 Ciblage de broadcast par secteur prédéfini
+- 3.5.3 Suivi de lecture par livreur (statut ENVOYE / VU)
+- 3.5.4 Historique des broadcasts du jour depuis le tableau de bord
+- 3.5.5 Réception et consultation côté livreur (zone dédiée app mobile)
+
+### Inputs
+
+| Input | Source | Description |
+|---|---|---|
+| Composition du message | Superviseur (interface web) | Type (ALERTE/INFO/CONSIGNE), texte (≤ 280 car.), ciblage choisi |
+| Liste des livreurs actifs du jour | BC-07 (Module 8 Planification) via Query | LivreurIds avec EtatJournalierLivreur == EN_COURS et leur secteur associé |
+| Accusé de lecture | App mobile livreur | Événement BroadcastVu déclenché à l'affichage du message |
+
+### Outputs
+
+| Output | Destination | Description |
+|---|---|---|
+| BroadcastEnvoyé (Domain Event) | Module 4 (Notification) | Déclenche la diffusion push FCM vers tous les livreurs résolus |
+| BroadcastVu (Domain Event) | Tableau de bord superviseur | Met à jour le statut de lecture individuel visible par le superviseur |
+| Historique du jour | Interface web superviseur (Read Model) | Liste consultable des broadcasts de la journée avec taux de lecture |
+| Notification push | App mobile livreur (via FCM) | Alerte visible même si l'app est en arrière-plan |
+
+### Commandes exposées (M8)
+
+| Commande | Déclencheur | Préconditions |
+|---|---|---|
+| EnvoyerBroadcast(superviseurId, type, texte, ciblage) | Superviseur valide l'envoi depuis le tableau de bord | Texte non vide ≤ 280 car., ciblage valide, au moins un livreur EN_COURS résolu |
+| MarquerBroadcastVu(broadcastMessageId, livreurId) | App mobile livreur — affichage automatique à l'ouverture de la zone messages | BroadcastMessage existant, livreurId dans la liste des destinataires |
+
+### Queries exposées (M8)
+
+| Query | Réponse |
+|---|---|
+| GetBroadcastsDuJour(date, superviseurId) | Liste des BroadcastMessages de la journée avec statuts de lecture agrégés |
+| GetStatutsLectureBroadcast(broadcastMessageId) | Liste des BroadcastStatutLivraison pour un message donné (ENVOYE / VU par livreur) |
+| GetBroadcastsRecus(livreurId, date) | Liste des messages reçus par un livreur pour la journée (consultation app mobile) |
+
+### Domain Events émis (M8)
+
+- `BroadcastEnvoyé` — superviseur déclenche l'envoi ; contient broadcastMessageId,
+  superviseurId, type, texte, ciblage, livreurIds résolus, horodatageEnvoi.
+- `BroadcastVu` — app mobile confirme l'affichage ; contient broadcastMessageId,
+  livreurId, horodatageVu.
+
+### Dépendances inter-modules (M8)
+
+| Module cible | Type | Mécanisme | Données échangées |
+|---|---|---|---|
+| Module 4 — Notification | Command (émetteur) | BroadcastEnvoyé → diffusion push FCM multi-livreurs | broadcastMessageId, livreurIds, type, texte |
+| BC-07 / Module Planification | Query (consommateur) | GET /api/supervision/livreurs/etat-du-jour → résolution des destinataires actifs | LivreurId + EtatJournalierLivreur + codeSecteur |
+| Module 6 — Identité | Query (consommateur) | Token OAuth2 → vérification rôle SUPERVISEUR | superviseurId, rôle |
+
+### Règles métier critiques (M8)
+
+1. Un BroadcastMessage est immuable après envoi — ni modification, ni annulation possible.
+2. L'envoi est rejeté si le ciblage ne résout aucun livreur actif (EN_COURS dans BC-07).
+3. Le texte ne peut pas être vide et ne peut pas dépasser 280 caractères.
+4. Le statut VU est émis automatiquement à l'affichage dans l'app mobile — pas de clic requis.
+5. Communication unidirectionnelle stricte — aucune réponse livreur n'est possible au MVP.
+6. L'envoi doit être réalisable en 3 clics maximum depuis le tableau de bord superviseur.
+7. La notification push doit être visible même si l'app mobile est en arrière-plan (FCM).
+
+---
+
 ## Matrice de dépendances inter-modules
 
 > Lecture : la cellule (ligne X, colonne Y) indique comment le module X dépend du module Y.
 > "Events" = consomme les événements. "Commands" = envoie des commandes. "Queries" = requêtes.
 > "-" = pas de dépendance directe.
 
-|  | M1 Orchestration | M2 Preuves | M3 Supervision | M4 Notification | M5 Intégration SI | M6 Identité | M7 Reporting |
-|---|---|---|---|---|---|---|---|
-| **M1 Orchestration** | — | Events (PreuveCapturée) | Commands (ApplInstr.) | Events (InstructionReçue) | Events (tous statuts) | Queries (token) | — |
-| **M2 Preuves** | Commands (ConfirmerLivraison) | — | — | — | Events (PreuveCapturée) | Queries (token) | — |
-| **M3 Supervision** | Events (tous events tournée) | Events (PreuveCapturée) | — | Commands (InstrEnvoyée) | — | Queries (token) | Events (clôture) |
-| **M4 Notification** | Commands (AppliquerInstr.) | — | Events (InstrEnvoyée, AlerteDéclenchée) | — | — | — | — |
-| **M5 Intégration SI** | Events (consommateur) | Events (consommateur) | — | — | — | — | — |
-| **M6 Identité** | — | — | — | — | — | — | — |
-| **M7 Reporting** | Events (consommateur) | — | — | — | — | — | — |
+|  | M1 Orchestration | M2 Preuves | M3 Supervision | M4 Notification | M5 Intégration SI | M6 Identité | M7 Reporting | M8 Broadcast |
+|---|---|---|---|---|---|---|---|---|
+| **M1 Orchestration** | — | Events (PreuveCapturée) | Commands (ApplInstr.) | Events (InstructionReçue) | Events (tous statuts) | Queries (token) | — | — |
+| **M2 Preuves** | Commands (ConfirmerLivraison) | — | — | — | Events (PreuveCapturée) | Queries (token) | — | — |
+| **M3 Supervision** | Events (tous events tournée) | Events (PreuveCapturée) | — | Commands (InstrEnvoyée) | — | Queries (token) | Events (clôture) | — |
+| **M4 Notification** | Commands (AppliquerInstr.) | — | Events (InstrEnvoyée, AlerteDéclenchée) | — | — | — | — | Events (BroadcastEnvoyé) |
+| **M5 Intégration SI** | Events (consommateur) | Events (consommateur) | — | — | — | — | — | — |
+| **M6 Identité** | — | — | — | — | — | — | — | — |
+| **M7 Reporting** | Events (consommateur) | — | — | — | — | — | — | — |
+| **M8 Broadcast** | — | — | — | Commands (BroadcastEnvoyé → push) | — | Queries (token) | — | — |
 
 ---
 
@@ -466,6 +568,8 @@ Ces événements constituent le contrat entre modules. Ils sont immuables et ver
 | InstructionEnvoyée | M3 | M4 | instructionId, livreurId, type, colisId |
 | InstructionReçue | M4 | M1 | instructionId |
 | InstructionExécutée | M3 | (tableau de bord) | instructionId, horodatage |
+| BroadcastEnvoyé | M8 | M4 | broadcastMessageId, superviseurId, type, texte, ciblage, livreurIds, horodatageEnvoi |
+| BroadcastVu | M8 | (tableau de bord superviseur) | broadcastMessageId, livreurId, horodatageVu |
 
 ### Commandes (interfaces synchrones entre modules)
 
@@ -476,6 +580,8 @@ Ces événements constituent le contrat entre modules. Ils sont immuables et ver
 | ConfirmerLivraison | M2 (via PreuveCapturée) | M1 | Preuve valide capturée |
 | EnvoyerInstruction | Interface Web (superviseur) | M3 | Tournée active, colis à livrer |
 | AppliquerInstruction | M4 (via InstructionReçue) | M1 | Instruction valide, tournée active |
+| EnvoyerBroadcast | Interface Web (superviseur) | M8 | Texte ≤ 280 car., ciblage valide, au moins un livreur EN_COURS résolu |
+| MarquerBroadcastVu | App Mobile (livreur) | M8 | BroadcastMessage existant, livreurId destinataire valide |
 
 ---
 

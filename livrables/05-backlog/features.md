@@ -545,6 +545,39 @@ User Stories rattachees :
 
 ---
 
+## EPIC-003 : Supervision et Pilotage Temps Reel (ajout 2026-04-21)
+
+### F-030 : Broadcast superviseur vers livreurs actifs
+
+**Description** : Permettre au superviseur d'envoyer en moins de 3 clics un message
+operationnel (alerte, information, consigne) vers tous ses livreurs actifs ou vers les
+livreurs d'un secteur predéfini, depuis le tableau de bord web (W-09 panneau lateral).
+Les livreurs recoivent la notification push (FCM, app arriere-plan incluse) et peuvent
+consulter les messages dans la zone dediee M-08 de l'application mobile. Le superviseur
+suit en temps reel combien de livreurs ont vu chaque message depuis l'historique du jour
+dans W-09.
+
+**Capability** : 3.5.1 Envoi de broadcast groupe / 3.5.2 Ciblage par secteur /
+3.5.3 Suivi de lecture / 3.5.4 Historique broadcasts du jour / 3.5.5 Reception et
+consultation livreur
+**Screens couverts** : W-09 (panneau superviseur web), M-08 (zone messages livreur mobile),
+overlay broadcast sur M-02/M-03/M-04/M-05
+**Domain Events** : BroadcastEnvoye, BroadcastVu
+**Priorite MoSCoW** : Must Have
+**Bounded Context** : BC-03 Supervision (Aggregate BroadcastMessage), BC-04 Notification
+**Contraintes** : ENF-BROADCAST-001 a 006, DD-012 (BroadcastVu REST), DD-013 (FCM
+sendEachForMulticast), DD-014 (secteurs config statique)
+**Dépendances** : US-057 (WebSocket STOMP — temps reel), US-016 (FCM adapter), US-049
+(referentiel livreurs dev)
+
+User Stories rattachees :
+
+- US-067 : Envoyer un broadcast a ses livreurs actifs depuis le tableau de bord (Must Have / M)
+- US-068 : Recevoir et consulter les messages broadcast sur l'application mobile (Must Have / M)
+- US-069 : Consulter les statuts de lecture des broadcasts envoyes (Must Have / S)
+
+---
+
 ## Récapitulatif des Features par priorité MoSCoW
 
 | Feature | Epic | Priorité | Périmètre |
@@ -574,3 +607,4 @@ User Stories rattachees :
 | F-027 : Horodatage consignes dans M-07 | EPIC-004 | Should Have | Post-MVP Sprint 6 |
 | F-028 : Repliage card SSO avant connexion | EPIC-006 | Should Have | Post-MVP Sprint 6 |
 | F-029 : Hint visuel swipe onboarding | EPIC-001 | Could Have | Post-MVP Sprint 7 |
+| F-030 : Broadcast superviseur vers livreurs actifs | EPIC-003 | Must Have | MVP |

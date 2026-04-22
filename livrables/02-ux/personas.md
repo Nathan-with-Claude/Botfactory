@@ -1,9 +1,10 @@
 # Personas DocuPost
 
-> Document de référence — Version 1.0 — 2026-03-19
+> Document de référence — Version 1.1 — 2026-04-21
 > Produit à partir des entretiens métier : Pierre (livreur Docaposte), Mme Dubois (DSI
 > Docaposte), M. Garnier (Architecte Technique DSI), M. Renaud (Responsable Exploitation
-> Logistique).
+> Logistique), Karim B. (Superviseur logistique terrain, Île-de-France Sud — entretien
+> 14/04/2026).
 > Chaque persona est ancré dans les verbatims et observations terrain recueillis lors
 > des entretiens. Les termes en italique sont les termes exacts du domaine, à conserver
 > dans le modèle métier.
@@ -63,14 +64,27 @@
 
 ---
 
-## Persona 2 — Laurent Renaud, Responsable Exploitation Logistique
+## Persona 2 — Laurent Renaud / Karim B., Superviseur logistique terrain
+
+> Note de mise à jour — 2026-04-21 :
+> L'entretien du 14/04/2026 avec Karim B. (Superviseur logistique terrain, agence
+> Île-de-France Sud) confirme et enrichit ce persona. Karim supervise 18 livreurs sur
+> 3 secteurs géographiques distincts, avec 120 points de livraison par jour. Son profil
+> correspond exactement à celui de Laurent Renaud sur les dimensions "supervision temps
+> réel" et "gestion d'incident". La différence notable est le besoin de *broadcast* de
+> masse, absent des entretiens initiaux avec M. Renaud.
+> Décision : pas de persona séparé pour Karim — même rôle, même interface, besoin
+> additionnel documenté ci-dessous et dans le Parcours 7.
 
 ### Profil et contexte
 
-- Nom fictif : Laurent Renaud (nom réel conservé, prénom fictif)
-- Rôle : Responsable exploitation logistique, superviseur de flotte
-- Périmètre : Supervision de plusieurs livreurs et *tournées* simultanément
-- Outil actuel : Téléphone, tableur Excel, éventuellement interface partielle de l'OMS
+- Nom fictif : Laurent Renaud (représente aussi Karim B. et les 3 superviseurs de son agence)
+- Rôle : Superviseur logistique terrain / Responsable exploitation logistique
+- Périmètre : Supervision de plusieurs livreurs et *tournées* simultanément ; communication
+  opérationnelle vers les livreurs en cours de journée
+- Volume type (Karim B.) : 18 livreurs, 3 secteurs géographiques, 120 points de livraison/jour
+- Fréquence des incidents nécessitant un *broadcast* : 2 à 4 fois par semaine
+- Outil actuel : Téléphone, tableur Excel, interface partielle OMS, groupe WhatsApp informel
 - Lieu de travail : Bureau au dépôt, avec vue sur un tableau mural des *tournées*
 
 ### Objectifs
@@ -80,6 +94,10 @@
 3. Envoyer une *instruction* structurée à un livreur (prioriser un *colis*, annuler, reprogrammer) directement depuis son écran.
 4. Avoir des *motifs d'échec* normalisés pour pouvoir analyser les performances par zone, par livreur, par type d'incident.
 5. Reconstituer l'historique d'un *incident* sans devoir rappeler le livreur a posteriori.
+6. **[Karim B. — 2026-04-21]** Envoyer un *broadcast* à tous ses livreurs ou à un *secteur*
+   ciblé en moins de 3 clics, sans appel téléphonique individuel, et savoir qui a vu le
+   message. "Un message qui s'affiche sur leur écran au bon moment, c'est tout ce que je
+   demande."
 
 ### Frustrations actuelles
 
@@ -89,6 +107,10 @@
 - En cas de livreur malade ou d'*incident*, la redistribution des *colis* non livrés se fait à la main, par téléphone, sans visibilité sur les capacités restantes.
 - Les *motifs de non-livraison* remontés par les livreurs sont hétérogènes : impossible d'en tirer des analyses fiables.
 - Le pilotage par téléphone génère des interruptions constantes, des erreurs de communication et une traçabilité nulle.
+- **[Karim B. — 2026-04-21]** "J'ai mis 20 minutes à joindre les 6 livreurs concernés.
+  Pendant ce temps, deux d'entre eux étaient déjà bloqués." Communication de masse
+  impossible sans appels individuels ou groupe WhatsApp informel. Aucun statut de lecture,
+  aucune traçabilité.
 
 ### Contraintes terrain
 
@@ -107,7 +129,8 @@
 
 *tournée*, *tournée à risque*, *incident*, *instruction*, *prioriser*, *reprogrammer*,
 *annuler*, *motif de non-livraison*, *colis restants livrables*, *redistribution*,
-*avancement de tournée*
+*avancement de tournée*, *broadcast*, *message broadcast*, *alerte*, *info*, *consigne*,
+*ciblage*, *secteur*, *livreurs actifs*, *statut vu*, *historique broadcast*
 
 ---
 
@@ -231,3 +254,13 @@
 | Événement de livraison| Fait métier immuable : changement de statut, preuve capturée, incident déclaré| Sophie, Éric       |
 | Brique SI             | Composant applicatif intégré dans le SI de l'entreprise via API officielle    | Éric               |
 | Avancement de tournée | Pourcentage ou nombre de colis traités par rapport au total de la tournée     | Laurent            |
+| Broadcast             | Message envoyé par le superviseur à N livreurs simultanément, sans réponse possible | Karim B.     |
+| Message broadcast     | Unité de communication de masse : type + texte + ciblage + horodatage        | Karim B.           |
+| Alerte                | Type de broadcast signalant un danger ou une urgence opérationnelle immédiate | Karim B.           |
+| Info                  | Type de broadcast transmettant une information opérationnelle non urgente     | Karim B.           |
+| Consigne              | Type de broadcast donnant une instruction de comportement à suivre            | Karim B.           |
+| Ciblage               | Périmètre de destinataires d'un broadcast : tous les livreurs actifs ou par secteur | Karim B.     |
+| Secteur               | Zone géographique prédéfinie regroupant un sous-ensemble de livreurs          | Karim B.           |
+| Livreurs actifs       | Livreurs dont la tournée est en cours au moment de l'envoi du broadcast       | Karim B.           |
+| Statut vu             | Indicateur confirmant qu'un livreur a ouvert et visualisé un message broadcast | Karim B.          |
+| Historique broadcast  | Liste des broadcasts envoyés dans la journée, consultable depuis le tableau de bord | Karim B.     |

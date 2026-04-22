@@ -247,6 +247,8 @@ Quand un nouveau besoin métier apparaît (ex. rôle oublié, nouveau parcours c
    schemas-integration, design-decisions, exigences-non-fonctionnelles.
 6. Demander à @po de créer / ajuster les Epics, Features et User Stories
    correspondantes dans 05-backlog/.
+7. Lancer le @developpeur pour faire les devs nécéssaires sur les US crées
+8. Lancer la @QA pour faire les tests des US devellopper par le develloppeur, et relancer le @developpeur si des erreurs sont détectées
 
 Ne jamais modifier directement le code ou le backlog sans passer par cette mini-chaîne.
 

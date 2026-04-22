@@ -52,7 +52,8 @@ class EnvoyerBroadcastHandlerTest {
                 broadcastSecteurRepository,
                 broadcastMessageRepository,
                 fcmTokenRepository,
-                fcmBroadcastAdapter
+                fcmBroadcastAdapter,
+                mock(org.springframework.context.ApplicationEventPublisher.class)
         );
     }
 

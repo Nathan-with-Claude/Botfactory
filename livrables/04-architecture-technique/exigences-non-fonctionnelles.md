@@ -605,6 +605,202 @@ d'exploitation sans intervention manuelle.
 
 ---
 
+## 8b. Exigences non fonctionnelles — Feature Broadcast superviseur → livreurs
+
+> Section ajoutée en v1.2 — 2026-04-21.
+> Source : entretien Karim B. (Superviseur IDF Sud), périmètre-mvp.md §"Feature Broadcast",
+> domain-model.md §"BC-03 BroadcastMessage".
+
+---
+
+### ENF-BROADCAST-001 — Latence d'envoi FCM (push vers livreurs)
+
+**Exigence** : La notification push FCM doit être livrée aux appareils Android des livreurs
+destinataires dans un délai compatible avec l'urgence opérationnelle d'un broadcast.
+
+**Cible** : < 10 secondes entre le déclenchement de l'envoi par le superviseur et la réception
+de la notification push sur l'appareil du livreur (p95, livreurs connectés).
+
+**Décomposition de la latence** :
+
+| Étape | Latence estimée |
+|---|---|
+| Validation JWT + routing API Gateway | < 50ms |
+| EnvoyerBroadcastUseCase (résolution BC-07 + persistance) | < 200ms |
+| Outbox polling (intervalle 5s) | 0 – 5s |
+| FCM sendEachForMulticast (Firebase) | < 1s |
+| Livraison FCM → appareil Android connecté | < 3s |
+| **Total p95** | **< 10s** |
+
+**Source** : "Ce matin j'ai eu une rue barrée en urgence." (Karim B.) — l'urgence terrain
+requiert une diffusion quasi-immédiate.
+
+**Mécanisme** : Outbox pattern (DD-003) avec polling 5s. Latence principale = polling outbox.
+Si une latence < 5s est requise en production, le polling peut être réduit à 2s pour le type
+ALERTE ou déclenché immédiatement par événement Spring in-process en complément.
+
+**Criticité** : MUST HAVE
+
+---
+
+### ENF-BROADCAST-002 — Volumétrie broadcast journalière
+
+**Exigence** : L'architecture doit supporter le volume de broadcasts attendu sur une journée
+de production sans dégradation des performances globales de la plateforme.
+
+**Cibles MVP** :
+
+| Paramètre | Valeur cible |
+|---|---|
+| Broadcasts par journée (max) | 15 (estimé d'après Karim B. : 2-4 incidents/semaine urgents + broadcasts informatifs) |
+| Livreurs destinataires par broadcast (max) | 50 (totalité des livreurs actifs du jour, ENF-PERF-007) |
+| Tokens FCM envoyés par broadcast (max) | 50 (< limite Firebase 500 — pas de pagination requise) |
+| Broadcasts simultanés (pic) | 2 (superviseurs de zones différentes) |
+| BroadcastStatutLivraison créés par journée (max) | 750 (15 broadcasts × 50 livreurs) |
+
+**Impact sur la base de données** :
+- Table `broadcast_message` : max 15 lignes/journée → négligeable.
+- Table `broadcast_statut_livraison` : max 750 lignes/journée → négligeable.
+- Table `fcm_token` : max 50 lignes (1 par livreur actif) → table statique, très faible charge.
+
+**Source** : "2 à 4 incidents par semaine nécessitant une communication urgente." (Karim B.)
+Extrapolation MVP : 15 broadcasts/journée couvre largement ce volume avec marge de sécurité.
+
+**Criticité** : MUST HAVE (dimensionnement initial)
+
+---
+
+### ENF-BROADCAST-003 — Rétention de l'historique broadcast
+
+**Exigence** : Les broadcasts et leurs statuts de lecture sont consultables depuis le tableau
+de bord superviseur (W-09) pendant la journée en cours uniquement.
+
+**Cible MVP** : Conservation des broadcasts du jour courant uniquement. Les données des jours
+précédents ne sont pas accessibles depuis l'interface superviseur au MVP.
+
+**Justification** : Le besoin exprimé par Karim B. est opérationnel et intra-journalier :
+"savoir qui a vu mon message dans la journée". L'archivage long terme est hors scope MVP
+(reporté en Release 2 — perimetre-mvp.md §"Hors scope MVP").
+
+**Mécanisme** :
+- La query `GET /api/supervision/broadcasts?date={date}` filtre sur `DATE(horodatage_envoi)`.
+- L'interface W-09 propose uniquement la date du jour en filtre par défaut.
+- Les données restent en base (pas de purge intra-journalière) mais ne sont pas exposées
+  dans l'interface au MVP. La purge automatique des données broadcast sera définie
+  conjointement avec le DPO (alignement sur ENF-RGPD-003).
+
+**Post-MVP (Release 2)** : ajout d'une fenêtre glissante de 30 jours et d'un export CSV.
+
+**Criticité** : MUST HAVE (MVP) — extension en R2
+
+---
+
+### ENF-BROADCAST-004 — Comportement offline (push en queue si livreur hors connexion)
+
+**Exigence** : Si un livreur est hors connexion au moment de l'envoi d'un broadcast,
+il doit recevoir la notification à son retour de connexion, et le statut VU doit être
+correctement mis à jour.
+
+**Cibles** :
+- Livraison de la notification push FCM : garantie par FCM (rétention FCM 28 jours par défaut).
+  FCM met en file le message et le livre dès que l'appareil est reconnecté.
+- Mise à jour statut VU : l'appel REST `POST /api/supervision/broadcasts/{id}/vu` est
+  exécuté dès l'affichage du message dans M-08 (premier plan de l'app).
+  Si l'app est hors connexion lors de l'affichage, l'appel est mis en file WatermelonDB
+  (PENDING) et rejoué dès le retour réseau (DD-002 — stratégie offline-first).
+
+**Comportement détaillé** :
+
+```
+Livreur hors connexion au moment de l'envoi :
+  1. FCM reçoit le push mais ne peut pas livrer → met en file interne FCM (TTL = 28j)
+  2. Au retour connexion → FCM livre la notification push
+  3. Livreur ouvre M-08 → affichage du message
+  4. App mobile appelle POST .../vu (connexion disponible) → BroadcastVu émis
+  5. Superviseur voit le compteur mis à jour dans W-09
+
+Livreur connecté mais app en arrière-plan :
+  1. FCM livre la notification push → notification système Android visible
+  2. Livreur tape sur la notification → app s'ouvre sur M-08
+  3. Affichage → POST .../vu → BroadcastVu → compteur W-09 mis à jour
+
+Livreur hors connexion lors de l'affichage de M-08 :
+  1. M-08 affiche le message depuis la cache locale WatermelonDB
+  2. App tente POST .../vu → échec réseau → action mise en file PENDING
+  3. Au retour réseau → rejoue POST .../vu → BroadcastVu émis avec horodatage réel
+```
+
+**Limite acceptable** : Le statut VU peut être émis avec un délai variable en cas d'absence
+de réseau prolongée. Ce comportement est attendu et documenté dans l'interface W-09
+("statut différé possible en cas de connectivité variable").
+
+**Source** : "Les zones péri-urbaines ont une connectivité variable." (M. Garnier — H5)
+
+**Criticité** : MUST HAVE
+
+---
+
+### ENF-BROADCAST-005 — Résilience FCM spécifique au broadcast
+
+**Exigence** : Une indisponibilité temporaire de Firebase Cloud Messaging ne doit pas
+entraîner la perte d'un broadcast ni bloquer l'interface superviseur.
+
+**Cibles** :
+- Si FCM est indisponible au moment du fan-out : le `BroadcastMessage` est persisté
+  avec statut ENVOYE dans `broadcast_message`. L'outbox handler réessaie le fan-out
+  FCM selon la politique de retry.
+- Politique de retry FCM broadcast : 3 tentatives avec backoff (30s → 1min → 2min).
+  Après échec définitif : log ERROR + alerte ops. Le statut du broadcast reste ENVOYE
+  (pas de rollback — le BroadcastMessage est immuable après création).
+
+**Distinction avec ENF-RESIL-002** : ENF-RESIL-002 couvre la résilience FCM pour les
+Instructions (1 destinataire). ENF-BROADCAST-005 couvre le fan-out multi-destinataires
+avec gestion partielle des échecs (certains tokens peuvent échouer sans bloquer les autres).
+
+**Mécanisme de gestion des erreurs partielles** :
+- Si `sendEachForMulticast` retourne des échecs partiels (certains tokens échouent,
+  d'autres réussissent) : les tokens en succès sont marqués ENVOYE, les tokens en échec
+  conservent le statut ENVOYE (pas de statut ECHEC_PUSH dans le modèle MVP — la liste
+  des destinataires est un snapshot immuable).
+- Log WARNING par token en échec. Si token UNREGISTERED : suppression de `fcm_token`.
+
+**Criticité** : SHOULD HAVE
+
+---
+
+### ENF-BROADCAST-006 — Sécurité RBAC spécifique au broadcast
+
+**Exigence** : Seuls les utilisateurs avec le rôle SUPERVISEUR peuvent envoyer un broadcast.
+Un livreur ne peut marquer comme VU que les broadcasts dont il est destinataire.
+
+**Mécanisme** :
+- `POST /api/supervision/broadcasts` : `@PreAuthorize("hasRole('SUPERVISEUR')")`
+- `POST /api/supervision/broadcasts/{id}/vu` : `@PreAuthorize("hasRole('LIVREUR')")`
+  + vérification serveur que `livreurId` (extrait du JWT) est dans `broadcast_message.livreur_ids`.
+  Un livreur non destinataire reçoit HTTP 403.
+- `GET /api/supervision/broadcasts` : `@PreAuthorize("hasRole('SUPERVISEUR') or hasRole('DSI')")`
+- `GET /api/mobile/broadcasts/{livreurId}` : `@PreAuthorize("hasRole('LIVREUR')")`
+  + vérification que le `livreurId` du path correspond au `livreurId` du JWT.
+
+**Source** : DD-004 (RBAC), ENF-SEC-005.
+
+**Criticité** : MUST HAVE
+
+---
+
+### Mise à jour de la matrice de criticité — entrées broadcast
+
+| Référence | Exigence | Criticité |
+|---|---|---|
+| ENF-BROADCAST-001 | Latence push FCM < 10s (p95) | MUST HAVE |
+| ENF-BROADCAST-002 | Volumétrie : 15 broadcasts/jour, 50 livreurs/broadcast | MUST HAVE |
+| ENF-BROADCAST-003 | Rétention : journée courante uniquement (MVP) | MUST HAVE |
+| ENF-BROADCAST-004 | Comportement offline : FCM queue + WatermelonDB PENDING | MUST HAVE |
+| ENF-BROADCAST-005 | Résilience FCM fan-out | SHOULD HAVE |
+| ENF-BROADCAST-006 | RBAC broadcast : SUPERVISEUR envoie, LIVREUR VU | MUST HAVE |
+
+---
+
 ## 9. Exigences de conformité aux standards DSI
 
 Les exigences suivantes sont imposées par M. Garnier (Architecte Technique DSI) et

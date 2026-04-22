@@ -54,10 +54,12 @@
 
 ## Interventions réalisées
 
-| Date | Version | Sujet | Fichiers |
-|------|---------|-------|----------|
-| 2026-03-19 | 1.0 | Création initiale — vision, KPIs, périmètre MVP (3 parcours, 6 exclusions) | vision-produit.md, kpis.md, perimetre-mvp.md |
-| 2026-03-20 | 1.1 | Ajout Parcours 0 (Planification TMS) — nouveau pain point, KPIs logisticien, H6, second Core Domain | vision-produit.md, kpis.md, perimetre-mvp.md |
+- **2026-03-19** v1.0 — Création initiale : vision, KPIs, périmètre MVP (3 parcours, 6 exclusions).
+  Fichiers : vision-produit.md, kpis.md, perimetre-mvp.md
+- **2026-03-20** v1.1 — Ajout Parcours 0 (Planification TMS) : pain point logisticien, KPIs, H6, second Core Domain.
+  Fichiers : vision-produit.md, kpis.md, perimetre-mvp.md
+- **2026-04-21** v1.2 — Arbitrage Broadcast superviseur vers livreurs (Karim B.) : incluse MVP, périmètre borné.
+  Fichiers : perimetre-mvp.md
 
 ---
 

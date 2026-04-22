@@ -13,6 +13,7 @@
  *   planification          → PreparationPage
  *   detail-tournee-planifiee → DetailTourneePlanifieePage (+ tourneePlanifieeId)
  *   preuves                → ConsulterPreuvePage
+ *   broadcast              → PanneauBroadcastPage (W-09 — US-067/069)
  *   auth-callback          → AuthCallbackPage
  *
  * Note WebSocket : TableauDeBordPage et DetailTourneePage tentent une connexion
@@ -33,6 +34,7 @@ import DetailTourneePlanifieePage from './pages/DetailTourneePlanifieePage';
 import ConsulterPreuvePage from './pages/ConsulterPreuvePage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import EtatLivreursPage from './pages/EtatLivreursPage';
+import PanneauBroadcastPage from './pages/PanneauBroadcastPage';
 
 // ─── Type discriminant de la route ───────────────────────────────────────────
 
@@ -45,6 +47,7 @@ export type AppRoute =
   | { page: 'detail-tournee-planifiee'; tourneePlanifieeId: string }
   | { page: 'preuves'; colisId?: string }
   | { page: 'etat-livreurs' }
+  | { page: 'broadcast' }
   | { page: 'auth-callback' };
 
 // ─── Layout shell ────────────────────────────────────────────────────────────
@@ -67,6 +70,7 @@ const NAV_PAGES: Array<{ label: string; route: AppRoute }> = [
   { label: 'Planification', route: { page: 'planification' } },
   { label: 'Livreurs', route: { page: 'etat-livreurs' } },
   { label: 'Preuves', route: { page: 'preuves' } },
+  { label: 'Broadcast', route: { page: 'broadcast' } },
 ];
 
 function NavBar({ current, navigate }: {
@@ -171,6 +175,7 @@ const TITRES_PAR_PAGE: Partial<Record<AppRoute['page'], string>> = {
   'detail-tournee-planifiee': 'DocuPost — Détail tournée planifiée',
   'preuves':                'DocuPost — Preuves de livraison',
   'etat-livreurs':          'DocuPost — État des livreurs',
+  'broadcast':              'DocuPost — Broadcast',
   'connexion':              'DocuPost — Connexion',
   'auth-callback':          'DocuPost — Connexion en cours…',
 };
@@ -289,6 +294,10 @@ function App({ routeInitiale }: AppProps) {
             }
             onAffecter={() => navigate({ page: 'planification' })}
           />
+        )}
+
+        {route.page === 'broadcast' && (
+          <PanneauBroadcastPage apiBaseUrl={API_BASE_URL} />
         )}
 
       </div>

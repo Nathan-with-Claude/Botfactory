@@ -306,6 +306,75 @@ AffectationEnregistree, DesaffectationEnregistree, TourneeLancee, TourneeClôtur
 
 ---
 
+## Parcours 7 — Superviseur : Envoyer un broadcast à ses livreurs
+
+**Persona principal** : Karim B. (Superviseur logistique terrain — Île-de-France Sud)
+**Déclencheur** : Un incident terrain nécessite une communication urgente vers plusieurs
+livreurs simultanément (fermeture de voie, fermeture anticipée du dépôt, incident matériel,
+consigne de sécurité) — sans passer par téléphone ou WhatsApp informel
+
+---
+
+### Version AS-IS (aujourd'hui)
+
+| # | Étape                      | Actions de Karim                                                           | Émotions           | Pain points                                                                                                   |
+|---|----------------------------|----------------------------------------------------------------------------|---------------------|---------------------------------------------------------------------------------------------------------------|
+| 1 | Détection de l'incident    | Karim apprend qu'un incident terrain impacte plusieurs livreurs           | Urgence / Stress    | Aucun canal structuré pour alerter rapidement plusieurs livreurs en même temps.                               |
+| 2 | Appels individuels         | Appelle chaque livreur concerné un par un, ou envoie un message WhatsApp  | Frustration / Perte de temps | "J'ai mis 20 minutes à joindre les 6 livreurs concernés." Deux étaient déjà bloqués. |
+| 3 | Attente de confirmation    | Espère que les livreurs ont lu le message WhatsApp ou décroché            | Incertitude         | Aucune confirmation de lecture. "Je sais même pas si le livreur a son téléphone en mode silencieux."          |
+| 4 | Suivi informel             | Note sur papier ou mémorise qui a été prévenu                             | Résignation         | Aucune traçabilité. En cas de litige, Karim ne peut pas prouver que le livreur a été informé.                  |
+
+**Pain points majeurs AS-IS :**
+- Communication de masse vers les livreurs entièrement hors du SI (WhatsApp + appels).
+- Aucun statut de lecture : Karim ne sait pas si le message a été reçu et vu.
+- Aucune traçabilité des *broadcasts* envoyés : historique impossible à reconstituer.
+- Les appels individuels perturbent les livreurs en pleine livraison ("ils conduisent").
+- Durée : 20 minutes pour joindre 6 livreurs sur un incident urgent.
+
+---
+
+### Version TO-BE MVP
+
+| # | Étape                            | Actions de Karim                                                                        | Système DocuPost                                                                                                     | Émotions attendues  | Opportunités / Domain Events                              |
+|---|----------------------------------|-----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|---------------------|-----------------------------------------------------------|
+| 1 | Détection du besoin de broadcast | Karim détecte un incident terrain depuis son tableau de bord W-01                      | W-01 est ouvert, Karim repère le problème (tournée à risque, appel d'un livreur, information externe).               | Réactivité          | —                                                         |
+| 2 | Ouverture du panneau Broadcast   | Clique sur "Broadcast" dans la SideNavBar ou dans W-01 (max 1 clic)                   | Ouverture du panneau W-09. Formulaire de *broadcast* vide. Compteur de caractères initialisé à 0 / 280.             | Maîtrise / Clarté   | —                                                         |
+| 3 | Composition du message           | Choisit le type (Alerte / Info / Consigne), le ciblage (Tous / Secteur 1, 2, 3), saisit le texte | Validation en temps réel : compteur de caractères, libellé de type coloré, liste de livreurs concernés affichée. | Contrôle / Rapidité | —                                                         |
+| 4 | Envoi du broadcast               | Clique sur ENVOYER                                                                      | Envoi de la *notification push* via FCM vers les livreurs ciblés. Toast de confirmation "Message envoyé à N livreurs". | Soulagement / Efficacité | **BroadcastEnvoyé**                                  |
+| 5 | Suivi du statut de lecture       | Consulte l'historique des *broadcasts* du jour depuis le panneau W-09                 | Affiche la liste des *broadcasts* envoyés avec nombre de livreurs ayant vu le message (statut "vu").                 | Sérénité / Contrôle | **BroadcastLu** (par chaque livreur à réception)          |
+
+---
+
+**Point de douleur actuel vs solution DocuPost :**
+- AS-IS : 20 minutes, 6 appels téléphoniques, aucune traçabilité.
+- TO-BE : 3 clics maximum depuis W-01, confirmation de réception par livreur, historique
+  du jour consultable en cas de litige.
+
+**Critère de succès :**
+- Karim peut envoyer un *broadcast* à tous ses livreurs actifs en moins de 30 secondes.
+- Il voit en temps réel combien de livreurs ont vu le message.
+- L'historique du jour est consultable sans navigation supplémentaire.
+
+---
+
+**Domain Events identifiés (Parcours 7) :**
+BroadcastEnvoyé, BroadcastLu
+
+**Termes du domaine captés :**
+*broadcast*, *message broadcast*, *alerte*, *info*, *consigne*, *ciblage*, *secteur*,
+*livreurs actifs*, *notification push*, *statut vu*, *historique broadcast*
+
+**Frontières de Bounded Contexts suggérées :**
+- L'envoi du *broadcast* (étape 4) marque la frontière entre le contexte "Supervision"
+  (décision humaine) et le contexte "Communication opérationnelle" (Supporting Subdomain
+  BroadcastMessage, infrastructure FCM). C'est la même frontière qu'à l'étape 5 du
+  Parcours 2 (envoi d'*instruction*), mais le *broadcast* cible N livreurs en parallèle.
+- Le statut "vu" (étape 5) implique un retour asynchrone du côté livreur vers le
+  Read Model *broadcast* : frontière entre l'app mobile (événement de lecture) et
+  le tableau de bord superviseur (agrégation des accusés).
+
+---
+
 ## Glossaire terrain — Ubiquitous Language (brouillon)
 
 > Ces termes doivent être transmis à l'Architecte Métier pour intégration dans le modèle
@@ -340,3 +409,13 @@ AffectationEnregistree, DesaffectationEnregistree, TourneeLancee, TourneeClôtur
 | EN_COURS                 | Livreur dont la tournée planifiée est au statut LANCEE                                | Parcours 6               |
 | Disponible               | Terme terrain utilisé par Laurent pour désigner un livreur à l'état SANS_TOURNEE     | Parcours 6               |
 | Désaffectation           | Retrait d'un livreur d'une tournée planifiée, le ramenant à l'état SANS_TOURNEE       | Parcours 6               |
+| Broadcast                | Message envoyé par le superviseur à N livreurs simultanément, sans réponse possible   | Parcours 7               |
+| Message broadcast        | Unité de communication de masse : type normalisé + texte libre + ciblage + horodatage | Parcours 7               |
+| Alerte                   | Type de broadcast signalant un danger ou une urgence opérationnelle immédiate         | Parcours 7               |
+| Info                     | Type de broadcast transmettant une information opérationnelle non urgente             | Parcours 7               |
+| Consigne                 | Type de broadcast donnant une instruction de comportement à suivre (sens broadcast, distinct de l'instruction individuelle) | Parcours 7 |
+| Ciblage                  | Périmètre de destinataires d'un broadcast : tous les livreurs actifs ou par secteur   | Parcours 7               |
+| Secteur                  | Zone géographique prédéfinie regroupant un sous-ensemble de livreurs                  | Parcours 7               |
+| Livreurs actifs          | Livreurs dont la tournée est en cours au moment de l'envoi du broadcast               | Parcours 7               |
+| Statut vu                | Indicateur confirmant qu'un livreur a ouvert et visualisé un message broadcast        | Parcours 7               |
+| Historique broadcast     | Liste des broadcasts envoyés dans la journée, consultable depuis le tableau de bord superviseur | Parcours 7     |

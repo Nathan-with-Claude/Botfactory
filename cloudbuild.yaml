@@ -139,28 +139,23 @@ steps:
         export EXPO_TOKEN=$$(cat /workspace/expo-token.txt)
         echo "Token length: $$(echo -n $$EXPO_TOKEN | wc -c)"
         if [ -z "$$EXPO_TOKEN" ]; then echo "ERREUR: EXPO_TOKEN vide"; exit 1; fi
-        echo ">>> EAS Build"
+        echo ">>> EAS Build (no-wait — Cloud Build ne bloque pas sur la queue EAS)"
         BUILD_JSON=$$(eas build \
           --platform android \
           --profile preview \
           --non-interactive \
-          --wait \
+          --no-wait \
           --json 2>&1 || echo "[]")
         echo ">>> BUILD_JSON: $$BUILD_JSON" | head -20
-        APK_URL=$$(echo "$$BUILD_JSON" | jq -r 'if type=="array" then .[0].artifacts.buildUrl else .artifacts.buildUrl end // empty' 2>/dev/null || true)
-        if [ -z "$$APK_URL" ] || [ "$$APK_URL" = "null" ]; then
-          APK_URL=$$(eas build:list --platform android --limit 1 --json --non-interactive 2>/dev/null | jq -r '.[0].artifacts.buildUrl // empty' || true)
-        fi
-        echo "APK URL : $$APK_URL"
-        if [ -z "$$APK_URL" ] || [ "$$APK_URL" = "null" ]; then
-          echo "ERREUR : URL APK introuvable"; exit 1
-        fi
-        curl -fsSLk "$$APK_URL" -o /workspace/docupost-livreur.apk
-        echo "Taille: $$(wc -c < /workspace/docupost-livreur.apk) bytes"
-        echo "=== END build-mobile-apk OK ==="
+        BUILD_ID=$$(echo "$$BUILD_JSON" | jq -r 'if type=="array" then .[0].id else .id end // empty' 2>/dev/null || true)
+        echo "EAS Build ID soumis : $$BUILD_ID"
+        echo "$$BUILD_ID" > /workspace/eas-build-id.txt
+        echo "=== END build-mobile-apk (soumis, pas attendu) ==="
 
   # ── Upload APK vers GCS ────────────────────────────────────────────────────
   # cloud-sdk lit /workspace/docupost-livreur.apk (partagé depuis step précédent)
+  # Upload APK déclenché manuellement après que EAS ait terminé (voir journal-devops.md)
+  # Commande manuelle : voir script ops/upload-eas-apk.sh
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: upload-mobile-apk
     waitFor: ['build-mobile-apk']
@@ -169,10 +164,13 @@ steps:
       - '-c'
       - |
         set -e
-        echo ">>> Upload vers GCS ($$(wc -c < /workspace/docupost-livreur.apk) bytes)"
-        gsutil cp /workspace/docupost-livreur.apk gs://${_APK_BUCKET}/docupost-livreur-${_TAG}.apk
-        gsutil cp /workspace/docupost-livreur.apk gs://${_APK_BUCKET}/docupost-livreur-latest.apk
-        echo "APK dispo : https://storage.googleapis.com/${_APK_BUCKET}/docupost-livreur-latest.apk"
+        EAS_BUILD_ID=$$(cat /workspace/eas-build-id.txt 2>/dev/null || echo "")
+        echo "EAS Build ID : $$EAS_BUILD_ID"
+        echo "APK en cours de build chez Expo. Récupérer l'URL depuis :"
+        echo "  https://expo.dev/accounts/nathan_claude/projects/docupostmobile/builds/$$EAS_BUILD_ID"
+        echo "Puis uploader manuellement :"
+        echo "  gsutil cp <apk> gs://${_APK_BUCKET}/docupost-livreur-${_TAG}.apk"
+        echo "  gsutil cp <apk> gs://${_APK_BUCKET}/docupost-livreur-latest.apk"
 
 substitutions:
   _TAG: latest
@@ -186,6 +184,8 @@ images:
   - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-tournee:$_TAG'
   - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/svc-supervision:$_TAG'
   - 'europe-west1-docker.pkg.dev/$PROJECT_ID/docupost/frontend-supervision:$_TAG'
+
+timeout: '7200s'
 
 options:
   logging: GCS_ONLY

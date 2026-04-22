@@ -1,6 +1,6 @@
 # Domain Model DocuPost
 
-> Document de référence — Version 1.2 — 2026-04-06
+> Document de référence — Version 1.3 — 2026-04-21
 > Produit à partir des entretiens métier (Pierre livreur, Mme Dubois DSI, M. Garnier
 > Architecte Technique, M. Renaud Responsable Exploitation Logistique), des livrables
 > de vision (/livrables/01-vision/) et des livrables UX (/livrables/02-ux/).
@@ -52,6 +52,13 @@
 | AFFECTE_NON_LANCE | Planification de Tournée | Valeur de EtatJournalierLivreur : le livreur est affecté à une TourneePlanifiee dont le statut est AFFECTEE — tournée préparée mais non encore démarrée. | Value Object | M. Renaud, US-066 |
 | EN_COURS | Planification de Tournée | Valeur de EtatJournalierLivreur : le livreur est affecté à une TourneePlanifiee dont le statut est LANCEE — tournée en cours d'exécution terrain. | Value Object | M. Renaud, US-066 |
 | VueLivreur | Planification de Tournée (Read Model) | Projection en lecture seule agrégant LivreurId, nomComplet, EtatJournalierLivreur et TourneePlanifieeId associée. Exposée par BC-07 et consommée par BC-03 pour la page W-08. | Read Model | US-066 |
+| BroadcastMessage | Supervision | Message opérationnel envoyé par un superviseur vers un groupe de livreurs actifs du jour. Unidirectionnel. Peut cibler tous les livreurs actifs ou un secteur prédéfini. "Ce matin j'ai eu une rue barrée en urgence — j'ai mis 20 minutes à joindre les 6 livreurs concernés." (Karim B.) | Aggregate Root | Karim B. |
+| BroadcastCiblage | Supervision | Définition du périmètre de destinataires d'un BroadcastMessage : TOUS les livreurs actifs du jour, ou les livreurs d'un ou plusieurs secteurs prédéfinis. | Value Object | Karim B. |
+| BroadcastStatutLivraison | Supervision | Trace de la réception d'un BroadcastMessage par un livreur individuel. Statut ENVOYE ou VU. Le passage à VU est déclenché par l'affichage du message dans l'app mobile. | Entity | Karim B. |
+| TypeBroadcast | Supervision | Libellé normalisé qualifiant la nature d'un BroadcastMessage : ALERTE (urgence terrain), INFO (information opérationnelle), CONSIGNE (directive de comportement). | Value Object | Karim B. |
+| BroadcastSecteur | Supervision | Secteur géographique prédéfini servant d'unité de ciblage pour le broadcast. Correspond aux zones codifiées dans le TMS ou configurées dans DocuPost. | Value Object | Karim B. |
+| BroadcastEnvoye | Supervision | Domain Event émis au moment où le superviseur déclenche l'envoi d'un BroadcastMessage. Contient le snapshot complet du message et du ciblage. | Domain Event | Karim B. |
+| BroadcastVu | Supervision | Domain Event émis par l'app mobile dès qu'un livreur affiche le message dans sa zone dédiée. Déclenche la mise à jour du BroadcastStatutLivraison vers VU. | Domain Event | Karim B. |
 
 ---
 
@@ -103,24 +110,29 @@ l'investissement du Core Domain.
 ### BC-03 : Supervision (Supporting Subdomain)
 
 **Responsabilité** : Agréger l'avancement des tournées en temps réel, détecter les
-tournées à risque, permettre l'envoi d'instructions structurées aux livreurs.
+tournées à risque, permettre l'envoi d'instructions structurées aux livreurs, et
+diffuser des messages opérationnels de groupe (broadcast) vers les livreurs actifs.
 
 **Classification DDD** : Supporting Subdomain. Consomme les événements du Core Domain
 et les synthétise pour le superviseur.
 
-**Aggregate Roots** : TableauDeBord (agrégat de lecture), Instruction
+**Aggregate Roots** : TableauDeBord (agrégat de lecture), Instruction, BroadcastMessage
 
 **Domain Events émis** :
 - TournéeÀRisqueDétectée, AlerteDéclenchée
 - InstructionEnvoyée, InstructionExécutée
+- BroadcastEnvoyé, BroadcastVu
 
 **Domain Events consommés** :
 - TournéeDémarrée, LivraisonConfirmée, ÉchecLivraisonDéclaré, IncidentDéclaré,
   TournéeClôturée (depuis BC Orchestration de Tournée)
 
 **Frontières** :
-- Entre : événements de tournée (depuis BC Orchestration de Tournée)
-- Sort : instructions (vers BC Orchestration de Tournée via BC Notification)
+
+- Entre : événements de tournée (depuis BC Orchestration de Tournée) ; liste des livreurs
+  actifs du jour avec leurs secteurs (depuis BC-07 Planification de Tournée)
+- Sort : instructions (vers BC Orchestration de Tournée via BC Notification) ;
+  broadcasts (vers BC Notification pour diffusion push multi-livreurs)
 
 ---
 
@@ -183,6 +195,7 @@ BC_Orchestration_Tournee  --[Customer/Supplier]-->  BC_GestionPreuves
 BC_Orchestration_Tournee  --[Published Language / Events]-->  BC_Integration_SI
 BC_Supervision             --[Customer/Supplier]-->  BC_Notification
 BC_Notification            --[Customer/Supplier]-->  BC_Orchestration_Tournee
+BC_Planification_Tournee   --[Customer/Supplier]-->  BC_Supervision
 BC_Integration_SI          --[ACL]-->  OMS_Externe
 BC_Identite_Acces          --[Shared Kernel]-->  BC_Orchestration_Tournee
 BC_Identite_Acces          --[Shared Kernel]-->  BC_Supervision
@@ -193,8 +206,9 @@ BC_Identite_Acces          --[Shared Kernel]-->  BC_Supervision
 | BC_Orchestration_Tournee | BC_Supervision | Customer/Supplier (Domain Events) | Event bus interne |
 | BC_Orchestration_Tournee | BC_Integration_SI | Published Language | Events + API REST |
 | BC_GestionPreuves | BC_Integration_SI | Customer/Supplier | Events |
-| BC_Supervision | BC_Notification | Customer/Supplier | Commande InstructionEnvoyée |
+| BC_Supervision | BC_Notification | Customer/Supplier | Commandes InstructionEnvoyée + BroadcastEnvoyé |
 | BC_Notification | BC_Orchestration_Tournee | Customer/Supplier | Push notification |
+| BC_Planification_Tournee | BC_Supervision | Customer/Supplier | Published Language — endpoint etat-du-jour + Events BC-07 |
 | BC_Integration_SI | OMS Externe | ACL | API REST (sans modification OMS) |
 | BC_Identite_Acces | Tous BC | Shared Kernel | Token OAuth2 / SSO |
 
@@ -472,6 +486,117 @@ reprogrammer). Statuts et incidents strictement normalisés." (M. Renaud)
 
 ---
 
+### Bounded Context : Supervision — BroadcastMessage (ajout v1.3)
+
+> Source : entretien Karim B., Superviseur logistique terrain IDF Sud — 14 avril 2026.
+> Décision d'inclusion MVP : @sponsor — 2026-04-21.
+> Rattachement : BC-03 Supervision (extension). Justification : le broadcast est une
+> capacité de pilotage superviseur ; la logique de ciblage repose sur les livreurs actifs
+> déjà connus de BC-03/BC-07 ; la masse de logique métier ne justifie pas un BC autonome
+> au MVP. BroadcastMessage devient le deuxième Aggregate Root de BC-03, aux côtés de
+> Instruction.
+
+```mermaid
+classDiagram
+    class BroadcastMessage {
+        <<Aggregate Root>>
+        BroadcastMessageId id
+        TypeBroadcast type
+        String texte
+        BroadcastCiblage ciblage
+        SuperviseurId superviseurId
+        Instant horodatageEnvoi
+        List~BroadcastStatutLivraison~ statutsLivraison
+        +envoyer(livreurIds) BroadcastEnvoye
+        +marquerVu(livreurId, horodatage) BroadcastVu
+    }
+
+    class TypeBroadcast {
+        <<Value Object>>
+        ALERTE
+        INFO
+        CONSIGNE
+    }
+
+    class BroadcastCiblage {
+        <<Value Object>>
+        TypeCiblage typeCiblage
+        List~BroadcastSecteur~ secteurs
+    }
+
+    class TypeCiblage {
+        <<Value Object>>
+        TOUS
+        SECTEUR
+    }
+
+    class BroadcastSecteur {
+        <<Value Object>>
+        String codeSecteur
+        String libelle
+    }
+
+    class BroadcastStatutLivraison {
+        <<Entity>>
+        LivreurId livreurId
+        StatutBroadcast statut
+        Instant horodatageVu
+    }
+
+    class StatutBroadcast {
+        <<Value Object>>
+        ENVOYE
+        VU
+    }
+
+    BroadcastMessage --> TypeBroadcast : de type
+    BroadcastMessage --> BroadcastCiblage : cible
+    BroadcastMessage "1" *-- "1..*" BroadcastStatutLivraison : suit
+    BroadcastCiblage --> TypeCiblage : de type
+    BroadcastCiblage --> "0..*" BroadcastSecteur : restreint a
+    BroadcastStatutLivraison --> StatutBroadcast : a pour statut
+```
+
+**Invariants de l'agrégat BroadcastMessage** :
+
+1. Un BroadcastMessage ne peut être envoyé que si le ciblage résout au moins un livreur
+   actif du jour (statut EN_COURS dans BC-07). Un broadcast sans destinataire est rejeté.
+2. Un BroadcastMessage est immuable après envoi : ni le texte, ni le ciblage, ni le type
+   ne peuvent être modifiés. Il ne peut pas être annulé ou rappelé.
+3. Le texte du message ne peut pas être vide et ne peut pas dépasser 280 caractères.
+4. Le statut VU est émis par l'application mobile dès l'affichage du message dans la zone
+   dédiée — aucun clic "lire" n'est requis du livreur.
+5. Le ciblage de type SECTEUR doit référencer au moins un secteur prédéfini valide.
+6. L'envoi est unidirectionnel : aucune réponse livreur n'est attendue ni possible.
+7. L'horodatageEnvoi est capturé automatiquement au moment de l'envoi — non modifiable.
+
+**Règle de résolution des destinataires** :
+
+```
+Pour un BroadcastMessage avec ciblage TOUS :
+  → destinataires = tous les LivreurId dont EtatJournalierLivreur == EN_COURS
+    (source : BC-07 via endpoint etat-du-jour)
+
+Pour un BroadcastMessage avec ciblage SECTEUR :
+  → destinataires = LivreurId dont EtatJournalierLivreur == EN_COURS
+    ET dont la TourneePlanifiee est associée à l'un des codeSecteur ciblés
+    (source : BC-07 via endpoint etat-du-jour)
+
+Si la liste résolue est vide → rejet avec erreur métier "Aucun livreur actif dans le ciblage"
+```
+
+**Domain Events** :
+
+- `BroadcastEnvoyé` — émis quand le superviseur déclenche l'envoi. Payload : broadcastMessageId,
+  superviseurId, type, texte, ciblage, livreurIds résolus, horodatageEnvoi.
+- `BroadcastVu` — émis par l'app mobile dès affichage. Payload : broadcastMessageId, livreurId,
+  horodatageVu.
+
+Source : "Si je pouvais écrire un message depuis mon tableau de bord et choisir 'tous les
+livreurs' ou 'les livreurs du secteur 2', ce serait parfait." (Karim B.)
+
+---
+
 ## Domain Events — Inventaire complet
 
 > Les Domain Events sont des faits passés immuables. Ils représentent ce qui s'est
@@ -506,6 +631,8 @@ reprogrammer). Statuts et incidents strictement normalisés." (M. Renaud)
 | AlerteDéclenchée | TournéeÀRisqueDétectée traitée | tourneeId, superviseurId, horodatage | Tableau de bord superviseur |
 | InstructionEnvoyée | Superviseur valide une instruction | instructionId, tourneeId, colisId, type, superviseurId, horodatage | BC Notification |
 | InstructionExécutée | Livreur a pris en compte l'instruction | instructionId, horodatage | Tableau de bord superviseur |
+| BroadcastEnvoyé | Superviseur déclenche l'envoi d'un broadcast | broadcastMessageId, superviseurId, type, texte, ciblage, livreurIds, horodatageEnvoi | BC Notification (diffusion push multi-livreurs) |
+| BroadcastVu | App mobile affiche le message au livreur | broadcastMessageId, livreurId, horodatageVu | Tableau de bord superviseur (mise à jour statut lecture) |
 
 ### BC Notification
 
@@ -723,3 +850,15 @@ classDiagram
 10. **Saisie de statut < 45 secondes** : "Mettre à jour le statut d'un colis le plus
     vite possible, sans friction." (Pierre). La séquence complète de mise à jour doit
     être réalisable en moins de 45 secondes.
+11. **Broadcast immuable après envoi** : "C'est moi qui décide quand et quoi envoyer."
+    (Karim B.). Un BroadcastMessage ne peut être ni modifié ni annulé après envoi. Le
+    superviseur est seul décisionnaire de l'envoi ; aucune alerte automatique sans
+    validation humaine explicite.
+12. **Broadcast avec destinataire actif obligatoire** : Un broadcast ne peut être envoyé
+    que si au moins un livreur actif (EN_COURS dans BC-07) correspond au ciblage. Envoyer
+    un broadcast dans le vide est interdit afin d'éviter des enregistrements fantômes dans
+    l'historique.
+13. **Envoi broadcast en 3 clics maximum** : "Maximum 3 clics depuis le tableau de bord
+    superviseur pour envoyer." (Karim B.). Cette contrainte est une règle d'expérience
+    métier qui doit être préservée dans la conception UX et le workflow de la commande
+    EnvoyerBroadcast.

@@ -74,6 +74,7 @@
 | 2026-04-04 | US-060 créée en P0 distinct de US-056 | persist() après sync = risque double envoi — sous-cas non couvert par US-056 (persistance à l'enqueue) |
 | 2026-04-06 | US-065 : traçabilité backlog pour corrections as-built supervision (Terminée) | 4 anomalies détectées en test manuel et corrigées directement en code — US créée pour non-régression et auditabilité |
 | 2026-04-06 | US-066 : nouveau besoin superviseur — page état des livreurs (Should Have) | Besoin exprimé terrain — dérivé de TourneePlanifiee BC-07 + VueTournee BC-03. VueLivreur Read Model à valider par @architecte-metier. Agents notifiés : @ux, @architecte-metier, @architecte-technique, @developpeur |
+| 2026-04-21 | US-067/068/069 + F-030 : feature Broadcast superviseur incluse au MVP (Must Have) | Cadrage complet issu entretien Karim B. Sources lues : domain-model v1.3 (BC-03 BroadcastMessage), modules-fonctionnels Module 8, design-decisions DD-012/013/014, ENF-BROADCAST-001 a 006, wireframes W-09 + M-08, user-journeys Parcours 7. Decoupe verticale en 3 US : envoi superviseur (M), reception livreur (M), statuts lecture (S). F-030 ajoutee sous EPIC-003. |
 
 ---
 
@@ -96,6 +97,10 @@
 | 2026-04-04 | 1.8 | Ajout règles de libellé UX (terminologie terrain vs jargon IT) + nouvelles US dans corrections-as-built-2026-04.md | corrections-as-built-2026-04.md |
 | 2026-04-06 | 1.9 | Création US-065 — traçabilité backlog des 4 anomalies de cohérence supervision (codeTMS, double affectation, VueTournees fantômes, blocage UI) | US-065-correction-coherence-supervision-donnees.md |
 | 2026-04-06 | 2.0 | Création US-066 — page état des livreurs W-08 (SANS_TOURNEE / AFFECTE_NON_LANCE / EN_COURS), Should Have / M | US-066-page-etat-livreurs.md |
+| 2026-04-21 | 2.1 | Création US-067 — Envoyer broadcast superviseur depuis W-09 (Must Have / M) | US-067-envoyer-broadcast-superviseur.md |
+| 2026-04-21 | 2.1 | Création US-068 — Recevoir broadcast livreur app mobile (Must Have / M) | US-068-recevoir-broadcast-livreur.md |
+| 2026-04-21 | 2.1 | Création US-069 — Consulter statuts lecture broadcasts (Must Have / S) | US-069-consulter-statuts-lecture-broadcast.md |
+| 2026-04-21 | 2.1 | Ajout F-030 Broadcast superviseur → livreurs dans features.md (EPIC-003, Must Have, MVP) | features.md |
 
 ---
 
@@ -103,7 +108,7 @@
 
 - **EPIC-007 est un prérequis** : US-021, US-023, US-024 doivent être développées avant US-001
 - Ordre de développement recommandé : US-019/020 (SSO) → US-021/023/024 (planification) → US-001 (livreur)
-- **US-067** prochaine US libre
+- **US-070** prochaine US libre (US-067, 068, 069 créées — feature Broadcast complète)
 - Toute nouvelle US doit avoir ses critères d'acceptation en format GIVEN/WHEN/THEN
 - **Sprint corrections as-built P0** : US-051 → US-052 → US-053 → US-054 → US-060 → US-061 (traiter en priorité absolue)
 - **Sprint stabilisation P1** : US-058 → US-056 → US-062 → US-055 → US-059 → US-057 (avant démo terrain)

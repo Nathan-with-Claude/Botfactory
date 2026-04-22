@@ -23,7 +23,7 @@ public class BroadcastSecteurRepositoryImpl implements BroadcastSecteurRepositor
     @Override
     public List<BroadcastSecteur> findAllActifs() {
         return jpa.findByActifTrue().stream()
-                .map(e -> new BroadcastSecteur(e.getCodeSecteur(), e.getLibelle(), e.isActif(), List.of()))
+                .map(e -> new BroadcastSecteur(e.getCodeSecteur(), e.getLibelle(), e.isActif(), e.getLivreurIds()))
                 .toList();
     }
 }

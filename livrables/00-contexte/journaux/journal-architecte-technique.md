@@ -89,6 +89,7 @@
 | 2026-04-01 | 1.2 | Création diagramme draw.io C4 Container macro : 6 microservices, 6 BDs, MinIO, API Gateway, SSO Keycloak, Mobile/Web clients, 4 systèmes externes, infra K8s, légende protocoles | /livrables/06-dev/architecture-technique-macro.drawio |
 | 2026-04-04 | — | Analyse as-built svc-supervision + app mobile. Rédaction de deux rapports d'écart architecture cible / code réel. | rapport-as-built-supervision.md, rapport-as-built-mobile.md |
 | 2026-04-06 | — | US-066 : Spécification technique complète "Page état des livreurs" (W-08). Endpoint GET /api/supervision/livreurs/etat-du-jour, LivreurReferentiel (port + impl dev), EtatJournalierLivreur (VO), VueLivreur (Read Model), ConsulterEtatLivreursHandler, LivreurEtatWebSocketPublisher (/topic/livreurs/etat), LivreurEtatController. Mise à jour architecture-applicative.md (section BC-03 + BC-07 extension). | specs-us066-etat-livreurs.md, architecture-applicative.md |
+| 2026-04-21 | v1.3 | Feature Broadcast : tranché 3 questions ouvertes par ADR (DD-012 BroadcastVu endpoint REST, DD-013 FCM sendEachForMulticast, DD-014 secteurs statiques). Ajout 6 NFR broadcast (ENF-BROADCAST-001→006). Section architecture-applicative.md broadcast déjà présente en v1.2. | design-decisions.md, exigences-non-fonctionnelles.md, CHANGELOG |
 
 ---
 

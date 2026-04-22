@@ -24,6 +24,7 @@ import { DeclarerEchecScreen } from './DeclarerEchecScreen';
 import { RecapitulatifTourneeScreen } from './RecapitulatifTourneeScreen';
 import { CapturePreuveScreen } from './CapturePreuveScreen';
 import { MesConsignesScreen } from './MesConsignesScreen';
+import MessagesSuperviseursScreen from './MessagesSuperviseursScreen';
 import BandeauInstructionOverlay from '../components/BandeauInstructionOverlay';
 import {
   getInstructionsEnAttente,
@@ -68,14 +69,15 @@ type EtatEcran =
   | { type: 'vide' }
   | { type: 'erreur'; message: string };
 
-// Navigation interne (US-004 + US-005 + US-007 + US-008/009 + US-037)
+// Navigation interne (US-004 + US-005 + US-007 + US-008/009 + US-037 + US-068)
 type NavigationColis =
   | { ecran: 'liste' }
   | { ecran: 'detail'; tourneeId: string; colisId: string }
   | { ecran: 'echec'; tourneeId: string; colisId: string; destinataireNom: string }
   | { ecran: 'preuve'; tourneeId: string; colisId: string; destinataireNom: string }
   | { ecran: 'recapitulatif'; tourneeId: string }
-  | { ecran: 'mesConsignes' };
+  | { ecran: 'mesConsignes' }
+  | { ecran: 'messagesSupervision' };
 
 export const ListeColisScreen: React.FC = () => {
   const [etat, setEtat] = useState<EtatEcran>({ type: 'chargement' });
@@ -113,6 +115,34 @@ export const ListeColisScreen: React.FC = () => {
     prendreEnCompteNouvelles,
     syncEnCours,
   } = useConsignesLocales();
+
+  // US-068 : compteur messages broadcast non lus du jour
+  const [nombreBroadcastsNonLus, setNombreBroadcastsNonLus] = useState(0);
+
+  useEffect(() => {
+    const chargerCompteurBroadcasts = async () => {
+      try {
+        const now = new Date();
+        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const baseUrl = process.env.EXPO_PUBLIC_SUPERVISION_URL ?? 'http://localhost:8082';
+        const mockHeaders: Record<string, string> =
+          process.env.EXPO_PUBLIC_ENV === 'recette'
+            ? { 'X-Mock-Role': 'ROLE_LIVREUR', 'X-Mock-Id': 'livreur-002' }
+            : {};
+        const reponse = await fetch(
+          `${baseUrl}/api/supervision/broadcasts/recus?date=${date}`,
+          { headers: mockHeaders }
+        );
+        if (reponse.ok) {
+          const liste: Array<{ vu: boolean }> = await reponse.json();
+          setNombreBroadcastsNonLus(liste.filter((m) => !m.vu).length);
+        }
+      } catch {
+        // Silencieux — ne bloque pas la liste
+      }
+    };
+    chargerCompteurBroadcasts();
+  }, [navigation.ecran]);
 
   const chargerTournee = useCallback(async () => {
     try {
@@ -291,6 +321,20 @@ export const ListeColisScreen: React.FC = () => {
     );
   }
 
+  // ─── Rendu MessagesSuperviseursScreen (US-068) ───────────────────────────
+
+  if (navigation.ecran === 'messagesSupervision') {
+    return (
+      <MessagesSuperviseursScreen
+        onRetour={() => {
+          // Réinitialiser le compteur au retour (les messages ont été acquittés)
+          setNombreBroadcastsNonLus(0);
+          setNavigation({ ecran: 'liste' });
+        }}
+      />
+    );
+  }
+
   // ─── Rendu RecapitulatifTourneeScreen (US-007) ───────────────────────────
 
   if (navigation.ecran === 'recapitulatif') {
@@ -445,6 +489,28 @@ export const ListeColisScreen: React.FC = () => {
             <View style={styles.badge} testID="badge-consignes">
               <Text style={styles.badgeTexte}>
                 {nombreNonLues > 9 ? '9+' : String(nombreNonLues)}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Bouton "Messages superviseur" avec badge (US-068) */}
+        <TouchableOpacity
+          testID="btn-messages-superviseur"
+          style={styles.boutonConsignes}
+          onPress={() => setNavigation({ ecran: 'messagesSupervision' })}
+          accessibilityRole="button"
+          accessibilityLabel={
+            nombreBroadcastsNonLus > 0
+              ? `Messages — ${nombreBroadcastsNonLus} non lu${nombreBroadcastsNonLus > 1 ? 's' : ''}`
+              : 'Messages superviseur'
+          }
+        >
+          <Text style={styles.boutonConsignesTexte}>MSG</Text>
+          {nombreBroadcastsNonLus > 0 && (
+            <View style={styles.badge} testID="badge-messages">
+              <Text style={styles.badgeTexte}>
+                {nombreBroadcastsNonLus > 9 ? '9+' : String(nombreBroadcastsNonLus)}
               </Text>
             </View>
           )}

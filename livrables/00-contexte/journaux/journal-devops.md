@@ -44,6 +44,8 @@
 | 2026-04-07 | As-built Cloud Run complet — état réel services, env vars, bugs corrigés, limitations | as-built-cloudrun-recette.md |
 | 2026-04-07 | Fix ALLOWED_ORIGINS svc-supervision (était placeholder) + correction noms secrets dans infra-locale | infrastructure-locale.md, svc-supervision (Cloud Run) |
 | 2026-04-08 | Ajout localhost:8083 dans _FRONTEND_URLS cloudbuild.yaml (port Expo Web local) + mise à jour pipeline-cicd.md et strategie-deploiement.md | cloudbuild.yaml, pipeline-cicd.md, strategie-deploiement.md |
+| 2026-04-22 | Déploiement recette feature broadcast (US-067/068/069) — TAG 0975f525, build 5a200cff. Health checks OK. broadcast-secteurs 200, POST broadcasts 422 AUCUN_LIVREUR_ACTIF (attendu). | pipeline-cicd.md |
+| 2026-04-22 | Fix SecurityConfig LIVREUR broadcasts (GET /recus + POST /vu bloqués par catch-all) + eas.json URLs Cloud Run + cloudbuild no-wait EAS. Build 753b5c5b SUCCESS. APK EAS f2f6d200 en queue. | SecurityConfig.java, eas.json, cloudbuild.yaml, pipeline-cicd.md |
 
 ---
 

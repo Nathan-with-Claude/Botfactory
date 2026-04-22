@@ -39,11 +39,17 @@ public class MockJwtAuthFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Permet de surcharger rôle et identité via headers X-Mock-Role / X-Mock-Id (tests L2)
+            String role = request.getHeader("X-Mock-Role");
+            String userId = request.getHeader("X-Mock-Id");
+            if (role == null) role = MOCK_ROLE;
+            if (userId == null) userId = MOCK_SUPERVISEUR_ID;
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            MOCK_SUPERVISEUR_ID,
+                            userId,
                             null,
-                            List.of(new SimpleGrantedAuthority(MOCK_ROLE))
+                            List.of(new SimpleGrantedAuthority(role))
                     );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

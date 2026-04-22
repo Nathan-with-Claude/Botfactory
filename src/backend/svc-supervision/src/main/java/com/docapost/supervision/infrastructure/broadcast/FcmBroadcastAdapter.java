@@ -3,7 +3,6 @@ package com.docapost.supervision.infrastructure.broadcast;
 import com.docapost.supervision.domain.broadcast.TypeBroadcast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -30,9 +29,10 @@ public class FcmBroadcastAdapter {
     /**
      * FirebaseMessaging est optionnel : absent si firebase-admin n'est pas configuré
      * ou si le profil dev ne fournit pas le bean.
+     * Initialisé à null (pas de bean Spring — évite NoUniqueBeanDefinitionException sur Object).
+     * En production, injecter via une sous-classe conditionnelle ou un @Bean Firebase.
      */
-    @Autowired(required = false)
-    private Object firebaseMessaging; // Typé Object pour éviter une dépendance de compilation si SDK absent
+    private final Object firebaseMessaging = null; // dev : FCM simulé (log INFO)
 
     private final FcmTokenJpaRepository fcmTokenJpaRepository;
 
